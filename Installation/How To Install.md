@@ -33,7 +33,7 @@ Download "EnneadTab_OS_Installer.exe" from link below. Save anywhere.
 Run the installer you just downloaded. It might takes a few seconds (or minutes, depending on your internet speed) to unpack the contents. 
 ![os install in progress](/Apps/lib/EnneadTab/images/Instruction_getting_OS.png)
 
-Watch the progress, when it says finished, it is ready to move on installing Rhino and Revit Version. Follow __step 2.1 or 3.1__ below.
+Watch the progress, when it says finished it will close itself, and it is ready to move on installing Rhino and Revit Version. Follow __step 2.1 or 3.1__ below.
 
 
 <br>
@@ -43,19 +43,21 @@ Watch the progress, when it says finished, it is ready to move on installing Rhi
 
 
 ### 2.1. EnneadTab-For-Revit 2.0
-0. Make sure you have pyrevit installed. Revit is not open.
-You can get pyrevit from here, there is no admin restriction: https://github.com/pyrevitlabs/pyRevit/releases
+0. EnneadTab-For-Revit run over pyRevit framework. Make sure you have pyrevit installed. Revit is not open.
+You can get pyrevit from here and pick the first one under "Download" section. There is no admin restriction to install: https://github.com/pyrevitlabs/pyRevit/releases
 
 1. No need to uninstall old version of EnneadTab-For-Revit, it will be handled automatically.
+
 2. Navigate to 
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 
-3. Double click on 
-    - "EnneadTab-For-Revit.exe"
+3. Make sure no Revit is running during the installation.
+4. Double click on 
+    - "EnneadTab-For-Revit.exe"(If you cannot see it, you system might not display file extension such as .exe)
 
-4. You can now open Revit.
+5. You can now open Revit.
 
-5. __(Optional)__ Configure your Revit's notification level at chapter 4 below.
+6. __(Optional)__ Configure your Revit's notification level at chapter 4 below.
 
 
 
@@ -67,7 +69,7 @@ You can get pyrevit from here, there is no admin restriction: https://github.com
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 
 3. Double click on 
-    - "EnneadTab_For_Revit_UnInstaller.exe"
+    - "EnneadTab_For_Revit_UnInstaller.exe"(If you cannot see it, you system might not display file extension such as .exe)
 
 4. You can now open Revit.
 
@@ -76,13 +78,14 @@ You can get pyrevit from here, there is no admin restriction: https://github.com
 
 ## 3 EnnneaTab-For-Rhino
 
-
+> [!NOTE]
+> EnneadTab-For-Rhino has been tested on Rhino 7. It is not yet compatible with Rhino 8.
 
 ### 3.1 EnnneaTab-For-Rhino 2.0
-0. Troughly uninstall __any__ previous version by following __step 3.2__, ignore if you have no previous version.
+0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.2__, ignore if you have no previous version.
 1. Navigate to 
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
-2. Have only ONE Rhino open, then drag "EnneadTab_For_Rhino_Installer.rui" into the Rhino window
+2. Have only ONE Rhino open, then drag "EnneadTab_For_Rhino_Installer.rui" into the Rhino window(If you cannot see it, you system might not display file extension such as .rui)
 3. From the top of toolbar, find "Enneaaaaaaaaaaaad" menu and click on "Install".
 4. Restart Rhino.
 
