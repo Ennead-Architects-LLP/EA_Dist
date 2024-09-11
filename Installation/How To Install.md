@@ -1,9 +1,17 @@
 # How to Install EnneadTab
 
-
 ## 1. Setup Basic
 If you have "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem", delete ecosystem folder just to get a clean reinstall.
 
+> [!IMPORTANT]
+> If you are using One-Drive, please note that you usually have __two__ Documents folders at your computer, see samples below. For all future reference, we will be talking about the non-One-Drive folder.
+- C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem :thumbsup:
+- C:\Users\\[USER_NAME]\OneDrive - Ennead Architects\Documents\EnneadTab Ecosystem :thumbsdown:
+
+
+<br>
+<br>
+<br>
 Download "EnneadTab_OS_Installer.exe" from link below.
 
 - https://github.com/Ennead-Architects-LLP/EA_Dist/blob/main/Installation/EnneadTab_OS_Installer.exe
@@ -14,13 +22,15 @@ When you can see "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\In
 ![screenshot of downloading page](/Apps/lib/EnneadTab/images/Instruction_core.png)
 
 > [!NOTE]
-> Some computer's firewall might mark this exe as potential virus, but it is really NOT virus, I promise! Just continue download and save that exe file. If for whatever reason your firewall still reject the download, use below L drive location as a backup.
+> Some computer's firewall(such as windows smart defender) might mark this exe as potential virus, but it is really NOT virus, I promise! Just continue download and save that exe file. If for whatever reason your firewall still reject the download, use below L drive location as a backup.
 - "L:\4b_Applied Computing\EnneadTab-DB\Stand Alone Tools\EnneadTab_OS_Installer.exe"
      
 
-Legacy version use script hosted by L drive version. Legacy version only works with other legacy version. There are no plan to further improve any legacy version.
+
+
 
 ## 2.1. EnneadTab-For-Revit(Legacy)
+Legacy version use script hosted by L drive version. Legacy version only works with other legacy version. There are no plan to further improve any legacy version.
 1. Make sure you have pyrevit installed. Revit is not open.
 
 2. Navigate to 
