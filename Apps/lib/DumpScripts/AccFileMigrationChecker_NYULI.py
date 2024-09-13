@@ -4,6 +4,7 @@ import winsound
 import time
 from tqdm import tqdm
 from colorama import Fore, Style
+from datetime import datetime
 
 class ACCMigrationChecker:
     def __init__(self, project_folder, folder_names_to_check, acc_project_name, acc_project_inner_folder_name, prefix, limit):
@@ -43,12 +44,14 @@ class ACCMigrationChecker:
         for root, dirs, files in os.walk(job_folder):
             for file in files:
                 full_path = os.path.join(root, file)
-
-                #  if any part of the full path contains the folder in folder_names_to_check, do not process this folder
-                if any(folder in full_path for folder in self.folder_names_to_check):
-                    continue
                 
-                file_paths.append(full_path)
+                # Get the list of all folders in the current file's full path
+                full_path_folders = os.path.normpath(root).split(os.sep)
+
+                # If any folder in folder_names_to_check is found in the full path folders, PROCESS
+                if any(folder in full_path_folders for folder in self.folder_names_to_check):
+                    
+                    file_paths.append(full_path)
  
         # Progress bar using tqdm
         with tqdm(total=len(file_paths), desc=Fore.GREEN + f"Checking files in {os.path.basename(job_folder)}" + Style.RESET_ALL, 
@@ -58,7 +61,14 @@ class ACCMigrationChecker:
                 new_path = new_path.replace("\\\\", "\\")
 
                 if len(new_path) > self.limit:
-                    affected_files.append((original_path, new_path))
+                    # Get file information
+                    file_info = os.stat(original_path)
+                    creation_time = datetime.fromtimestamp(file_info.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+                    modified_time = datetime.fromtimestamp(file_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    accessed_time = datetime.fromtimestamp(file_info.st_atime).strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    # Append the file along with its timestamps
+                    affected_files.append((original_path, new_path, creation_time, modified_time, accessed_time))
 
                 pbar.update(1)
 
@@ -82,8 +92,10 @@ class ACCMigrationChecker:
             report_content.append(f"Summary: {len(affected_files)} files will be affected.\n")
             report_content.append(f"Note: The warning limit is set to {self.limit} characters. The real limit is 256.\n")
             report_content.append("Details of affected files:\n")
-            for i, (original, new) in enumerate(affected_files):
-                detail = f"{i+1}.\nOriginal: {original}\nNew: {new}\nLength: {len(original)} -> {len(new)}\n"
+            for i, (original, new, creation_time, modified_time, accessed_time) in enumerate(affected_files):
+                detail = (f"{i+1}.\nOriginal: {original}\nNew: {new}\n"
+                          f"Length: {len(original)} -> {len(new)}\n"
+                          f"Created: {creation_time}\nModified: {modified_time}\nAccessed: {accessed_time}\n")
                 report_content.append(detail)
         else:
             report_content.append(f"Summary: All paths are below {self.limit} length limit.\n")
@@ -137,7 +149,6 @@ class ACCMigrationChecker:
         finally:
             # Play Windows system alert sound
             winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
-
 
 
 async def process_project(project_folder, folder_names_to_check, acc_project_name, acc_project_inner_folder_name, prefix, limit):
