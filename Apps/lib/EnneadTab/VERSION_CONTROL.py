@@ -1,8 +1,15 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
 import os
 
 import EXE
 import ENVIRONMENT
 import NOTIFICATION
+
+
+
 
 def update_EA_dist():
     EXE.try_open_app("EnneadTab_OS_Installer", safe_open=True)
