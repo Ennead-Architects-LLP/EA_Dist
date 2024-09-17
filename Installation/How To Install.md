@@ -42,7 +42,7 @@ Watch the progress, when it says finished it will close itself, and it is ready 
 ## 2. EnneadTab-For-Revit
 
 
-### 2.1. EnneadTab-For-Revit 2.0
+### 2.1. EnneadTab-For-Revit
 0. EnneadTab-For-Revit run over pyRevit framework. Make sure you have pyrevit installed. Revit is not open.
 You can get pyrevit from here and pick the first one under "Download" section. There is no admin restriction to install: https://github.com/pyrevitlabs/pyRevit/releases
 
@@ -79,9 +79,19 @@ You can get pyrevit from here and pick the first one under "Download" section. T
 ## 3 EnnneaTab-For-Rhino
 
 > [!NOTE]
-> EnneadTab-For-Rhino has been tested on Rhino 7. It is not yet compatible with Rhino 8.
+> Attention, __Rhino 8__ users!
+> <br>
+> Due to the significant .Net framework changes from Rhino 7 to 8, you will need to configure your Rhino 8 to be backward compatable before installing EnneadTab-for-Rhino. Please do the following: <br>
+> 1. Start __ONE__ Rhino for Windows<br>
+> 2. Type the command __SetDotNetRuntime__<br>
+> 3. Select the __Runtime__ option<br>
+> 4. Set the __NETFramework__ option<br>
+> 5. Close Rhino<br>
 
-### 3.1 EnnneaTab-For-Rhino 2.0
+
+
+
+### 3.1 EnnneaTab-For-Rhino
 0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.2__, ignore if you have no previous version.
 1. Navigate to 
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
