@@ -94,6 +94,10 @@ class Solution:
 
         t = DB.Transaction(doc, "Create new instance")
         t.Start()
+
+
+        if not self.symbol.IsActive:
+            self.symbol.Activate()
         if doc.IsFamilyDocument:
             doc_create = doc.FamilyCreate
         else:
