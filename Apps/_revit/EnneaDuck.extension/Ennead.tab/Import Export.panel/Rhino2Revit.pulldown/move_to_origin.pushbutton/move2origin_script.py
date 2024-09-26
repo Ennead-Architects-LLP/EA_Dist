@@ -109,12 +109,12 @@ class Solution:
                                                     DB.Structure.StructuralType.NonStructural )
         except Exception as e:
             t.RollBack()
-            REVIT_FORMS.dialogue(main_text = str(e), sub_text = "WIP")
+            REVIT_FORMS.dialogue(main_text = str(e), sub_text = "Notify Sen Zhang for this issue...")
             return
 
         if level.Elevation != 0:
             offset = level.Elevation
-            for para_name in ["Elevation from Level", ""]:
+            for para_name in ["Elevation from Level", "Offset from Host"]:
                 para = instance.LookupParameter(para_name)
                 if para:
                     para.Set(-offset)
