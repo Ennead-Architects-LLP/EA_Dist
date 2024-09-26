@@ -306,6 +306,14 @@
         "tab": "File.tab",
         "tab_icon": "File.tab\\icon.png"
     },
+    "File.tab\\rebase_file.button\\rebase_file_left.py": {
+        "script": "File.tab\\rebase_file.button\\rebase_file_left.py",
+        "icon": "File.tab\\rebase_file.button\\icon.png",
+        "alias": "RebaseFile",
+        "doc": "Try to rebase the file center to new origin point, include all the views.",
+        "tab": "File.tab",
+        "tab_icon": "File.tab\\icon.png"
+    },
     "File.tab\\save_small_and_close.button\\save_small_and_close_left.py": {
         "script": "File.tab\\save_small_and_close.button\\save_small_and_close_left.py",
         "icon": "File.tab\\save_small_and_close.button\\icon.png",
@@ -801,6 +809,14 @@
         "doc": null,
         "tab": "Tailor.tab",
         "tab_icon": "Tailor.tab\\icon.png"
+    },
+    "View.tab\\batch_export_rhino_view.button\\batch_export_rhino_view_left.py": {
+        "script": "View.tab\\batch_export_rhino_view.button\\batch_export_rhino_view_left.py",
+        "icon": "View.tab\\batch_export_rhino_view.button\\icon.png",
+        "alias": "BatchExportRhinoView",
+        "doc": "Batch export Rhino views to folder.",
+        "tab": "View.tab",
+        "tab_icon": "View.tab\\icon.png"
     },
     "View.tab\\batch_rename_camera.button\\batch_rename_camera_left.py": {
         "script": "View.tab\\batch_rename_camera.button\\batch_rename_camera_left.py",
