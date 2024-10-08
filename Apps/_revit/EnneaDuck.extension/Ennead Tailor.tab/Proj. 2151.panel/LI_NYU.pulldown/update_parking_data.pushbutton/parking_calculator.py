@@ -3,6 +3,7 @@ DEFAULT_PATH = "{}.rfa".format(CALCULATOR_FAMILY_NAME)
 CALCULATOR_DUMP_VIEW_NAME = "EnneadTab_Parking Calculator Dump View"
 
 SCHDEULE_SHEET_NUM = "T-002"
+DIVIDER = "##"
 
 
 import traceback
@@ -35,13 +36,13 @@ class ParkingCalculator:
     def print_parking_families_detected(self):
         self.output.print_md("## Parking families detected:")
         for i, family in enumerate(self.parking_families_detected):
-            print("{i+1}. {family}".format(i=i, family=family))
+            print("{}. {}".format(i+1, family))
 
     def record_phase(self, phase_name):
         """Record parking instances for a given phase."""
         parking_instances = []
         for doc in REVIT_APPLICATION.get_revit_link_docs(including_current_doc=True):
-            self.output.print_md("## Getting parking instances from [{}], phase [{}]".format(doc.Title, phase_name))
+            self.output.print_md("### Getting parking instances from [{}], phase [{}]".format(doc.Title, phase_name))
             phase = REVIT_PHASE.get_phase_by_name(phase_name, doc=doc)
             if not phase:
                 continue
@@ -72,11 +73,11 @@ class ParkingCalculator:
             return
         self.parking_families_detected.add(family_name)
         level_name = parking_instance.LookupParameter("ParkingLevel").AsString()
-        try:
-            zone_name = parking_instance.LookupParameter("ParkingZone").AsString()
-        except:
-            zone_name = "zone parameter to add"
-        calculator_type_name = "{}_{}_{}".format(phase_name, level_name, zone_name)
+        zone_name = parking_instance.LookupParameter("ParkingZone").AsString()
+        if zone_name == "" or zone_name is None:
+            zone_name = "zone unknown"
+
+        calculator_type_name = "{phase_name}{divider}{level_name}{divider}{zone_name}".format(phase_name=phase_name, level_name=level_name, zone_name=zone_name, divider=DIVIDER)
         if calculator_type_name not in self.calculator_type_dict:
             self.calculator_type_dict[calculator_type_name] = []
         self.calculator_type_dict[calculator_type_name].append(parking_instance)
@@ -118,9 +119,9 @@ class ParkingCalculator:
                            
 
         update_para_dict = {
-            "Phase": calculator_type_name.split("_")[0],
-            "Level": calculator_type_name.split("_")[1],
-            "Zone": calculator_type_name.split("_")[2],
+            "Phase": calculator_type_name.split(DIVIDER)[0],
+            "Level": calculator_type_name.split(DIVIDER)[1],
+            "Zone": calculator_type_name.split(DIVIDER)[2],
             "Total Count": len(parking_instances),
             "Standard Count": len(filter(lambda x: not self.is_ada(x), parking_instances)),
             "ADA Count": len(filter(self.is_ada, parking_instances)),
@@ -133,7 +134,7 @@ class ParkingCalculator:
         """Purge unused calculator types."""
         self.output.print_md("## Purging unused calculator types")
         for calculator_type in REVIT_FAMILY.get_all_types_by_family_name(CALCULATOR_FAMILY_NAME, self.doc):
-            if calculator_type.LookupParameter("Type Name").AsString() not in self.calculator_type_dict:
+            if calculator_type.LookupParameter("Type Name").AsString() not in self.calculator_type_dict.keys():
                 print("deleting extra type [{}]".format(calculator_type.LookupParameter("Type Name").AsString()))
                 self.doc.Delete(calculator_type.Id)
 
