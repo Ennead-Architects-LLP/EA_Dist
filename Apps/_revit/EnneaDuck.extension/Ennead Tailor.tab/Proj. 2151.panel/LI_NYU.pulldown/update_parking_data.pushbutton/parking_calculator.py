@@ -35,13 +35,13 @@ class ParkingCalculator:
     def print_parking_families_detected(self):
         self.output.print_md("## Parking families detected:")
         for i, family in enumerate(self.parking_families_detected):
-            print(f"{i+1}. {family}")
+            print("{i+1}. {family}".format(i=i, family=family))
 
     def record_phase(self, phase_name):
         """Record parking instances for a given phase."""
         parking_instances = []
         for doc in REVIT_APPLICATION.get_revit_link_docs(including_current_doc=True):
-            self.output.print_md("## Getting parking instances from [], phase [{}]".format(doc.Title, phase_name))
+            self.output.print_md("## Getting parking instances from [{}], phase [{}]".format(doc.Title, phase_name))
             phase = REVIT_PHASE.get_phase_by_name(phase_name, doc=doc)
             if not phase:
                 continue

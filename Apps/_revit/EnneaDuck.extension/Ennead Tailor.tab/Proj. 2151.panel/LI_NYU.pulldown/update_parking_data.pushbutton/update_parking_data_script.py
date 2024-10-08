@@ -111,7 +111,7 @@ def update_instance(doc):
             if parking.LookupParameter("is_flipped_symbol"):
                 parking.LookupParameter("is_flipped_symbol").Set(parking.Mirrored )
 
-        if parking.LookupParameter("ParkingZone").AsString() == "" or parking.LookupParameter("ParkingZone").AsString() == "zone not defined.":
+        if parking.LookupParameter("ParkingZone").AsString() == "" or parking.LookupParameter("ParkingZone").AsString() == "zone parameter to add":
             parking.LookupParameter("ParkingZone").Set("{}'s zone not defined.".format(bldg_id))
     t.Commit()
 
