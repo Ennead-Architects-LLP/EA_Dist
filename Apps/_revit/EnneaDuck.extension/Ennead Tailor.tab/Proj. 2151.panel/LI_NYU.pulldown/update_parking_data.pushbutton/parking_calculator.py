@@ -84,7 +84,8 @@ class ParkingCalculator:
 
     def process_calculator_type_dict(self):
         """Process each calculator type in the dictionary."""
-        for calculator_type_name, parking_instances in self.calculator_type_dict.items():
+        for calculator_type_name in sorted(self.calculator_type_dict.keys()):
+            parking_instances = self.calculator_type_dict[calculator_type_name]
             print("- processing calculator type [{}]".format(calculator_type_name))
             try:
                 if "sum" in calculator_type_name.lower():
@@ -161,13 +162,17 @@ class ParkingCalculator:
 
 def update_parking_data(doc):
     """Update parking data in the given document."""
-    switch_to_sheet()
+    try:
+        switch_to_sheet()
+    except Exception as e:
+        pass
+        
     t = DB.Transaction(doc, "Update Parking Data")
     t.Start()
     try:
-        calculator = ParkingCalculator(doc)
-        calculator.update_parking_data()
-        t.Commit()
+            calculator = ParkingCalculator(doc)
+            calculator.update_parking_data()
+            t.Commit()
     except Exception as e:
         t.RollBack()
         print(traceback.format_exc())
