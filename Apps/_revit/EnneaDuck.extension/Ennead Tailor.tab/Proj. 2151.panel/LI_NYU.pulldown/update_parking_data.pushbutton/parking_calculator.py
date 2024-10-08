@@ -112,7 +112,7 @@ class ParkingCalculator:
         for parking_instance in parking_instances:
             user_type = parking_instance.LookupParameter("ParkingUser")
             if user_type:
-                if user_type.AsString() == "":
+                if user_type.AsString() in ["", None]:
                     user_types.add("Unknown")
                 else:
                     user_types.add(user_type.AsString()) 
