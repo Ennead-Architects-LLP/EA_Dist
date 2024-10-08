@@ -71,7 +71,7 @@ def update_parking_data(doc, show_log = False):
     update_type(doc, show_log)
     update_instance(doc)
 
-    if USER.IS_DEVELOPER and doc.Title == "2151_A_EA_NYULI_Site":
+    if doc.Title == "2151_A_EA_NYULI_Site":
         PC.update_parking_data(doc)
 
 def update_type(doc, show_log = False):
@@ -106,13 +106,16 @@ def update_instance(doc):
         if parking.Symbol.LookupParameter("Type Comments").AsString() == "Ambu.":
             parking.LookupParameter("ParkingUser").Set("Ambu.")
 
+        # make sure it is never empty
+        if parking.LookupParameter("ParkingUser").AsString() in ["", None]:
+            parking.LookupParameter("ParkingUser").Set("Undefined")
 
         if REVIT_SELECTION.is_outside_multi_group(parking):            
             if parking.LookupParameter("is_flipped_symbol"):
                 parking.LookupParameter("is_flipped_symbol").Set(parking.Mirrored )
 
         if parking.LookupParameter("ParkingZone").AsString() in ["", "zone not defined.", None]:
-            parking.LookupParameter("ParkingZone").Set("{}'s zone not defined.".format(bldg_id))
+            parking.LookupParameter("ParkingZone").Set("[{}]'s zone not defined.".format(bldg_id))
     t.Commit()
 
 
