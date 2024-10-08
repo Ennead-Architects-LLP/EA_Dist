@@ -61,8 +61,7 @@ class ParkingCalculator:
             "Total Count": len(parking_instances),
             "Standard Count": len(filter(lambda x: not self.is_ada(x), parking_instances)),
             "ADA Count": len(filter(self.is_ada, parking_instances)),
-            "User Type": "",
-            "GSF": 99999
+            "User Type": ""
         }
         REVIT_FAMILY.update_family_type(self.doc, CALCULATOR_FAMILY_NAME, calculator_type_name, update_para_dict, show_log=True)
 
@@ -126,8 +125,7 @@ class ParkingCalculator:
             "Total Count": len(parking_instances),
             "Standard Count": len(filter(lambda x: not self.is_ada(x), parking_instances)),
             "ADA Count": len(filter(self.is_ada, parking_instances)),
-            "User Type": "/ ".join(sorted(list(user_types))),
-            "GSF": 99999
+            "User Type": "/ ".join(sorted(list(user_types)))
         }
         REVIT_FAMILY.update_family_type(self.doc, CALCULATOR_FAMILY_NAME, calculator_type_name, update_para_dict, show_log=True)
 
