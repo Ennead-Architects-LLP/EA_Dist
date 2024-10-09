@@ -115,7 +115,7 @@ def update_instance(doc):
                 parking.LookupParameter("is_flipped_symbol").Set(parking.Mirrored )
 
         if parking.LookupParameter("ParkingZone").AsString() in ["", "zone not defined.", None]:
-            parking.LookupParameter("ParkingZone").Set("[{}]'s zone not defined.".format(bldg_id))
+            parking.LookupParameter("ParkingZone").Set(bldg_id)
     t.Commit()
 
 
@@ -128,7 +128,7 @@ def set_parking_level(parking):
         level = host.LookupParameter("Level").AsValueString()
         if level:
             return level
-    return "to be figured out"
+    return "maybe lost host association"
 
 ################## main code below #####################
 if __name__ == "__main__":
