@@ -14,7 +14,7 @@ except:
     globals()["DOC"] = object()
 
 
-def get_all_phases(doc = DOC, sort_by_name = True):
+def get_all_phases(doc = DOC, sort_by_name = False):
     phases = [phase for phase in doc.Phases]
 
     if sort_by_name:
