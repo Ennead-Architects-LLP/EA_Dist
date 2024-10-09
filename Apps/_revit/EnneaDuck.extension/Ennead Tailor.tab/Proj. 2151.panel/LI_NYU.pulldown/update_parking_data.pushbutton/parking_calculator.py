@@ -55,8 +55,9 @@ class ParkingCalculator:
             self.output.print_md("### Getting parking instances from [{}], phase [{}]".format(doc.Title, phase_name))
             phase = REVIT_PHASE.get_phase_by_name(phase_name, doc=doc)
             if not phase:
-                print ("phase [{}] not found in doc [{}]".format(phase_name, doc.Title))
-                continue
+                print ("phase [{}] not found in doc [{}], going to use last phase in doc".format(phase_name, doc.Title))
+                phase = REVIT_PHASE.get_all_phases(doc)[-1]
+                
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
             doc_instances = filter(self.is_stall, doc_instances)
             print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase_name, doc.Title))
@@ -79,6 +80,7 @@ class ParkingCalculator:
             "User Type": ""
         }
         REVIT_FAMILY.update_family_type(self.doc, CALCULATOR_FAMILY_NAME, calculator_type_name, update_para_dict, show_log=True)
+        self.calculator_type_dict[calculator_type_name] = parking_instances
 
     def record_parking_instance(self, parking_instance, phase_name):
         """Record a single parking instance."""
