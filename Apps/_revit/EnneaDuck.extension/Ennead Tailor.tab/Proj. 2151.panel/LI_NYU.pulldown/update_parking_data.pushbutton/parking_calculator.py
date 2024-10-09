@@ -140,8 +140,9 @@ class ParkingCalculator:
         self.output.print_md("## Purging unused calculator types")
         for calculator_type in REVIT_FAMILY.get_all_types_by_family_name(CALCULATOR_FAMILY_NAME, self.doc):
             if calculator_type.LookupParameter("Type Name").AsString() not in self.calculator_type_dict.keys():
-                print("deleting extra type [{}]".format(calculator_type.LookupParameter("Type Name").AsString()))
-                self.doc.Delete(calculator_type.Id)
+                if REVIT_SELECTION.is_changable(calculator_type):
+                    print("deleting extra type [{}]".format(calculator_type.LookupParameter("Type Name").AsString()))
+                    self.doc.Delete(calculator_type.Id)
 
     def place_parking_calculator_instance(self, calculator_type):
         """Place a parking calculator instance."""
@@ -158,6 +159,7 @@ class ParkingCalculator:
         if len(all_this_type_instances) > 1:
             for x in all_this_type_instances[1:]:
                 if REVIT_SELECTION.is_changable(x):
+                    print("deleting extra type [{}]".format(x.LookupParameter("Type Name").AsString()))
                     self.doc.Delete(x.Id)
 
     def is_ada(self, parking_instance):
