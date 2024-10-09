@@ -26,6 +26,9 @@ class ParkingCalculator:
         self.output = script.get_output()
         self.print_all_doc_phases()
 
+        self.master_phase_list = [x.Name for x in REVIT_PHASE.get_all_phases(self.doc)]
+        print ("master phase list: {}".format(self.master_phase_list))
+
     def print_all_doc_phases(self):
         for doc in REVIT_APPLICATION.get_revit_link_docs(including_current_doc=True):
             self.output.print_md("#### doc [{}] has phases: {}".format(doc.Title, [x.Name for x in REVIT_PHASE.get_all_phases(doc)]))
@@ -58,9 +61,10 @@ class ParkingCalculator:
                 print ("phase [{}] not found in doc [{}], going to use last phase in doc".format(phase_name, doc.Title))
                 phase = REVIT_PHASE.get_all_phases(doc)[-1]
                 
+                
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
             doc_instances = filter(self.is_stall, doc_instances)
-            print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase.Name, doc.Title))
+            print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase_name, doc.Title))
             parking_instances.extend(doc_instances)
 
             
@@ -72,6 +76,7 @@ class ParkingCalculator:
         calculator_type_name = "Sum Per Phase_{}".format(phase_name)
         update_para_dict = {
             "Phase": phase_name,
+            "Phase Order": self.master_phase_list.index(phase_name),
             "Level": "Total",
             "Zone": "Total Phase",
             "Total Count": len(parking_instances),
@@ -135,6 +140,7 @@ class ParkingCalculator:
 
         update_para_dict = {
             "Phase": calculator_type_name.split(DIVIDER)[0],
+            "Phase Order": self.master_phase_list.index(calculator_type_name.split(DIVIDER)[0]),
             "Level": calculator_type_name.split(DIVIDER)[1],
             "Zone": calculator_type_name.split(DIVIDER)[2],
             "Total Count": len(parking_instances),
@@ -147,11 +153,18 @@ class ParkingCalculator:
     def purge_unused_calculator_types(self):
         """Purge unused calculator types."""
         self.output.print_md("## Purging unused calculator types")
+        delete_count = 0
         for calculator_type in REVIT_FAMILY.get_all_types_by_family_name(CALCULATOR_FAMILY_NAME, self.doc):
             if calculator_type.LookupParameter("Type Name").AsString() not in self.calculator_type_dict.keys():
                 if REVIT_SELECTION.is_changable(calculator_type):
                     print("deleting extra type [{}]".format(calculator_type.LookupParameter("Type Name").AsString()))
                     self.doc.Delete(calculator_type.Id)
+                    delete_count += 1
+                    
+        if delete_count > 0:
+            self.output.print_md("Deleted {} unused calculator types".format(delete_count))
+        else:
+            self.output.print_md("No unused calculator types found")
 
     def place_parking_calculator_instance(self, calculator_type):
         """Place a parking calculator instance."""
