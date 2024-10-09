@@ -60,7 +60,7 @@ class ParkingCalculator:
                 
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
             doc_instances = filter(self.is_stall, doc_instances)
-            print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase_name, doc.Title))
+            print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase.Name, doc.Title))
             parking_instances.extend(doc_instances)
 
             
