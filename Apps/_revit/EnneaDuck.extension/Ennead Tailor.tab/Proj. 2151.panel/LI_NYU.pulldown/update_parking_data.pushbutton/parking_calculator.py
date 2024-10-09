@@ -38,6 +38,10 @@ class ParkingCalculator:
         for i, family in enumerate(self.parking_families_detected):
             print("{}. {}".format(i+1, family))
 
+    def is_stall(self, parking_instance):
+        family_name = parking_instance.Symbol.FamilyName
+        return "stall" in family_name.lower()
+
     def record_phase(self, phase_name):
         """Record parking instances for a given phase."""
         parking_instances = []
@@ -48,7 +52,10 @@ class ParkingCalculator:
                 print ("phase [{}] not found in doc [{}]".format(phase_name, doc.Title))
                 continue
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
+            doc_instances = filter(self.is_stall, doc_instances)
             parking_instances.extend(doc_instances)
+
+            
         map(lambda x: self.record_parking_instance(x, phase_name), parking_instances)
         self.record_sum_per_phase(phase_name, parking_instances)
 
@@ -69,8 +76,6 @@ class ParkingCalculator:
     def record_parking_instance(self, parking_instance, phase_name):
         """Record a single parking instance."""
         family_name = parking_instance.Symbol.FamilyName
-        if "stall" not in family_name.lower():
-            return
         self.parking_families_detected.add(family_name)
         level_name = parking_instance.LookupParameter("ParkingLevel").AsString()
         zone_name = parking_instance.LookupParameter("ParkingZone").AsString()
