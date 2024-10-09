@@ -149,9 +149,11 @@ class ParkingCalculator:
         x, y = index % row_count, index // row_count
         self.doc.Create.NewFamilyInstance(DB.XYZ(unit_distant * x, unit_distant * y, 0), calculator_type, REVIT_VIEW.get_view_by_name(CALCULATOR_DUMP_VIEW_NAME, doc=self.doc))
         all_this_type_instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(CALCULATOR_FAMILY_NAME, type_name, doc=self.doc, editable_only=True)
+
         if len(all_this_type_instances) > 1:
             for x in all_this_type_instances[1:]:
-                self.doc.Delete(x.Id)
+                if REVIT_SELECTION.is_changable(x):
+                    self.doc.Delete(x.Id)
 
     def is_ada(self, parking_instance):
         """Check if a parking instance is ADA compliant."""
