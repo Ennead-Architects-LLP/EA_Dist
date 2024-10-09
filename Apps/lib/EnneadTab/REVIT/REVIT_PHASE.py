@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collections import OrderedDict
 try:
 
     from Autodesk.Revit import DB # pyright: ignore
@@ -7,6 +8,7 @@ try:
     UIDOC = __revit__.ActiveUIDocument # pyright: ignore
     DOC = UIDOC.Document
     import DATA_CONVERSION
+    import REVIT_APPLICATION
 
     
 except:
@@ -41,7 +43,33 @@ def get_elements_in_phase(doc, phase, category = DB.BuiltInCategory.OST_Rooms):
     return all_elements
 
 
+def get_phase_map(doc = DOC, return_name = False):
+    phase_map = {}
+    revit_links = list(DB.FilteredElementCollector(doc).OfClass(DB.RevitLinkInstance).ToElements())
+    master_phases = get_all_phases(doc)
+    master_phases_names = [x.Name for x in master_phases]
+    for revit_link in revit_links:
+        revit_link_type = doc.GetElement(revit_link.GetTypeId())
+        
+        temp_map = OrderedDict()
+        temp_phase_map = dict(revit_link_type.GetPhaseMap())
+        
+        for key in sorted(temp_phase_map.keys(), key=lambda x: master_phases_names.index(doc.GetElement(x).Name)):
+            value = temp_phase_map[key]
+            if return_name:
+                temp_map[doc.GetElement(key).Name] = revit_link.GetLinkDocument().GetElement(value).Name
+            else:
+                temp_map[doc.GetElement(key)] = revit_link.GetLinkDocument().GetElement(value)
+        phase_map[revit_link.GetLinkDocument().Title] = temp_map
+    return phase_map
 
+def pretty_print_phase_map(doc=DOC):
+    print ("Below is the phase map for all linked docs:")
+    phase_map = get_phase_map(doc, return_name=True)
+    for doc_name, value in phase_map.items():
+        print("\n[{}] --> [{}]".format(doc.Title,doc_name))
+        for key2, value2 in value.items():
+            print("\t{}: {}".format(key2, value2))
 
 def get_element_phase(element):
     return
