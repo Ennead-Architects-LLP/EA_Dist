@@ -28,7 +28,8 @@ class ParkingCalculator:
 
         self.master_phase_list = [x.Name for x in REVIT_PHASE.get_all_phases(self.doc)]
         print ("master phase list: {}".format(self.master_phase_list))
-
+        print ("\n\n")
+        REVIT_PHASE.pretty_print_phase_map(self.doc)
     def print_all_doc_phases(self):
         for doc in REVIT_APPLICATION.get_revit_link_docs(including_current_doc=True):
             self.output.print_md("#### doc [{}] has phases: {}".format(doc.Title, [x.Name for x in REVIT_PHASE.get_all_phases(doc)]))
