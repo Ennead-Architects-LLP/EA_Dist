@@ -45,6 +45,7 @@ class ParkingCalculator:
             self.output.print_md("### Getting parking instances from [{}], phase [{}]".format(doc.Title, phase_name))
             phase = REVIT_PHASE.get_phase_by_name(phase_name, doc=doc)
             if not phase:
+                print ("phase [{}] not found in doc [{}]".format(phase_name, doc.Title))
                 continue
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
             parking_instances.extend(doc_instances)
