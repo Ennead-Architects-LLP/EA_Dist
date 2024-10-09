@@ -6,7 +6,7 @@ try:
     from Autodesk.Revit import UI # pyright: ignore
     UIDOC = __revit__.ActiveUIDocument # pyright: ignore
     DOC = UIDOC.Document
-    
+    import DATA_CONVERSION
 
     
 except:
@@ -32,7 +32,11 @@ def get_phase_by_name(phase_name, doc = DOC):
 
 
 def get_elements_in_phase(doc, phase, category = DB.BuiltInCategory.OST_Rooms):
-    filter = DB.ElementPhaseStatusFilter (phase.Id, DB.ElementOnPhaseStatus.Existing)
+    status_collection = [DB.ElementOnPhaseStatus.Existing, DB.ElementOnPhaseStatus.New]
+    status_collection = DATA_CONVERSION.list_to_system_list(status_collection, 
+                                                            type=DB.ElementOnPhaseStatus, 
+                                                            use_IList=False)
+    filter = DB.ElementPhaseStatusFilter (phase.Id, status_collection)
     all_elements = DB.FilteredElementCollector(doc).OfCategory(category).WherePasses(filter).WhereElementIsNotElementType().ToElements()
     return all_elements
 

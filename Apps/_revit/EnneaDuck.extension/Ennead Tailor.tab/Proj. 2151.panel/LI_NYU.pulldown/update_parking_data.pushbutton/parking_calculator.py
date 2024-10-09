@@ -12,6 +12,7 @@ from EnneadTab.REVIT import REVIT_FAMILY, REVIT_VIEW, REVIT_SHEET, REVIT_PHASE, 
 from Autodesk.Revit import DB # pyright: ignore 
 from pyrevit import script
 
+
 class ParkingCalculator:
     def __init__(self, doc):
         """Initialize the ParkingCalculator with the given document."""
@@ -23,6 +24,11 @@ class ParkingCalculator:
         self.parking_families_detected = set()
         self.calculator_type_dict = {}
         self.output = script.get_output()
+        self.print_all_doc_phases()
+
+    def print_all_doc_phases(self):
+        for doc in REVIT_APPLICATION.get_revit_link_docs(including_current_doc=True):
+            self.output.print_md("#### doc [{}] has phases: {}".format(doc.Title, [x.Name for x in REVIT_PHASE.get_all_phases(doc)]))
 
     def update_parking_data(self):
         """Update parking data by processing all phases and calculator types."""
@@ -53,6 +59,7 @@ class ParkingCalculator:
                 continue
             doc_instances = REVIT_PHASE.get_elements_in_phase(doc, phase, DB.BuiltInCategory.OST_Parking)
             doc_instances = filter(self.is_stall, doc_instances)
+            print ("Find {} parking instances in phase [{}] of [{}]".format(len(doc_instances), phase_name, doc.Title))
             parking_instances.extend(doc_instances)
 
             
@@ -159,7 +166,7 @@ class ParkingCalculator:
         if len(all_this_type_instances) > 1:
             for x in all_this_type_instances[1:]:
                 if REVIT_SELECTION.is_changable(x):
-                    print("deleting extra type [{}]".format(x.LookupParameter("Type Name").AsString()))
+                    print("deleting extra type [{}]".format(x.Symbol.LookupParameter("Type Name").AsString()))
                     self.doc.Delete(x.Id)
 
     def is_ada(self, parking_instance):
