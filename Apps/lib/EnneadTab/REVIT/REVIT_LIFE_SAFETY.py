@@ -8,12 +8,12 @@ except:
 
 import math
 
-from EnneadTab import NOTIFICATION, SAMPLE_FILE
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW
+from EnneadTab import ENVIRONMENT, NOTIFICATION
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW, REVIT_UNIT
 
 LIFE_SAFETY_CALCULATOR_FAMILY_NAME = "LifeSafetyCalculator"
-LIFE_SAFETY_CALCULATOR_FAMILY_PATH = SAMPLE_FILE.get_file("{}.rfa".format(LIFE_SAFETY_CALCULATOR_FAMILY_NAME))
-LIFE_SAFETY_CALCULATOR_DUMP_VIEW = "EnneadTab_LifeSafetyCalculater_Dump"
+LIFE_SAFETY_CALCULATOR_FAMILY_PATH = "{}\\REVIT\\{}.rvt".format(ENVIRONMENT.CORE_MODULE_FOLDER_FOR_PUBLISHED_REVIT, LIFE_SAFETY_CALCULATOR_FAMILY_NAME)
+LIFE_SAFETY_CALCULATOR_DUMP_VIEW = "EnneadTab_LifeSafetyCalculater"
 
 
 class EgressData:
@@ -68,6 +68,7 @@ class EgressData:
         return "{}_{}".format(self.LevelName, self.EgressId)
     
 
+
     def __str__(self):
         return "Level: {}, Egress Id: {}, Occupancy Load: {}, Total Width: {}".format(self.LevelName, self.EgressId, self.OccupancyLoad, self.total_width)
 
@@ -75,22 +76,9 @@ class EgressData:
 
 
 
-def load_life_safety_calculator(doc, force_reload = False):
-    if force_reload:
-        REVIT_FAMILY.get_family_by_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, 
-                                        doc=doc,
-                                        load_path_if_not_exist = LIFE_SAFETY_CALCULATOR_FAMILY_PATH)
-    else:
-        REVIT_FAMILY.get_family_by_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, 
-                                        doc=doc)
 
-def secure_dump_view(doc):
-    view = REVIT_VIEW.get_view_by_name(LIFE_SAFETY_CALCULATOR_DUMP_VIEW, doc=doc)
-    if not view:
-        print ("Cannot find dump view, creating one")
-        NOTIFICATION.messenger("Cannot find dump view, creating one")
-        view = REVIT_VIEW.create_drafting_view(doc, LIFE_SAFETY_CALCULATOR_DUMP_VIEW, 200)
-    return view
+
+
 
 class LifeSafetyChecker:
     output = script.get_output()
@@ -117,24 +105,14 @@ class LifeSafetyChecker:
         return max_width
     
     def __init__(self, doc, data_source):
-        self.is_ready = True
         self.doc = doc
         self.data_source = data_source
         self.output = script.get_output()
 
-        self.dump_view = secure_dump_view(doc)
-
-        if not REVIT_FAMILY.get_family_by_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, 
-                                                doc=doc):
-            NOTIFICATION.messenger("Cannot find life safety calculator family, please load it first")
-            self.is_ready = False
-            return
-
+        REVIT_FAMILY.get_family_by_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, 
+                                         load_path_if_not_exist = LIFE_SAFETY_CALCULATOR_FAMILY_PATH)
 
     def run_check(self):
-        if not self.is_ready:
-            NOTIFICATION.messenger("Life safety checker is not ready")
-            return
         # loop thru all spatial element, either from area or from room. 
         cate = DB.BuiltInCategory.OST_Rooms if self.data_source.Source == "Room" else DB.BuiltInCategory.OST_Areas
         all_spatial_elements = DB.FilteredElementCollector(self.doc).OfCategory(cate).WhereElementIsNotElementType().ToElements()
@@ -148,7 +126,6 @@ class LifeSafetyChecker:
         # get a test spatial element to see if all needed parameter is valid
         tester = all_spatial_elements[0]
         if not self.varify_para_exist(tester):
-            print ("Missing parameters, please fix")
             return
                           
 
@@ -177,28 +154,19 @@ class LifeSafetyChecker:
 
 
         self.gather_revit_objs()
-        self.update_life_safety_calculator()
         self.purge_bad_calculater()
         
-    def update_life_safety_calculator(self):
         # for each item data, get a data calculator and update.
         # why not use revit obj directly? 
             # becasue stair can not easitl disply data by level. and stair and door if mixed in multi-category schdule can cause confusion, althoug it is technically possoble
             # because it is impossible to update door from a link
-        for i, data_item in enumerate(sorted(EgressData.data_collection.values(), key = lambda x: (x.LevelName, x.EgressId))):
+        for data_item in sorted(EgressData.data_collection.values(), key = lambda x: (x.LevelName, x.EgressId)):
             type_name = data_item.TypeName
             family_type = REVIT_FAMILY.get_family_type_by_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, type_name, create_if_not_exist=True)
-            if family_type and not family_type.IsActive:
-                family_type.Activate()
             instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME, type_name)
-            if instances is None:
-                print ("Cannot find life safety calculator family type [{}], if persistant, please at least place one instance of this family in the project".format(type_name))
-                continue
+
             if len(instances) == 0:
-                dist = 100
-                x = dist * (i % 5)
-                y = dist * (i // 5)  # Change from 4 to 5
-                instance = self.doc.Create.NewFamilyInstance(DB.XYZ(x, y, 0), family_type, self.dump_view)
+                instance = self.doc.Create.NewFamilyInstance(DB.XYZ(0, 0, 0), family_type, REVIT_VIEW.get_view_by_name(LIFE_SAFETY_CALCULATOR_DUMP_VIEW))
                 instances = [instance]
 
 
@@ -241,10 +209,7 @@ class LifeSafetyChecker:
             ]
             for para_name in filler_para_names:
                 family_type.LookupParameter(para_name).Set(getattr(data_item, para_name, 0))
-
-
-                
-        
+            
 
     def gather_revit_objs(self):
 
@@ -319,11 +284,7 @@ class LifeSafetyChecker:
         if spatial_element.LookupParameter(self.data_source.ParaNameLoadManual).AsInteger() > 0:
             return spatial_element.LookupParameter(self.data_source.ParaNameLoadManual).AsInteger()
             
-        if spatial_element.LookupParameter(self.data_source.ParaNameLoadPerArea).AsDouble () == 0:
-            print ("{} has 0 area per person, assign a value to this parameter to enable life safety calculation".format(self.output.linkify(spatial_element.Id, title = spatial_element.LookupParameter("Name").AsString())))
-            return 0
 
-            
         return int(math.ceil(spatial_element.Area / spatial_element.LookupParameter(self.data_source.ParaNameLoadPerArea).AsDouble ()))
 
 
@@ -333,9 +294,6 @@ class LifeSafetyChecker:
         
 
         all_types = REVIT_FAMILY.get_all_types_by_family_name(LIFE_SAFETY_CALCULATOR_FAMILY_NAME)
-        if not all_types:
-            print ("Cannot find any life safety calculator types in the project, please place at least one instance of this calculator family")
-            return
         for type in all_types:
             if type.LookupParameter("Type Name").AsString() not in valid_type_names:
                 self.doc.Delete(type.Id)
@@ -343,15 +301,7 @@ class LifeSafetyChecker:
 
 class SpatialDataSource:
     """use this format to define how to extract lfe safety data, 
-    each project mght want to do someting differently.
-    source: "Area" or "Room"
-    area_scheme_name: the name of the area scheme to use for area source
-    para_name_load_per_area: the name of the parameter to use for the load per area
-    para_name_load_manual: the name of the parameter to use for the load manual
-    para_name_target: the name of the parameter to use for the target, ex: "Exit 1+Exit 2"
-    para_name_egress_id: the name of the parameter to use for the egress id, ex: "Stair 1", "Stair 2", "Exit 1", "Exit 2"
-    para_name_door_width: the name of the parameter to use for the door width
-    """
+    each project mght want to do someting differently."""
     def __init__(self, source,
                  para_name_load_per_area,
                  para_name_load_manual,
