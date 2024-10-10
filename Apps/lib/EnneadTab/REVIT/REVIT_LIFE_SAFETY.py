@@ -202,7 +202,7 @@ class LifeSafetyChecker:
             if len(instances) == 0:
                 dist = 100
                 x = dist * (i % 5)
-                y = dist * (i // 5)  # Change from 4 to 5
+                y = dist * (i // 5)  
                 instance = self.doc.Create.NewFamilyInstance(DB.XYZ(x, y, 0), family_type, self.dump_view)
                 instances = [instance]
 
@@ -246,13 +246,16 @@ class LifeSafetyChecker:
             for para_name in filler_para_names:
                 family_type.LookupParameter(para_name).Set(getattr(data_item, para_name, 0))
 
+            # below are useful if want to also push back the data to revit obj so it not entirely relying on data calculator
+            sending_back_to_revit = False
+            if sending_back_to_revit:
+            
+                # get the doors in this data item and update the door width
+                for door in data_item.RevitDoorObjCollection:
+                    door.LookupParameter(self.data_source.ParaNameDoorCapacityRequired).Set(data_item.OccupancyLoad)
 
-            # get the doors in this data item and update the door width
-            for door in data_item.RevitDoorObjCollection:
-                door.LookupParameter(self.data_source.ParaNameDoorCapacityRequired).Set(data_item.OccupancyLoad)
-
-            for stair in data_item.RevitStairObjCollection:
-                stair.LookupParameter(self.data_source.ParaNameDoorCapacityRequired).Set(data_item.OccupancyLoad)
+                for stair in data_item.RevitStairObjCollection:
+                    stair.LookupParameter(self.data_source.ParaNameDoorCapacityRequired).Set(data_item.OccupancyLoad)
 
 
     def gather_revit_objs(self):
@@ -271,21 +274,22 @@ class LifeSafetyChecker:
 
             all_doors = list(DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Doors).WhereElementIsNotElementType().ToElements())
             all_doors = filter(is_valid_egress_id, all_doors)
-            if (len(all_doors) == 0):
-                print("Cannot find any egress door in document <{}>".format(doc.Title))
+            # if (len(all_doors) == 0):
+            #     print("Cannot find any egress door in document <{}>".format(doc.Title))
 
             for door in all_doors:
                 level_name = doc.GetElement(door.LevelId).Name
                 egress_id = door.LookupParameter(egress_id_para_name).AsString()
                 egress_data = EgressData.get_data(level_name, egress_id)
+                # why do i use collection instead of a single door? In example where there is a stadium, you have 3 doors side by side that are all called EXIT K, it is one big egreesss that need to map 3 instance of family.
                 egress_data.RevitDoorObjCollection.append(door)
 
             all_stairs = list(DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Stairs).WhereElementIsNotElementType().ToElements())
             all_stairs = filter(is_valid_egress_id, all_stairs)
+            #  why using nesting loop? need to collect all egress stair called "Stair 5", in some cases they might be several seprateed stairs to connect one long one.
             for stair in all_stairs:
                 egress_id = stair.LookupParameter(egress_id_para_name).AsString()
                 for item in EgressData.data_collection.values():
-
                     if item.EgressId == egress_id:
                         item.RevitStairObjCollection.append(stair)
 
@@ -390,6 +394,8 @@ class SpatialDataSource:
     para_name_target: the name of the parameter to use for the target, ex: "Exit 1+Exit 2"
     para_name_egress_id: the name of the parameter to use for the egress id, ex: "Stair 1", "Stair 2", "Exit 1", "Exit 2"
     para_name_door_width: the name of the parameter to use for the door width
+    para_name_door_required: the name of the parameter to use for the door capacity required
+    para_name_stair_width: the name of the parameter to use for the stair width
     """
     def __init__(self, source,
                  para_name_load_per_area,
@@ -398,6 +404,7 @@ class SpatialDataSource:
                  para_name_egress_id,
                  para_name_door_width,
                  para_name_door_capacity_required,
+                 para_name_stair_width,
                  area_scheme_name = None,
                  ):
         self.Source = source# "Area" or "Room"
@@ -408,7 +415,7 @@ class SpatialDataSource:
         self.ParaNameEgressId = para_name_egress_id
         self.ParaNameDoorWidth = para_name_door_width
         self.ParaNameDoorCapacityRequired = para_name_door_capacity_required
-      
+        self.ParaNameStairWidth = para_name_stair_width
 
 
 def update_life_safety(doc, data_source):
