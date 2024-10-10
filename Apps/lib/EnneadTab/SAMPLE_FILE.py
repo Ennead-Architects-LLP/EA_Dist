@@ -11,7 +11,3 @@ def get_file(file_name):
     if os.path.exists(path):
         return path
     NOTIFICATION.messenger("Cannot find [{}]".format(file_name))
-
-
-if __name__ == "__main__":
-    print (get_file("LifeSafetyCalculator.rfa"))
