@@ -7,6 +7,8 @@ __title__ = "Update Life Safety"
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
 
+import traceback
+
 from Autodesk.Revit import DB # pyright: ignore 
 
 from EnneadTab import ERROR_HANDLE, LOG
@@ -22,21 +24,31 @@ DOC = REVIT_APPLICATION.get_doc()
 def update_life_safety(doc):
 
     data_source = REVIT_LIFE_SAFETY.SpatialDataSource(
-                source = "Area",
-                area_scheme_name = "Life Safety",
+                source = "Room",
+                area_scheme_name = "Apple",
                  para_name_load_per_area = "Rooms_$LS_Occupancy AreaPer",
-                 para_name_load_manual = "Rooms_$LS_Occupancy Load_Manual",
+                 para_name_load_manual = "Rooms_$LS_Occupancy Load_Dummy",
                  para_name_target = "Rooms_$LS_Occupancy Load_Target",
                  para_name_egress_id = "Door_$LS_Exit Name",
                  para_name_door_width = "Door_$LS_Clear Width"
                  )
-
+    t = DB.Transaction(doc, "Load Life Safety Calculator")
+    t.Start()
+    REVIT_LIFE_SAFETY.load_life_safety_calculator(doc, force_reload = False)
+    REVIT_LIFE_SAFETY.secure_dump_view(doc)
+    t.Commit()
+    
     t = DB.Transaction(doc, "Life Safety Update")
     t.Start()
-    REVIT_LIFE_SAFETY.update_life_safety(doc, data_source)
-    REVIT_LIFE_SAFETY.purge_tags_on_non_egress_door(doc, 
-                                                    tag_family_name="LS Door Data", 
-                                                    tag_family_type_name="SD")
+    try:
+        REVIT_LIFE_SAFETY.update_life_safety(doc, data_source)
+        REVIT_LIFE_SAFETY.purge_tags_on_non_egress_door(doc, 
+                                                        tag_family_name="LS Door Data", 
+                                                        tag_family_type_name="SD")
+    except Exception as e:
+        print (traceback.format_exc())
+        t.RollBack()
+        return
     t.Commit()
 
 
