@@ -143,11 +143,11 @@ def get_family_by_name(family_name,
     families = filter(lambda x: x.Name == family_name, all_families)
     
     if len(families) == 0:
-        # print ("Cannot find this family")
         if load_path_if_not_exist:
             print ("Loading from [{}]".format(load_path_if_not_exist))
             return load_family_by_path(load_path_if_not_exist, project_doc=doc)
         else:
+            NOTIFICATION.messenger("Cannot find family [{}]".format(family_name))
             return None
         
     return families[0]
@@ -167,6 +167,10 @@ def get_family_type_by_name(family_name, type_name, doc=None, create_if_not_exis
         return None
     types = [doc.GetElement(x) for x in family.GetFamilySymbolIds()]
 
+    if not types:
+        NOTIFICATION.messenger("Cannot find any type in [{}]".format(family_name))
+        return None
+    
     for type in types:
         if type.LookupParameter("Type Name").AsString() == type_name:
             return type
