@@ -322,3 +322,25 @@ def update_life_safety(doc, data_source):
 
     LifeSafetyChecker(doc, data_source).run_check()
     NOTIFICATION.messenger("Life Safety updated")
+
+
+def purge_tags_on_non_egress_door(doc, tag_family_name, tag_family_type_name):
+    
+    family_type = REVIT_FAMILY.get_family_type_by_name(tag_family_name, tag_family_type_name, doc=doc)
+    if not family_type:
+        print ("Cannot find tag family type [{}]".format(tag_family_type_name))
+        return
+
+    tags = REVIT_SELECTION.get_all_instances_of_type(family_type)
+    tags = [el for el in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_DoorTags).WhereElementIsNotElementType().ToElements() if el.GetTypeId() == family_type.Id]
+    # print (tags)
+    for tag in tags:
+        host_refs = list(tag.GetTaggedReferences())
+        if len(host_refs) == 0:
+            continue
+        for host_ref in host_refs:
+
+            host = doc.GetElement(host_ref.ElementId) or doc.GetElement(host_ref.LinkedElementId)
+
+            if not host.LookupParameter("Door_$LS_Exit Name") or not host.LookupParameter("Door_$LS_Exit Name").HasValue or host.LookupParameter("Door_$LS_Exit Name").AsString() == "":
+                doc.Delete(tag.Id)
