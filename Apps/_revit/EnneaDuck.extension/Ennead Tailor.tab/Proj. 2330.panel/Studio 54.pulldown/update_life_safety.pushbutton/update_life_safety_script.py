@@ -31,7 +31,8 @@ def update_life_safety(doc):
                  para_name_target = "Rooms_$LS_Occupancy Load_Target",
                  para_name_egress_id = "Door_$LS_Exit Name",
                  para_name_door_width = "Door_$LS_Clear Width",
-                 para_name_door_capacity_required = "Door_$LS_Capacity_Required"
+                 para_name_door_capacity_required = "Door_$LS_Capacity_Required",
+                 para_name_stair_width = "Door_$LS_Stair Width"
                  )
     t = DB.Transaction(doc, "Load Life Safety Calculator")
     t.Start()

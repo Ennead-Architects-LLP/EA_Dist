@@ -15,7 +15,12 @@ If you have "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem", delete ecosys
 
 
 ### 1.1 Download Installer
-Download "EnneadTab_OS_Installer.exe" from link below. Save anywhere.
+Sometime your drive cannot connect to L drive after computer is restarted.(The little red X symbol on your drive icon). You can reconnect it by double clicking on that drive icon.
+
+If you can connect to L drive, go this and ignore rest of step __1.1__
+> - L:\4b_Applied Computing\EnneadTab-DB\Stand Alone Tools\EnneadTab_OS_Installer.exe
+
+Otherwise, see link below to download "EnneadTab_OS_Installer.exe". Save anywhere.
 
 - https://github.com/Ennead-Architects-LLP/EA_Dist/blob/main/Installation/EnneadTab_OS_Installer.exe
 
