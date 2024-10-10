@@ -6,8 +6,8 @@ except:
 
 
 import math
-
-from EnneadTab import NOTIFICATION, SAMPLE_FILE
+import random
+from EnneadTab import NOTIFICATION, SAMPLE_FILE, IMAGE
 from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW
 
 LIFE_SAFETY_CALCULATOR_FAMILY_NAME = "LifeSafetyCalculator"
@@ -447,3 +447,28 @@ def purge_tags_on_non_egress_door(doc, tag_family_name, tag_family_type_name, ke
 
             if not host.LookupParameter(key_para_name) or not host.LookupParameter(key_para_name).HasValue or host.LookupParameter(key_para_name).AsString() == "":
                 doc.Delete(tag.Id)
+
+
+
+def display_room_targets(doc, views, key_para_name = "Rooms_$LS_Occupancy Load_Target"):
+    """
+    display a graphic on each room that show the target of the room
+    """
+    if not isinstance(views, list):
+        views = [views]
+    graphic_datas = []
+    target_color_map = {}
+    for view in views:
+        print ("Displaying egress targets on [{}]".format(view.Name))
+        all_rooms = DB.FilteredElementCollector(doc, view.Id).OfCategory(DB.BuiltInCategory.OST_Rooms).WhereElementIsNotElementType().ToElements()
+        for room in all_rooms:
+            room_target = room.LookupParameter(key_para_name).AsString()
+            if room_target not in target_color_map:
+                target_color_map[room_target] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            color = target_color_map[room_target]
+            image = IMAGE.create_bitmap_text_image(text = room_target, size = (128, 32), bg_color = color)
+            graphic_data = REVIT_VIEW.GraphicDataItem(room.Location.Point, additional_info={"description":"Egress Targets: {}".format(room_target)}, image = image)
+            graphic_datas.append(graphic_data)
+
+        
+    REVIT_VIEW.show_in_convas_graphic(graphic_datas, doc = doc, view = view)

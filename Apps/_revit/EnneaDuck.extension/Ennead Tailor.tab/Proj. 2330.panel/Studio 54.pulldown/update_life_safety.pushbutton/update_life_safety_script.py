@@ -12,9 +12,9 @@ import traceback
 from Autodesk.Revit import DB # pyright: ignore 
 
 from EnneadTab import ERROR_HANDLE, LOG
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_LIFE_SAFETY, REVIT_SELECTION
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_LIFE_SAFETY, REVIT_SELECTION, REVIT_VIEW, REVIT_FORMS
 
-
+from pyrevit import forms
 # UIDOC = REVIT_APPLICATION.get_uidoc()
 DOC = REVIT_APPLICATION.get_doc()
 
@@ -53,6 +53,12 @@ def update_life_safety(doc):
         return
     t.Commit()
 
+    options = ["yes", "no"]
+    res = REVIT_FORMS.dialogue("Display Egress Targets", main_text = "Do you want to display egress targets?", sub_text = "this can help you check if all room are getting correct target.", options = options)
+    if res == options[0]:
+        # views = REVIT_VIEW.ViewFilter().filter_archi_views().to_views()
+        views = forms.select_views()
+        REVIT_LIFE_SAFETY.display_room_targets(doc, views)
 
 
 ################## main code below #####################
