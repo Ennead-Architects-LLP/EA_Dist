@@ -72,7 +72,7 @@ def update_parking_data(doc, show_log = False, is_from_sync_hook = False):
     update_instance(doc)
 
     if doc.Title == "2151_A_EA_NYULI_Site":
-        if is_from_sync_hook:
+        if not USER.IS_DEVELOPER and is_from_sync_hook:
             options = ["Yes, update the data calculator", "No, skip updating and return to working immediately."]
             res = REVIT_FORMS.dialogue(main_text="Do you want to update the data calculator?", 
                                        sub_text="This might take extra 15 secs to run, but make the total count schedule more accurate.", 
