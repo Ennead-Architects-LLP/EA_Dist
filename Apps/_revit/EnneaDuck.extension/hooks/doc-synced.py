@@ -54,7 +54,7 @@ def update_project_2151():
 
     folder = "Ennead Tailor.tab\\Proj. 2151.panel\\LI_NYU.pulldown"
     func_name = "update_parking_data"
-    MODULE_HELPER.run_revit_script(folder, func_name, doc, show_log = False)
+    MODULE_HELPER.run_revit_script(folder, func_name, doc, show_log = False, is_from_sync_hook = True)
 
 
     return

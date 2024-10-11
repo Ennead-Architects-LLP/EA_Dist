@@ -50,6 +50,9 @@ def get_phase_map(doc = DOC, return_name = False):
     master_phases_names = [x.Name for x in master_phases]
     for revit_link in revit_links:
         revit_link_type = doc.GetElement(revit_link.GetTypeId())
+        if not DB.RevitLinkType.IsLoaded(doc, revit_link_type.Id):
+            print ("Link type [{}] is not loaded".format(revit_link_type.LookupParameter("Type Name").AsString()))
+            continue
         
         temp_map = OrderedDict()
         temp_phase_map = dict(revit_link_type.GetPhaseMap())
@@ -64,7 +67,18 @@ def get_phase_map(doc = DOC, return_name = False):
     return phase_map
 
 def pretty_print_phase_map(doc=DOC):
-    print ("Below is the phase map for all linked docs:")
+    """
+    Pretty prints the phase map for all linked documents in the given Revit document.
+
+    Args:
+        doc (Document, optional): The Revit document. Defaults to DOC.
+
+    Prints:
+        The phase map for all linked documents, showing the mapping of phases between the master document and each linked document.
+    """
+    from pyrevit import script
+    output = script.get_output()
+    output.print_md("### Below is the phase map for all linked docs in [{}]".format(doc.Title))
     phase_map = get_phase_map(doc, return_name=True)
     for doc_name, value in phase_map.items():
         print("\n[{}] --> [{}]".format(doc.Title,doc_name))

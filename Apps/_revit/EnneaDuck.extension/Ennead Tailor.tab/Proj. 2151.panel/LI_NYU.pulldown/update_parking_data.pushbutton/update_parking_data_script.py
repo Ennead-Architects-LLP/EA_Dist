@@ -11,7 +11,7 @@ import proDUCKtion # pyright: ignore
 proDUCKtion.validify()
 
 from EnneadTab import ERROR_HANDLE, LOG, USER
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_SELECTION, REVIT_FAMILY
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_SELECTION, REVIT_FAMILY, REVIT_FORMS
 from Autodesk.Revit import DB # pyright: ignore 
 
 import sys
@@ -65,14 +65,22 @@ FAMILY_DATA = {
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
-def update_parking_data(doc, show_log = False):
+def update_parking_data(doc, show_log = False, is_from_sync_hook = False):
     if doc.Title not in DOC_NAME_MAP:
         return
     update_type(doc, show_log)
     update_instance(doc)
 
     if doc.Title == "2151_A_EA_NYULI_Site":
+        if is_from_sync_hook:
+            options = ["Yes, update the data calculator", "No, skip updating and return to working immediately."]
+            res = REVIT_FORMS.dialogue(main_text="Do you want to update the data calculator?", 
+                                       sub_text="This might take extra 15 secs to run, but make the total count schedule more accurate.", 
+                                       options=options)
+            if res == options[1] or res is None:
+                return
         PC.update_parking_data(doc)
+
 
 def update_type(doc, show_log = False):
     t = DB.Transaction(doc, __title__)
