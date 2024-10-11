@@ -75,17 +75,7 @@ class ParkingCalculator:
     def record_sum_per_phase(self, phase_name, parking_instances):
         """Record the sum of parking instances per phase."""
         calculator_type_name = "Sum Per Phase_{}".format(phase_name)
-        update_para_dict = {
-            "Phase": phase_name,
-            "Phase Order": self.master_phase_list.index(phase_name),
-            "Level": "Total",
-            "Zone": "Total Phase",
-            "Total Count": len(parking_instances),
-            "Standard Count": len(filter(lambda x: not self.is_ada(x), parking_instances)),
-            "ADA Count": len(filter(self.is_ada, parking_instances)),
-            "User Type": ""
-        }
-        REVIT_FAMILY.update_family_type(self.doc, CALCULATOR_FAMILY_NAME, calculator_type_name, update_para_dict, show_log=True)
+        
         self.calculator_type_dict[calculator_type_name] = parking_instances
 
     def record_parking_instance(self, parking_instance, phase_name):
@@ -110,6 +100,7 @@ class ParkingCalculator:
             try:
                 if "sum" in calculator_type_name.lower():
                     self.process_sum_calculator_type(calculator_type_name, parking_instances)
+                    self.check_duplicated_parking_markers(parking_instances)
                 else:
                     self.process_regular_calculator_type(calculator_type_name, parking_instances)
             except Exception as e:
@@ -117,9 +108,37 @@ class ParkingCalculator:
                 print(traceback.format_exc())
                 print ("\n\n")
 
+    def check_duplicated_parking_markers(self, parking_instances):
+        """Check duplicated parking instances with same markers."""
+        marker_dict = {}
+        for parking_instance in parking_instances:
+            if not parking_instance.LookupParameter("ParkingMarker"):
+                continue
+            marker = parking_instance.LookupParameter("ParkingMarker").AsString()
+            if marker in marker_dict:
+                marker_dict[marker].append(parking_instance)
+            else:
+                marker_dict[marker] = [parking_instance]
+        for marker in marker_dict:
+            if len(marker_dict[marker]) > 1:
+                self.output.print_md("<span style='color:red;'>### {} parking instances</span> with conflicting marker [{}] found:".format(len(marker_dict[marker]), marker))
+  
+
     def process_sum_calculator_type(self, calculator_type_name, parking_instances):
         """Process a sum calculator type."""
-        print("!!!!!!!!!processing sum calculator type [{}] to be implemented".format(calculator_type_name))
+        phase_name = calculator_type_name.split("_")[1]
+        update_para_dict = {
+            "Phase": phase_name,
+            "Phase Order": self.master_phase_list.index(phase_name),
+            "Level": "Total",
+            "Zone": "Total Phase",
+            "Total Count": len(parking_instances),
+            "Standard Count": len(filter(lambda x: not self.is_ada(x), parking_instances)),
+            "ADA Count": len(filter(self.is_ada, parking_instances)),
+            "User Type": ""
+        }
+        REVIT_FAMILY.update_family_type(self.doc, CALCULATOR_FAMILY_NAME, calculator_type_name, update_para_dict, show_log=True)
+        
 
     def process_regular_calculator_type(self, calculator_type_name, parking_instances):
         """Process a regular calculator type."""
