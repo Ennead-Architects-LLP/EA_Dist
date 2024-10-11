@@ -124,6 +124,9 @@ def update_instance(doc):
 
         if parking.LookupParameter("ParkingZone").AsString() in ["", "zone not defined.", None]:
             parking.LookupParameter("ParkingZone").Set(bldg_id)
+
+        if parking.LookupParameter("ParkingMarker").AsString() in ["", None]:
+            parking.LookupParameter("ParkingMarker").Set("Undefined")
     t.Commit()
 
 
