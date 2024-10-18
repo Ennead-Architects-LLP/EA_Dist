@@ -454,6 +454,8 @@ def display_room_targets(doc, views, key_para_name = "Rooms_$LS_Occupancy Load_T
     """
     display a graphic on each room that show the target of the room
     """
+    if not views:
+        return
     if not isinstance(views, list):
         views = [views]
     graphic_datas = []

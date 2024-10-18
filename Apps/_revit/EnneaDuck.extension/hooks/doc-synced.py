@@ -288,11 +288,14 @@ def doc_synced():
     if random.random() < 0.1:
         warn_non_enclosed_room()
 
+    if REVIT_EVENT.is_all_sync_closing():
+        return
         
     update_DOB_numbering()
     update_sheet_name()
     update_working_view_name()
     update_with_generic_healthcare_tool()
+
 
     
     update_project_2151()
