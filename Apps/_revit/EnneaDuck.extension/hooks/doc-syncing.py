@@ -137,12 +137,13 @@ def doc_syncing():
         # ENNEAD_LOG.update_account_by_local_warning_diff(doc)
         pass
 
-
+    if REVIT_EVENT.is_all_sync_closing():
+        return
 
     # do this after checking ques so the primary EXE_PARAM is same as before
     fill_drafter_info()
 
-    return
+
     LOG.update_time_sheet_revit(doc.Title)
 
 

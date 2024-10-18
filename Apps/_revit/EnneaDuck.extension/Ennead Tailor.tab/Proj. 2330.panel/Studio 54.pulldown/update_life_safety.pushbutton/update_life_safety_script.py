@@ -58,6 +58,8 @@ def update_life_safety(doc):
     if res == options[0]:
         # views = REVIT_VIEW.ViewFilter().filter_archi_views().to_views()
         views = forms.select_views()
+        if not views:
+            return
         REVIT_LIFE_SAFETY.display_room_targets(doc, views)
 
 
