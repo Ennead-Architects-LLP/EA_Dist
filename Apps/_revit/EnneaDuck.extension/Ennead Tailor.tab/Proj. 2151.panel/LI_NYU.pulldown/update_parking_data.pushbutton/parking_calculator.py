@@ -144,7 +144,7 @@ class ParkingCalculator:
         """Process a regular calculator type."""
         calculator_type = REVIT_FAMILY.get_family_type_by_name(CALCULATOR_FAMILY_NAME, calculator_type_name, doc=self.doc, create_if_not_exist=True)
         if not REVIT_SELECTION.is_changable(calculator_type):
-            print("calculator type [{}] is not editable, skipped".format(calculator_type_name))
+            self.output.print_md("###calculator type<span style='color:blue;'> [{}] </span>is not editable, skipped".format(calculator_type_name))
             return
         self.place_parking_calculator_instance(calculator_type)
 

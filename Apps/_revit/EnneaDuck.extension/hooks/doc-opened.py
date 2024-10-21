@@ -430,16 +430,14 @@ def main():
         append_sync_time_record(doc)
         check_if_keynote_file_pointing_to_library(doc)
 
+        REVIT_HISTORY.record_warning(doc)
+        
+        check_group_usage(doc)
+        log_time_sheet(doc)
         return
         
-        REVIT_HISTORY.record_warning(doc)
-        log_time_sheet(doc)
         
 
-        try:
-            check_group_usage(doc)
-        except SystemError:
-            pass
 
 
 
