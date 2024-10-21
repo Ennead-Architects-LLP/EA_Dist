@@ -4,7 +4,7 @@ from Autodesk.Revit import DB # pyright: ignore
 
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
-from EnneadTab import VERSION_CONTROL, ERROR_HANDLE, LOG, DATA_FILE, TIME, USER, DUCK, CONFIG, FOLDER
+from EnneadTab import VERSION_CONTROL, ERROR_HANDLE, LOG, DATA_FILE, TIME, USER, DUCK, CONFIG, FOLDER, TIMESHEET
 from EnneadTab.REVIT import REVIT_FORMS, REVIT_SELECTION, REVIT_EVENT
 
 __title__ = "Doc Syncing Hook"
@@ -144,7 +144,7 @@ def doc_syncing():
     fill_drafter_info()
 
 
-    LOG.update_time_sheet_revit(doc.Title)
+    TIMESHEET.update_timesheet(doc.Title)
 
 
     
