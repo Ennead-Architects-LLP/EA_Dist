@@ -6,7 +6,7 @@ import random
 from Autodesk.Revit import DB # pyright: ignore
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
-from EnneadTab import NOTIFICATION, LOG, ERROR_HANDLE, EMAIL, NOTIFICATION, USER, FOLDER, DATA_FILE, ENVIRONMENT, SOUND
+from EnneadTab import NOTIFICATION, TIMESHEET, ERROR_HANDLE, EMAIL, NOTIFICATION, USER, FOLDER, DATA_FILE, ENVIRONMENT, SOUND
 from EnneadTab.REVIT import REVIT_HISTORY, REVIT_EXTERNAL_FILE, REVIT_FORMS, REVIT_SYNC, REVIT_EVENT
 from pyrevit import forms, script
 from pyrevit import EXEC_PARAMS
@@ -18,7 +18,7 @@ from pyrevit.coreutils import ribbon
 
 
 def log_time_sheet(doc):
-    LOG.update_time_sheet_revit(doc.Title)
+    TIMESHEET.update_timesheet(doc.Title)
 
 
 
