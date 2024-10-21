@@ -9,7 +9,7 @@ import math
 import traceback
 import random
 from EnneadTab import NOTIFICATION, SAMPLE_FILE, IMAGE
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW, REVIT_SCHEDULE
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW, REVIT_SCHEDULE, REVIT_FORMS
 
 LIFE_SAFETY_CALCULATOR_FAMILY_NAME = "LifeSafetyCalculator"
 LIFE_SAFETY_CALCULATOR_FAMILY_PATH = SAMPLE_FILE.get_file("{}.rfa".format(LIFE_SAFETY_CALCULATOR_FAMILY_NAME))
@@ -510,14 +510,22 @@ def secure_egress_path_family_package(doc, egress_path_family_name, egress_path_
 def update_all_egress_marker_family(doc, egress_path_family_name):
     t = DB.Transaction(doc, "Update All Egress Path Marker Family")
     t.Start()
+    options = ["Show Note", "Hide Note"]
+    res = REVIT_FORMS.dialogue(main_text = "Do you want to show or hide the note on the egress path marker?", options = options)
+    if res == options[0]:
+        hide_note = True
+    else:
+        hide_note = False
     all_type_names = REVIT_FAMILY.get_all_types_by_family_name(egress_path_family_name, doc = doc, return_name = True)
     for family_type_name in all_type_names:
-        process_type(doc, egress_path_family_name, family_type_name)
+        process_type(doc, egress_path_family_name, family_type_name, hide_note)
     t.Commit()
 
-def process_type(doc, egress_path_family_name, family_type_name):
+def process_type(doc, egress_path_family_name, family_type_name, hide_note):
     family_type = REVIT_FAMILY.get_family_type_by_name(egress_path_family_name, family_type_name, doc = doc)
     family_type.LookupParameter("Type Comments").Set(family_type_name)
+
+    family_type.LookupParameter("show_note").Set(hide_note)
 
     # get all instance of each family type
     instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(egress_path_family_name, family_type_name, doc = doc)
