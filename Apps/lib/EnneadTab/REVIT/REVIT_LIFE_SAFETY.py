@@ -6,9 +6,10 @@ except:
 
 
 import math
+import traceback
 import random
 from EnneadTab import NOTIFICATION, SAMPLE_FILE, IMAGE
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_SELECTION, REVIT_VIEW, REVIT_SCHEDULE
 
 LIFE_SAFETY_CALCULATOR_FAMILY_NAME = "LifeSafetyCalculator"
 LIFE_SAFETY_CALCULATOR_FAMILY_PATH = SAMPLE_FILE.get_file("{}.rfa".format(LIFE_SAFETY_CALCULATOR_FAMILY_NAME))
@@ -474,3 +475,100 @@ def display_room_targets(doc, views, key_para_name = "Rooms_$LS_Occupancy Load_T
 
         
     REVIT_VIEW.show_in_convas_graphic(graphic_datas, doc = doc, view = view)
+
+##########################################################################
+# egress path reflated
+##########################################################################
+
+
+def smart_egress_path(doc, schedule_name, egress_path_family_name, egress_path_family_path, egress_path_tag_family_name, egress_path_tag_family_path, para_name_egress_path_path_id, para_name_egress_path_total):
+    family, tag_family = secure_egress_path_family_package(doc, egress_path_family_name, egress_path_family_path, egress_path_tag_family_name, egress_path_tag_family_path)
+
+    view = REVIT_VIEW.get_view_by_name(schedule_name, doc = doc)
+    if view is None:
+        view = create_egress_schedule(doc, schedule_name, egress_path_family_name,  para_name_egress_path_path_id, para_name_egress_path_total)
+
+    update_all_egress_marker_family(doc, egress_path_family_name)
+
+def secure_egress_path_family_package(doc, egress_path_family_name, egress_path_family_path, egress_path_tag_family_name, egress_path_tag_family_path):
+    family = REVIT_FAMILY.get_family_by_name(egress_path_family_name, doc = doc)
+    if family is None:
+        t = DB.Transaction(doc, "Create Egress Path Marker Family")
+        t.Start()
+        family = REVIT_FAMILY.get_family_by_name(egress_path_family_name, doc = doc, load_path_if_not_exist = egress_path_family_path)
+        t.Commit()
+
+        
+    tag_family = REVIT_FAMILY.get_family_by_name(egress_path_tag_family_name, doc = doc)
+    if tag_family is None:
+        t = DB.Transaction(doc, "Create Egress Path Tag Family")
+        t.Start()
+        tag_family = REVIT_FAMILY.get_family_by_name(egress_path_tag_family_name, doc = doc, load_path_if_not_exist = egress_path_tag_family_path)
+        t.Commit()  
+    return family, tag_family
+
+def update_all_egress_marker_family(doc, egress_path_family_name):
+    t = DB.Transaction(doc, "Update All Egress Path Marker Family")
+    t.Start()
+    all_type_names = REVIT_FAMILY.get_all_types_by_family_name(egress_path_family_name, doc = doc, return_name = True)
+    for family_type_name in all_type_names:
+        process_type(doc, egress_path_family_name, family_type_name)
+    t.Commit()
+
+def process_type(doc, egress_path_family_name, family_type_name):
+    family_type = REVIT_FAMILY.get_family_type_by_name(egress_path_family_name, family_type_name, doc = doc)
+    family_type.LookupParameter("Type Comments").Set(family_type_name)
+
+    # get all instance of each family type
+    instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(egress_path_family_name, family_type_name, doc = doc)
+    
+    # get the view scale and apply to scale factor_desired
+    for instance in instances:
+        view_scale = doc.GetElement(instance.OwnerViewId).Scale
+        instance.LookupParameter("ScaleFactor_desired").Set(view_scale)
+
+    # get all the egress path instances with same path id
+    egress_dict = {}
+    for instance in instances:
+        path_id = instance.LookupParameter("EgressPath_ID").AsString()
+        if path_id in ["", None]:
+            path_id = "No Path ID"
+            instance.LookupParameter("EgressPath_ID").Set(path_id)
+            
+        if path_id not in egress_dict:
+            egress_dict[path_id] = [instance]
+        else:
+            egress_dict[path_id].append(instance)
+    
+
+    # add the length togather to get the total length and apply back to those instances
+    for path_id, instances in egress_dict.items():
+        total_length = sum([instance.LookupParameter("Length").AsDouble() for instance in instances])
+        for instance in instances:
+            instance.LookupParameter("EgressPath_TotalLength").Set(total_length)
+
+    
+
+    pass
+
+def create_egress_schedule(doc, schedule_name, egress_path_family_name,  para_name_egress_path_path_id, para_name_egress_path_total):
+    
+    t = DB.Transaction(doc, "Create Egress Schedule")
+    t.Start()
+    family = REVIT_FAMILY.get_family_by_name(egress_path_family_name, doc = doc)
+    
+
+    field_names = ["Family", "Type Comments",  para_name_egress_path_path_id, para_name_egress_path_total]
+    view = REVIT_SCHEDULE.create_schedule(doc, schedule_name, field_names, built_in_category = DB.BuiltInCategory.OST_DetailComponents)
+    try:
+        if REVIT_FAMILY.is_family_used(egress_path_family_name, doc = doc):
+            # REVIT_SCHEDULE.add_filter_to_schedule(view, "Family", DB.ScheduleFilterType.Equal, family.Id)
+            pass
+        else:
+            # print ("Family [{}] is not used in the project, skip creating egress schedule".format(egress_path_family_name))
+            pass
+        t.Commit()
+    except Exception as e:
+        print (traceback.format_exc())
+        t.RollBack()
+

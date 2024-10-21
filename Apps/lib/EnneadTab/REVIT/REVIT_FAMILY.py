@@ -153,12 +153,27 @@ def get_family_by_name(family_name,
     return families[0]
 
 
-def get_all_types_by_family_name(family_name, doc=None):
+def is_family_used(family_name, doc=None):
+    doc = doc or DOC
+    family = get_family_by_name(family_name, doc=doc)
+    if family is None:
+        return False
+    is_used = False
+    for x in family.GetFamilySymbolIds():
+        if doc.GetElement(x).IsActive:
+            is_used = True
+            break
+    return is_used
+
+def get_all_types_by_family_name(family_name, doc=None, return_name = False):
     doc = doc or DOC
     family = get_family_by_name(family_name, doc=doc)
     if family is None:
         return None
-    return [doc.GetElement(x) for x in family.GetFamilySymbolIds()]
+    if return_name:
+        return [doc.GetElement(x).LookupParameter("Type Name").AsString() for x in family.GetFamilySymbolIds()]
+    else:
+        return [doc.GetElement(x) for x in family.GetFamilySymbolIds()]
 
 def get_family_type_by_name(family_name, type_name, doc=None, create_if_not_exist=False):
     doc = doc or DOC
