@@ -24,16 +24,13 @@ TAG_FAMILY_PATH = SAMPLE_FILE.get_file("{}.rfa".format(EGRESS_PATH_TAG_FAMILY_NA
 @ERROR_HANDLE.try_catch_error()
 def smart_egress_path(doc):
 
-    para_name_egress_path_path_id = "EgressPath_ID"
-    para_name_egress_path_total = "EgressPath_TotalLength"
+
     REVIT_LIFE_SAFETY.smart_egress_path(doc, 
                                         SCHDULE_NAME, 
                                         EGRESS_PATH_FAMILY_NAME, 
                                         FAMILY_PATH, 
                                         EGRESS_PATH_TAG_FAMILY_NAME,
-                                        TAG_FAMILY_PATH,
-                                        para_name_egress_path_path_id, 
-                                        para_name_egress_path_total)
+                                        TAG_FAMILY_PATH)
 
 
 ################## main code below #####################
