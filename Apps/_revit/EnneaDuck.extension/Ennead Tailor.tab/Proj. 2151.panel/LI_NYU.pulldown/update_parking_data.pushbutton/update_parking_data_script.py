@@ -10,7 +10,7 @@ __title__ = "Update Parking Data"
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
 
-from EnneadTab import ERROR_HANDLE, LOG, USER
+from EnneadTab import ERROR_HANDLE, LOG, NOTIFICATION, USER
 from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_SELECTION, REVIT_FAMILY, REVIT_FORMS
 from Autodesk.Revit import DB # pyright: ignore 
 
@@ -81,6 +81,8 @@ def update_parking_data(doc, show_log = False, is_from_sync_hook = False):
                 return
         PC.update_parking_data(doc)
 
+    NOTIFICATION.messenger("Pakring Data Updated.")
+
 
 def update_type(doc, show_log = False):
     t = DB.Transaction(doc, __title__)
@@ -89,17 +91,17 @@ def update_type(doc, show_log = False):
     t.Commit()
 
 def update_instance(doc):    
-    all_parking = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Parking).WhereElementIsNotElementType().ToElements()
-    all_parking = REVIT_SELECTION.filter_elements_changable(all_parking)
+    all_parkings = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Parking).WhereElementIsNotElementType().ToElements()
+    all_parkings = REVIT_SELECTION.filter_elements_changable(all_parkings)
 
-    if not all_parking:
+    if not all_parkings:
         return
     
     t = DB.Transaction(doc, __title__)
     t.Start()
 
     
-    for parking in all_parking:
+    for parking in all_parkings:
         if not parking.LookupParameter("BldgId") or not parking.LookupParameter("ParkingLevel") or not parking.LookupParameter("ParkingZone"):
             print("{} is missing BldgId, ParkingLevel, or ParkingZone".format(parking.Name))
             t.RollBack()
