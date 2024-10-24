@@ -1,4 +1,4 @@
-from operator import is_
+
 import os
 from datetime import date
 import random
