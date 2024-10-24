@@ -38,7 +38,7 @@ Otherwise, see link below to download "EnneadTab_OS_Installer.exe". Save anywher
 <br>
 
 ### 1.2 Install Ecosystem Folder
-Run the installer you just downloaded by double clicking the exe file. It might takes a few seconds (or minutes, depending on your internet speed) to unpack the contents. 
+Run the installer you just downloaded by double clicking the exe file. It might takes a few seconds (or minutes, depending on your internet speed) to unpack the contents. __This window will only show if there was no existing Ecosystem folder, aka a clean (re)installation. Otherwise it will be a silent installation, and you can move on to next step when you have the needed content.__
 ![os install in progress](/Apps/lib/EnneadTab/images/Instruction_getting_OS.png)
 
 Watch the progress, when it says finished it will close itself, and it is ready to move on installing Rhino and Revit Version. Follow __step 2.1 or 3.1__ below.
