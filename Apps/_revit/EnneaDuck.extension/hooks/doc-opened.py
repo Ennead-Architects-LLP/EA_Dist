@@ -330,7 +330,7 @@ def warn_ignorance(doc, warning_cate):
     if not os.path.exists(record_file):
         record = dict()
     else:
-        record = DATA_FILE.get_data_in_shared_dump_folder(record_file, create_if_not_exist=True)
+        record = DATA_FILE.get_data(record_file)
     
     import time
     if len(record.keys()) == 0:
