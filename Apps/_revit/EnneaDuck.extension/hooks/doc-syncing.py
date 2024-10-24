@@ -4,11 +4,21 @@ from Autodesk.Revit import DB # pyright: ignore
 
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
-from EnneadTab import VERSION_CONTROL, ERROR_HANDLE, LOG, DATA_FILE, TIME, USER, DUCK, CONFIG, FOLDER, TIMESHEET
+from EnneadTab import MODULE_HELPER, VERSION_CONTROL, ERROR_HANDLE, LOG, DATA_FILE, TIME, USER, DUCK, CONFIG, FOLDER, TIMESHEET
 from EnneadTab.REVIT import REVIT_FORMS, REVIT_SELECTION, REVIT_EVENT
 
 __title__ = "Doc Syncing Hook"
 doc = EXEC_PARAMS.event_args.Document
+
+
+
+def update_2151():
+    if doc.Title.lower() == "2151_a_ea_nyuli_hospital_ext":
+
+        folder = "Ennead Tailor.tab\\Proj. 2151.panel\\LI_NYU.pulldown"
+        func_name = "update_dummy_patient_room"
+        MODULE_HELPER.run_revit_script(folder, func_name, doc)
+
 
 
 def check_sync_queue():
@@ -143,6 +153,7 @@ def doc_syncing():
     # do this after checking ques so the primary EXE_PARAM is same as before
     fill_drafter_info()
 
+    update_2151()
 
     TIMESHEET.update_timesheet(doc.Title)
 
