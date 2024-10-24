@@ -36,7 +36,7 @@ def update_dummy_patient_room(doc):
                 level = view_placed.GenLevel.Name
             except:
                 level = "Level unknown"
-            instance.LookupParameter("level").Set(level)
+            instance.LookupParameter("PatientRoomLevel").Set(level)
     
     t.Commit()
 
