@@ -247,7 +247,7 @@ def update_sync_queue():
         NOTIFICATION.messenger ("Your account have no access to write in DB folder.")
         return
 
-    if REVIT_EVENT.is_sync_queue_disabled:
+    if REVIT_EVENT.is_sync_queue_disabled():
         # when  gloabl sync queue disabled, dont want to see dialogue, but still want to clear name from log file
         return
 
