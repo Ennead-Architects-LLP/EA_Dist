@@ -28,6 +28,8 @@ def activate_enneadtab():
     if not is_tab_loaded_originally:
         from EnneadTab import NOTIFICATION
         NOTIFICATION.messenger("EnneadTab Activated")
+        from EnneadTab.RHINO import RHINO_RUI
+        RHINO_RUI.add_startup_script()
 
     
 if __name__ == "__main__":
