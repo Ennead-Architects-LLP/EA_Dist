@@ -67,7 +67,7 @@ FAMILY_DATA = {
         },
         "Layback": {
             "Width": 9,
-            "Length": 20,
+            "Length": 22,
             "Type Comments": "Layback",
             "is_ADA": False,
             "is_perpendicular": False,
