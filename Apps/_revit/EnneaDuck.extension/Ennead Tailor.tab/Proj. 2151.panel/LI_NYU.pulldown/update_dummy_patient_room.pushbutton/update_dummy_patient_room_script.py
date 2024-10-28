@@ -25,9 +25,9 @@ def update_dummy_patient_room(doc):
     t.Start()
 
     
-    all_types = REVIT_FAMILY.get_all_types_by_family_name(FAMILY_NAME, return_name=True)
+    all_types = REVIT_FAMILY.get_all_types_by_family_name(FAMILY_NAME,doc = doc, return_name=True)
     for family_type in all_types:
-        all_instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(FAMILY_NAME, family_type, editable_only=True)
+        all_instances = REVIT_FAMILY.get_family_instances_by_family_name_and_type_name(FAMILY_NAME, family_type, doc = doc, editable_only=True)
 
 
         for instance in all_instances:
