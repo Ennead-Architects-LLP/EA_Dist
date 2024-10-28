@@ -38,25 +38,41 @@ FAMILY_DATA = {
             "Length": 18,
             "Type Comments": "Standard",
             "is_ADA": False,
+            "is_perpendicular": True,
+            "is_layback":False
         },
         "ADA": {
             "Width": 9,
             "Length": 18,
             "Type Comments": "ADA",
             "is_ADA": True,
+            "is_perpendicular": True,
+            "is_layback":False
         },
         "Ambulance": {
             "Width": 12,
             "Length": 25,
             "Type Comments": "Ambu.",
             "is_ADA": False,
+            "is_perpendicular": True,
+            "is_layback":False
         },
         "Truck": {
             "Width": 12,
             "Length": 55,
             "Type Comments": "Truck",
             "is_ADA": False,
-        }
+            "is_perpendicular": True,
+            "is_layback":False
+        },
+        "Layback": {
+            "Width": 9,
+            "Length": 20,
+            "Type Comments": "Layback",
+            "is_ADA": False,
+            "is_perpendicular": False,
+            "is_layback":True
+        },
     },
     "Parking Stall_Angled": {
         "Standard": {
