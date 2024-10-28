@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 __doc__ = """
-1. gather all the egress path family as dict, key is the 
+Update smart egress path maker family data.
 """
 __title__ = "Smart\nEgress Path"
-
+__tip__ = True
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
 
