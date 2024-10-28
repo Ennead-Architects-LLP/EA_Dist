@@ -28,7 +28,7 @@ DOC_NAME_MAP = {
     "2151_A_EA_NYULI_Parking East":"Garage East",
     "2151_A_EA_NYULI_Parking West":"Garage West",
     "2151_A_EA_NYULI_CUP_EXT": "CUP",
-    "2151_A_EA_NYULI_HOSPITAL_EXT": "Hospital"
+    "2151_A_EA_NYULI_Hospital_EXT": "Hospital"
 }
 
 FAMILY_DATA = {
@@ -50,6 +50,12 @@ FAMILY_DATA = {
             "Length": 25,
             "Type Comments": "Ambu.",
             "is_ADA": False,
+        },
+        "Truck": {
+            "Width": 12,
+            "Length": 55,
+            "Type Comments": "Truck",
+            "is_ADA": False,
         }
     },
     "Parking Stall_Angled": {
@@ -66,8 +72,10 @@ FAMILY_DATA = {
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
 def update_parking_data(doc, show_log = False, is_from_sync_hook = False):
+
     if doc.Title not in DOC_NAME_MAP:
         return
+
     update_type(doc, show_log)
     update_instance(doc)
 
