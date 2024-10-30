@@ -4,10 +4,12 @@
 Check formulas, read data, save data, etc."""
 
 import os
+import shutil
 import sys
-
+import traceback
+import time
 try:
-    # 设定了输出的环境为utf8
+    
     sys.setdefaultencoding("utf-8")
 except:
     pass
@@ -19,10 +21,12 @@ import NOTIFICATION
 import COLOR
 import FOLDER
 import UNIT_TEST
+import TEXT
 
 sys.path.append(ENVIRONMENT.DEPENDENCY_FOLDER)
 import xlrd
 import xlsxwriter
+
 
 
 def letter_to_index(letter):
@@ -101,22 +105,58 @@ def get_all_worksheets(filepath):
     wb = xlrd.open_workbook(filepath, on_demand=True)
     return wb.sheet_names()
 
+def save_as_xls(filepath):
+    _, file = os.path.split(filepath)
+    safe_copy = FOLDER.get_EA_dump_folder_file("save_copy_" + file)
+    shutil.copyfile(filepath, safe_copy)
 
-def read_data_from_excel(filepath, worksheet=None, by_line=True, return_dict=False):
+    
+
+    try:
+        import clr  # pyright: ignore
+        clr.AddReference("Microsoft.Office.Interop.Excel")
+        from Microsoft.Office.Interop import Excel  # pyright: ignore
+
+        excel_app = Excel.ApplicationClass()
+        excel_app.Visible = False
+        excel_app.DisplayAlerts = True  # Suppress warnings and prompts
+
+        
+        workbook = excel_app.Workbooks.Open(safe_copy)
+        save_as_path = FOLDER.get_EA_dump_folder_file("local_save_as_{}.xls".format(time.time()))
+        workbook.SaveAs(save_as_path, FileFormat=Excel.XlFileFormat.xlExcel8)
+        return save_as_path
+    except:
+        print ("Cannot save as xls, see error below:")
+        print (traceback.format_exc())
+    finally:
+        try:    
+            workbook.Close(False)
+            excel_app.Quit()
+        except:
+            pass
+
+
+def read_data_from_excel(filepath, worksheet=None, return_dict=False):
     """Read data from an Excel file.
 
     Args:
         filepath (str): The path to the Excel file.
         worksheet (str, optional): The name of the worksheet. Defaults to None.
-        by_line (bool, optional): Whether to return the data by line. Defaults to True.
-        return_dict (bool, optional): Whether to return the data as a dictionary. Defaults to False.
+        return_dict (bool, optional): Whether to return the data as a dictionary, otherwise by line. Defaults to False.
 
     Returns:
         list or dict: The data from the Excel
     """
+    filepath = FOLDER.get_save_copy(filepath)
+    
+    if filepath.endswith(".xlsx"):
+        NOTIFICATION.messenger(main_text="Excel file is xlsx, converting to xls, this will take a few moments.\nFor better performace, save as .xls instead of .xlsx.")   
+        filepath = save_as_xls(filepath)
+
     wb = xlrd.open_workbook(
         filepath, formatting_info=return_dict
-    )  # , encoding_override = "cp1252")#""big5")#"iso2022_jp_2")#"gb18030")#"gbk")#"hz")  #"gb2312")   #"utf8"
+    )
     try:
         if not worksheet:
             worksheet = wb.sheet_names()[0]
@@ -124,7 +164,6 @@ def read_data_from_excel(filepath, worksheet=None, by_line=True, return_dict=Fal
     except:
         NOTIFICATION.messenger(main_text="Cannot open worksheet: {}".format(worksheet))
         return None
-    # print sheet.cell_value(2, 1)
 
     if not return_dict:
         OUT = []
@@ -133,28 +172,6 @@ def read_data_from_excel(filepath, worksheet=None, by_line=True, return_dict=Fal
             OUT.append(sheet.row_values(i))
         return OUT
 
-    # from collections import OrderedDict
-    # OUT = OrderedDict()
-
-    # OUT = {}
-    # for i in range(0, sheet.nrows):
-    #     for j in range(sheet.ncols):
-    #         cell = sheet.cell(i, j)
-    #         text_value = cell.value
-
-    #         # Get color
-    #         xf_index = sheet.cell_xf_index(i, j)
-    #         xf = wb.xf_list[xf_index]
-    #         bgx = xf.background.pattern_colour_index
-    #         rgb = wb.colour_map.get(bgx)
-
-    #         # Store in dictionary
-    #         OUT[(i, j)] = {'value': text_value, 'color': rgb}
-    #         # if i == 2:
-    #         #     print (OUT[(i, j)])
-
-    # return OUT
-
     import clr  # pyright: ignore
 
     clr.AddReference("Microsoft.Office.Interop.Excel")
@@ -162,6 +179,7 @@ def read_data_from_excel(filepath, worksheet=None, by_line=True, return_dict=Fal
 
     excel_app = Excel.ApplicationClass()
     excel_app.Visible = False
+    excel_app.DisplayAlerts = True  # Suppress warnings and prompts
 
     workbook = excel_app.Workbooks.Open(filepath)
     sheet = workbook.Sheets[worksheet]
@@ -185,6 +203,33 @@ def read_data_from_excel(filepath, worksheet=None, by_line=True, return_dict=Fal
 
     return OUT
 
+
+def get_column_values(data, column):
+    return [value_dict["value"] for key,value_dict in data.items() if key[1] == column]
+
+def search_row_in_column_by_value(data, column, search_value, is_fuzzy=False):
+    """a typeical data looks like this.
+    {
+        (93, 9): {'color': (255, 255, 255), 'value': 'apple'},
+        (68, 2): {'color': (255, 255, 255), 'value': 'E10 - Lobby Cafe'}
+    }
+        """
+    column = get_column_index(column)
+    if is_fuzzy:
+        column_values = get_column_values(data, column)
+        new_search_value = TEXT.fuzzy_search(search_value, column_values) # change the search value to the best match
+        print ("search value changed from [{}] --> [{}]".format(search_value, new_search_value))
+        search_value = new_search_value
+        
+
+    for key in data.keys():
+        data_row, data_column = key
+        if data_column != column:
+            continue
+        else:
+            if data[key]["value"] == search_value:
+                return data_row
+    return None
 
 def save_data_to_excel(data, filepath, worksheet="EnneadTab", open_after=True):
     """Save data to an Excel file.
@@ -321,14 +366,6 @@ def check_formula(excel, worksheet, highlight_formula=True):
         EXE.try_open_app(excel)
 
 
-def add_two(A, B):
-    return A + B
-
-def add_to_list(list):
-    output = []
-    for item in list:
-        output.append(item + 1)
-    return output
 
 def flip_dict(dict):
     output = {}
@@ -339,23 +376,8 @@ def flip_dict(dict):
 def num_and_letter(num, letter):
     return num + letter_to_index(letter)
 
-def add_two(A, B):
-    return A + B
 
-def add_to_list(list):
-    output = []
-    for item in list:
-        output.append(item + 1)
-    return output
 
-def flip_dict(dict):
-    output = {}
-    for key in dict.keys():
-        output[dict[key]] = key
-    return output
-
-def num_and_letter(num, letter):
-    return num + letter_to_index(letter)
 
 #################  UNIT TEST  #################
 
@@ -376,15 +398,6 @@ test_dict = {
         "'Z'": 25,
         "'AA'": None,
         "'BBB'": None,
-    },
-    "add_two": {
-        "1, 2": 3,
-        "3, 4": 7,
-        "5, 6": 11,
-    },
-    "add_to_list": {
-        "[1, 2, 3]": [2, 3, 4],
-        "[4, 5, 6]": [5, 6, 7],
     },
     "flip_dict": {
         "{'a': 1, 'b': 2}": {1: 'a', 2: 'b'},
