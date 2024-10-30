@@ -65,6 +65,14 @@ FAMILY_DATA = {
             "is_perpendicular": True,
             "is_layback":False
         },
+        "Waste Truck": {
+            "Width": 12,
+            "Length": 35,
+            "Type Comments": "Waste Truck",
+            "is_ADA": False,
+            "is_perpendicular": True,
+            "is_layback":False
+        },
         "Layback": {
             "Width": 9,
             "Length": 22,
