@@ -33,16 +33,18 @@ def temp_excel_reader():
     # NOTIFICATION.duck_pop(main_text="using testing file for now.")
     data = EXCEL.read_data_from_excel(source_excel, worksheet="EA Benchmarking DGSF Tracker", return_dict=True)
 
-    print(data)
+    print(data)        
+    key_column = "B"
+    print ("avaibale excel departments: {}".format(EXCEL.get_column_values(data, key_column)))
     for department_name in DEPARTMENT_PARA_MAPPING.keys():
-        row = EXCEL.search_row_in_column_by_value(data, "B", department_name, is_fuzzy=True)
-        print(department_name, row)
-        target = data.get((row,EXCEL.get_column_index("P")), "no value")
-        print(target)
+        row = EXCEL.search_row_in_column_by_value(data, key_column, search_value=department_name, is_fuzzy=True)
+
+        target = data.get((row,EXCEL.get_column_index("P")), None)
         if target:
-            pass
+            target = float(target)
+            print ("target value found for [{}]: {}".format(department_name, target))
             # dummy_target_data.update(self.option.DEPARTMENT_PARA_MAPPING[department_name], target)
-        print ("\n\n")  
+            print ("\n\n")  
 
 
 ################## main code below #####################

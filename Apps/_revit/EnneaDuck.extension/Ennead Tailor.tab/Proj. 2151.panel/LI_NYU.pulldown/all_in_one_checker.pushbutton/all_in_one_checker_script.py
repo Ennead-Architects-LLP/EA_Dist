@@ -363,12 +363,13 @@ class InternalCheck:
             dummy_target_data.update(para_name, value)
 
 
-        if USER.IS_DEVELOPER:
-            self.update_from_excel(dummy_target_data)
+        
+        self.update_from_excel(dummy_target_data)
 
                 
 
     def update_from_excel(self, dummy_target_data):
+        NOTIFICATION.duck_pop("Reading from ACC excel by downloading from cloud, this might take a moment.")
         source_excel = "{}\\DC\\ACCDocs\\Ennead Architects LLP\\2151_NYULI\\Project Files\\00_EA-EC Teams Files\\4_Programming\\_Public Shared\\Web Portal Only_ACTIVE.NYULI_Program_EA.EC.xls".format(os.getenv("USERPROFILE"))
         # source_excel = FOLDER.get_EA_dump_folder_file("temptemp.xlsx")
         # NOTIFICATION.duck_pop(main_text="using testing file for now.")
