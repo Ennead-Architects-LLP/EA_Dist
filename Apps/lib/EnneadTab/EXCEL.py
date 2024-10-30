@@ -6,6 +6,7 @@ Check formulas, read data, save data, etc."""
 import os
 import shutil
 import sys
+import trace
 import traceback
 import time
 try:
@@ -39,6 +40,8 @@ def letter_to_index(letter):
     Returns:
         int: The index of the letter in the alphabet.
     """
+    if isinstance(letter, int):
+        return letter
     try:
         return ord(letter.upper()) - ord("A")
     except TypeError:
@@ -54,6 +57,9 @@ def get_column_index(letter):
     Returns:
         int: The column index.
     """
+    if isinstance(letter, int):
+        return letter
+    
     if len(letter) == 1:
         return letter_to_index(letter)
     elif len(letter) == 2:
@@ -119,10 +125,16 @@ def save_as_xls(filepath):
 
         excel_app = Excel.ApplicationClass()
         excel_app.Visible = False
-        excel_app.DisplayAlerts = True  # Suppress warnings and prompts
+        excel_app.DisplayAlerts = False  # Suppress warnings and prompts
 
         
-        workbook = excel_app.Workbooks.Open(safe_copy)
+        # Force open the workbook as ReadOnly and ignore warnings
+        workbook = excel_app.Workbooks.Open(
+            safe_copy,
+            ReadOnly=True,  # Open in read-only mode to avoid write permission issues
+            IgnoreReadOnlyRecommended=True,  # Suppress the read-only prompt
+            CorruptLoad=Excel.XlCorruptLoad.xlRepairFile  # Try opening with repair options
+        )
         save_as_path = FOLDER.get_EA_dump_folder_file("local_save_as_{}.xls".format(time.time()))
         workbook.SaveAs(save_as_path, FileFormat=Excel.XlFileFormat.xlExcel8)
         return save_as_path
@@ -154,18 +166,20 @@ def read_data_from_excel(filepath, worksheet=None, return_dict=False):
         NOTIFICATION.messenger(main_text="Excel file is xlsx, converting to xls, this will take a few moments.\nFor better performace, save as .xls instead of .xlsx.")   
         filepath = save_as_xls(filepath)
 
-    wb = xlrd.open_workbook(
-        filepath, formatting_info=return_dict
-    )
-    try:
-        if not worksheet:
-            worksheet = wb.sheet_names()[0]
-        sheet = wb.sheet_by_name(worksheet)
-    except:
-        NOTIFICATION.messenger(main_text="Cannot open worksheet: {}".format(worksheet))
-        return None
+
 
     if not return_dict:
+        wb = xlrd.open_workbook(
+            filepath, formatting_info=return_dict
+        )
+        try:
+            if not worksheet:
+                worksheet = wb.sheet_names()[0]
+            sheet = wb.sheet_by_name(worksheet)
+        except:
+            NOTIFICATION.messenger(main_text="Cannot open worksheet: {}".format(worksheet))
+            return None
+        
         OUT = []
 
         for i in range(0, sheet.nrows):
@@ -179,33 +193,44 @@ def read_data_from_excel(filepath, worksheet=None, return_dict=False):
 
     excel_app = Excel.ApplicationClass()
     excel_app.Visible = False
-    excel_app.DisplayAlerts = True  # Suppress warnings and prompts
+    excel_app.DisplayAlerts = False  # Suppress warnings and prompts
 
-    workbook = excel_app.Workbooks.Open(filepath)
-    sheet = workbook.Sheets[worksheet]
+    try:
+        # Force open the workbook as ReadOnly and ignore warnings
+        workbook = excel_app.Workbooks.Open(
+            filepath,
+            ReadOnly=True,  # Open in read-only mode to avoid write permission issues
+            IgnoreReadOnlyRecommended=True,  # Suppress the read-only prompt
+            CorruptLoad=Excel.XlCorruptLoad.xlRepairFile  # Try opening with repair options
+        )
+        sheet = workbook.Sheets[worksheet]
 
-    import COLOR
+        import COLOR
 
-    OUT = {}
-    for i in range(1, sheet.UsedRange.Rows.Count + 1):
-        for j in range(1, sheet.UsedRange.Columns.Count + 1):
-            cell = sheet.Cells[i, j]
-            decimal_color = cell.Interior.Color
-            rgb_color = COLOR.decimal_to_rgb(decimal_color)
-            cell_value = cell.Value2 if cell.Value2 is not None else ""
+        OUT = {}
+        for i in range(1, sheet.UsedRange.Rows.Count + 1):
+            for j in range(1, sheet.UsedRange.Columns.Count + 1):
+                cell = sheet.Cells[i, j]
+                decimal_color = cell.Interior.Color
+                rgb_color = COLOR.decimal_to_rgb(decimal_color)
+                cell_value = cell.Value2 if cell.Value2 is not None else ""
 
-            # note to self, use i-1 and j-1 becaome the index starting method is different for clr called method
-            OUT[(i - 1, j - 1)] = {"value": cell_value, "color": rgb_color}
+                # note to self, use i-1 and j-1 becaome the index starting method is different for clr called method
+                OUT[(i - 1, j - 1)] = {"value": cell_value, "color": rgb_color}
 
-    workbook.Close(False)
-    excel_app.Quit()
-    # print OUT
+    except:
+        print (traceback.format_exc())
+    finally:
+        workbook.Close(False)
+        excel_app.Quit()
+        
 
     return OUT
 
 
 def get_column_values(data, column):
-    return [value_dict["value"] for key,value_dict in data.items() if key[1] == column]
+    column = get_column_index(column)
+    return list(set([value_dict["value"] for key,value_dict in data.items() if key[1] == column]))
 
 def search_row_in_column_by_value(data, column, search_value, is_fuzzy=False):
     """a typeical data looks like this.
