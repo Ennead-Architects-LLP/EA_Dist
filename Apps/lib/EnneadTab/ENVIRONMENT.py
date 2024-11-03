@@ -81,6 +81,34 @@ if os.path.exists(ONE_DRIVE_ECOSYS_FOLDER):
     except:
         pass
 
+
+def cleanup_dump_folder():
+    """Silently clean up files in DUMP_FOLDER older than 3 days, excluding .json and .sexyDuck files"""
+    import os
+    import time
+
+    cutoff_time = time.time() - (3 * 24 * 60 * 60)  # 3 days
+    protected_extensions = {'.json', '.sexyDuck', ".txt", ".lock", ".rui"}
+
+    for filename in os.listdir(DUMP_FOLDER):
+        file_path = os.path.join(DUMP_FOLDER, filename)
+        if not os.path.isfile(file_path):
+            continue
+            
+        file_ext = os.path.splitext(filename)[1].lower()
+
+        if file_ext in protected_extensions:
+            continue
+            
+        if os.path.getmtime(file_path) < cutoff_time:
+            try:
+                os.remove(file_path)
+            except:
+                pass
+
+
+cleanup_dump_folder()
+
 def is_avd():
     """Check if current environment is an Azure Virtual Desktop.
 
@@ -248,6 +276,7 @@ def get_app_name():
     elif IS_RHINO_ENVIRONMENT:
         app_name = "rhino"
     return app_name
+
 
 
 ###############
