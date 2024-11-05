@@ -2,14 +2,15 @@
 try:
     from Autodesk.Revit import DB # pyright: ignore
     import clr # pyright: ignore
+    import REVIT_APPLICATION
 except:
     pass
 try:
     REF_CLASS = DB.IFamilyLoadOptions
 except:
     REF_CLASS = object # this is to trick that class can be used during INIT process
-try:
-    DOC = __revit__.ActiveUIDocument.Document # pyright: ignore
+try:    
+    DOC = REVIT_APPLICATION.get_doc()
 except:
     DOC = object
     

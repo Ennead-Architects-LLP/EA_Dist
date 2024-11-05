@@ -50,7 +50,7 @@ if IS_PY2:
     DEPENDENCY_FOLDER += "\\py2"
 else:
     DEPENDENCY_FOLDER += "\\py3"
-
+PY3_DEPENDENCY_FOLDER =  os.path.join(LIB_FOLDER, "dependency", "py3")
 
 
 USER_PROFILE_FOLDER = os.environ["USERPROFILE"]
