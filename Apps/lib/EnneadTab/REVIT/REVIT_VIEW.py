@@ -2,16 +2,17 @@
 
 import ENVIRONMENT, NOTIFICATION, DATA_FILE
 
+import REVIT_APPLICATION
+import REVIT_SELECTION
 
 try:
 
     from Autodesk.Revit import DB # pyright: ignore
     from Autodesk.Revit import UI # pyright: ignore
-    UIDOC = __revit__.ActiveUIDocument # pyright: ignore
-    DOC = UIDOC.Document
+    UIDOC = REVIT_APPLICATION.get_uidoc() 
+    DOC = REVIT_APPLICATION.get_doc()
+
     
-    import REVIT_APPLICATION
-    import REVIT_SELECTION
     from pyrevit.coreutils import envvars
     
     

@@ -378,7 +378,7 @@ class InternalCheck:
         data = EXCEL.read_data_from_excel(source_excel, worksheet="EA Benchmarking DGSF Tracker", return_dict=True)
 
         key_column = "B"
-        print ("avaibale excel departments: {}".format(EXCEL.get_column_values(data, key_column)))
+        print ("avaibale excel departments: {}".format(EXCEL.get_column_values(data, key_column).keys()))
         for department_name in self.option.DEPARTMENT_PARA_MAPPING.keys():
             row = EXCEL.search_row_in_column_by_value(data, key_column, search_value=department_name, is_fuzzy=True)
 
