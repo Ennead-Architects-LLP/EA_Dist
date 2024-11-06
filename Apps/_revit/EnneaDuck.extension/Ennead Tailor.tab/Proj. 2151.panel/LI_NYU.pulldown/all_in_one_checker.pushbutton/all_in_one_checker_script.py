@@ -362,11 +362,12 @@ class InternalCheck:
             value = dummy_target_type.LookupParameter(para_name).AsDouble()
             dummy_target_data.update(para_name, value)
 
-
-        if ENVIRONMENT.IS_AVD:
-            NOTIFICATION.messenger("Cannot update from excel in AVD becasue ACC desktop connector is not working in AVD.")
-            return
-        self.update_from_excel(dummy_target_data)
+        if USER.IS_DEVELOPER:
+            print ("\n\nThis is a developer version")
+            if ENVIRONMENT.IS_AVD:
+                NOTIFICATION.messenger("Cannot update from excel in AVD becasue ACC desktop connector is not working in AVD.")
+                return
+            self.update_from_excel(dummy_target_data)
 
                 
 
