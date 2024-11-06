@@ -57,7 +57,8 @@ class AbstractDepartment(object):
         return "{} from row {} to row {}.\nSecondary data column: {}\nRevit department name: {}".format(self.name, self.begin_row, self.end_row, self.secondary_data_column_letter, self.revit_department_name)
 
 class EmergencyDepartment(AbstractDepartment):
-    secondary_data_column_letter = "C"
+    secondary_data_column_letter = "B"
+    thirdary_data_column_letter = "C"
     def __init__(self, begin_row, end_row):
         super(EmergencyDepartment, self).__init__(begin_row, end_row)
     
