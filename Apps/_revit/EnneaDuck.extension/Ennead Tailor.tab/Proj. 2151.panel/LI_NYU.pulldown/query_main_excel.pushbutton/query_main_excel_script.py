@@ -6,7 +6,7 @@ proDUCKtion.validify()
 import os
 import re
 
-from EnneadTab import ERROR_HANDLE, LOG, EXCEL, NOTIFICATION
+from EnneadTab import ERROR_HANDLE, LOG, EXCEL, NOTIFICATION, TEXT
 from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_AREA_SCHEME, REVIT_FORMS
 from Autodesk.Revit import DB # pyright: ignore 
 
@@ -56,7 +56,7 @@ class DiagnosticAndTreatment(AbstractDepartment):
         super(DiagnosticAndTreatment, self).__init__(begin_row, end_row)
 
 class InpatientCare(AbstractDepartment):
-    secondary_data_column_letter = "B"
+    secondary_data_column_letter = "C"
     def __init__(self, begin_row, end_row):
         super(InpatientCare, self).__init__(begin_row, end_row)
 
@@ -152,6 +152,8 @@ class Solution:
             t.Start()
             for area in bad_area_dict[target_department]:
                 area.LookupParameter(DEPARTMENT_KEY_PARA).Set(target_department)
+
+            NOTIFICATION.messenger("Fixed {} areas".format(len(bad_area_dict[target_department])))
             t.Commit()
 
     def fix_program_type_assignments(self):
@@ -201,6 +203,10 @@ class Solution:
             # Select target program type
             picked_source_program_type_name = "[{}] {}".format(picked_option[0].LookupParameter(DEPARTMENT_KEY_PARA).AsString(), 
                                                                picked_option[0].LookupParameter(PROGRAM_TYPE_KEY_PARA).AsString())
+
+            best_match = TEXT.fuzzy_search(picked_source_program_type_name, [option.name for option in target_options])
+            target_options.sort(key=lambda x: x.name == best_match, reverse=True)
+
             target_option = forms.SelectFromList.show(
                 target_options,
                 button_name="{} ---> ?".format(picked_source_program_type_name),
@@ -214,6 +220,7 @@ class Solution:
             t.Start()
             for area in picked_option:
                 area.LookupParameter(PROGRAM_TYPE_KEY_PARA).Set(target_option)
+            NOTIFICATION.messenger("Fixed {} areas".format(len(picked_option)))
             t.Commit()
 
     def fix_assignments(self, is_program_type=False):
