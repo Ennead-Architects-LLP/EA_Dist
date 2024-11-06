@@ -1,4 +1,4 @@
-__doc__ = "Sen Zhang has not writed documentation for this tool, but he should!"
+__doc__ = "Use the shaed excel file to read the correct naming for department and program type. Provide solution to batch fix."
 __title__ = "Query Main Excel"
 
 import proDUCKtion # pyright: ignore 
@@ -21,26 +21,37 @@ AREA_SCHEME_NAME = "DGSF Scheme"
 class AbstractDepartment(object):
     raw_data = {}
     secondary_data_column_letter = None
+    thirdary_data_column_letter = None
     def __init__(self, begin_row, end_row):
         self.name = self.__class__.__name__
         self.begin_row = begin_row
         self.end_row = end_row
         self.revit_department_name = re.sub(r'(?<!^)(?=[A-Z])', ' ', self.__class__.__name__).upper()
-        self.get_secondary_data()
+        self.get_subdata()
         self.revit_program_type_names = [self.secondary_data[pointer]["value"] for pointer in sorted(self.secondary_data.keys())]
 
 
-    def get_secondary_data(self):
+    def get_subdata(self):
         self.secondary_data = {}
+        self.thirdary_data = {}
 
+        
         for pointer in sorted(self.raw_data.keys()):
             row, column = pointer
-            if self.begin_row <= row <= self.end_row and EXCEL.column_number_to_letter(column) == self.__class__.secondary_data_column_letter:
+            if not self.begin_row <= row <= self.end_row:
+                continue
+            if EXCEL.column_number_to_letter(column) == self.__class__.secondary_data_column_letter:
                 value = self.raw_data[pointer]["value"]
                 self.raw_data[pointer]["value"] = value.upper()
                 if value not in ["", " ", None]:
                     self.secondary_data[(row, column)] = self.raw_data[pointer]
 
+
+            if EXCEL.column_number_to_letter(column) == self.__class__.thirdary_data_column_letter:
+                value = self.raw_data[pointer]["value"]
+                self.raw_data[pointer]["value"] = value.upper()
+                if value not in ["", " ", None]:
+                    self.thirdary_data[(row, column)] = self.raw_data[pointer]
 
     def __repr__(self):
         return "{} from row {} to row {}.\nSecondary data column: {}\nRevit department name: {}".format(self.name, self.begin_row, self.end_row, self.secondary_data_column_letter, self.revit_department_name)
@@ -52,6 +63,7 @@ class EmergencyDepartment(AbstractDepartment):
     
 class DiagnosticAndTreatment(AbstractDepartment):
     secondary_data_column_letter = "B"
+    thirdary_data_column_letter = "C"
     def __init__(self, begin_row, end_row):
         super(DiagnosticAndTreatment, self).__init__(begin_row, end_row)
 
