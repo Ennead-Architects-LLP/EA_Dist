@@ -533,6 +533,10 @@ def is_changable(x):
         return True
     return False
 
+def is_borrowed(x):
+    current_owner = get_owner(x)
+    return current_owner.lower() == x.Document.Application.Username.lower()
+    
 
 def filter_elements_changable(elements):
     return filter(is_changable, elements)
