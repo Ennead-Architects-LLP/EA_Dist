@@ -143,19 +143,25 @@ def fill_drafter_info(doc):
 
 
 def update_modified_date(doc):
-    sample_sheet = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets).FirstElement()
-    sample_view = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).FirstElement()
-    if not sample_sheet.LookupParameter("ModifiedDate") and not sample_view.LookupParameter("ModifiedDate"):
-        return
-    all_sheets = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets).ToElements()
-    all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
-    t = DB.Transaction(doc, "Update Modified Date")
-    t.Start()
-    for element in list(all_sheets) + list(all_views):
-        if REVIT_SELECTION.is_borrowed(element):
-            if element.LookupParameter("ModifiedDate"):
+
+    # Get collectors for both categories at once
+    collectors = {
+        "sheets": DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets),
+        "views": DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views)
+    }
+
+    for collector in collectors.values():
+        sample_element = collector.FirstElement()
+        if not sample_element.LookupParameter("ModifiedDate"):
+            continue
+
+        # Get all elements and process in single transaction
+        t = DB.Transaction(doc, "Update Modified Date")
+        t.Start()
+        for element in collector.ToElements():
+            if REVIT_SELECTION.is_borrowed(element):
                 element.LookupParameter("ModifiedDate").Set(TIME.get_YYYY_MM_DD())
-    t.Commit()
+        t.Commit()
 
     
 @LOG.log(__file__, __title__)
