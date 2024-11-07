@@ -13,10 +13,16 @@ from Autodesk.Revit import DB # pyright: ignore
 from pyrevit import forms
 # UIDOC = REVIT_APPLICATION.get_uidoc()
 DOC = REVIT_APPLICATION.get_doc()
-DEPARTMENT_KEY_PARA = "Area_$Department"
-PROGRAM_TYPE_KEY_PARA = "Area_$Department_Program Type"
-PROGRAM_TYPE_DETAIL_KEY_PARA = "Area_$Department_Program Type Detail"
-AREA_SCHEME_NAME = "DGSF Scheme"
+
+# Add path to all_in_one_checker module
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'all_in_one_checker.pushbutton'))
+from constants import DepartmentOption
+
+DEPARTMENT_KEY_PARA = DepartmentOption.DEPARTMENT_KEY_PARA
+PROGRAM_TYPE_KEY_PARA = DepartmentOption.PROGRAM_TYPE_KEY_PARA
+PROGRAM_TYPE_DETAIL_KEY_PARA = DepartmentOption.PROGRAM_TYPE_DETAIL_KEY_PARA
+AREA_SCHEME_NAME = DepartmentOption.DGSF_SCHEME_NAME
 
 
 class AbstractDepartment(object):
@@ -235,38 +241,89 @@ class Solution:
             for i, area in enumerate(bad_area_dict[picked_option]):
                 area.LookupParameter(PROGRAM_TYPE_KEY_PARA).Set(prog_type)
                 area.LookupParameter(DEPARTMENT_KEY_PARA).Set(dept_name)
-                if picked_option != target_option:
-                    print (len(picked_option), len(target_option))
-                    # Compare characters and show differences with a playful indicator
-                    max_length = max(len(picked_option), len(target_option))
-                    for j in range(max_length):
-                        picked_char = picked_option[j] if j < len(picked_option) else "$"  # Duck for missing char!
-                        target_char = target_option[j] if j < len(target_option) else "$"  # Duck for missing char!
-                        if picked_char != target_char:
-                            print("at {} index: {} != {} QUACK!".format(j, picked_char, target_char))
-
                     
                 print ("{}/{}: {}: {} ---> {}".format(i+1, len(bad_area_dict[picked_option]), output.linkify(area.Id), picked_option, target_option))
             NOTIFICATION.messenger("Fixed {} areas".format(len(bad_area_dict[picked_option])))
             t.Commit()
 
-    def fix_assignments(self, changed_para):
-        """Main entry point for fixing assignments"""
-        if changed_para == DEPARTMENT_KEY_PARA:
-            self.fix_department_assignments()
-        elif changed_para == PROGRAM_TYPE_KEY_PARA:
-            self.fix_program_type_assignments()
-        elif changed_para == PROGRAM_TYPE_DETAIL_KEY_PARA:
-            print ("not implemented")
+    def fix_program_type_detail_assignments(self):
+        """Fix program type detail assignments for areas with a dash of fun"""
+        
+        while True:
+            bad_area_dict = self.get_bad_areas(changed_para=PROGRAM_TYPE_DETAIL_KEY_PARA)
+            options = sorted(bad_area_dict.keys(), key=lambda x: (x != "_Finish_", x))
+
+            # Remove any options that end with " None"
+            options = [x for x in options if not x.endswith(" None")]
+
+            # Remove empty options after last ]
+            options = [x for x in options if not x.strip().endswith("]")]
+            
+            picked_option = forms.SelectFromList.show(
+                options,
+                title="Pick a PROGRAM TYPE DETAIL to fix"
+            )
+
+            if not picked_option or picked_option == "_Finish_":
+                break
+
+            # Create target options with full hierarchy
+            target_options = []
+            for dept in self.department_instances:
+                for detail in dept.thirdary_data.values():
+                    full_option = "[{}] [{}] {}".format(
+                        dept.revit_department_name,
+                        detail["parent"],
+                        detail["value"]
+                    )
+                    target_options.append(full_option)
+            
+            target_options.sort()
+
+            # Find best fuzzy match and put it at the top
+            best_match = TEXT.fuzzy_search(picked_option, target_options)
+            target_options.sort(key=lambda x: x == best_match, reverse=True)
+
+            target_option = forms.SelectFromList.show(
+                target_options,
+                button_name="{} ---> ?".format(picked_option),
+                title="Pick a target PROGRAM TYPE DETAIL"
+            )
+            
+            if not target_option:
+                break
+
+            # Apply changes in transaction
+            t = DB.Transaction(DOC, "Fix program type detail: {}".format(picked_option))
+            t.Start()
+            
+            # Extract department, program type, and detail from target
+            matches = re.findall(r"\[(.*?)\]", target_option)
+            dept_name = matches[0].strip()
+            prog_type = matches[1].strip()
+            detail = re.search(r"\](.*?)$", target_option).group(1).strip()
+
+            for i, area in enumerate(bad_area_dict[picked_option]):
+                area.LookupParameter(PROGRAM_TYPE_DETAIL_KEY_PARA).Set(detail)
+                area.LookupParameter(PROGRAM_TYPE_KEY_PARA).Set(prog_type)
+                area.LookupParameter(DEPARTMENT_KEY_PARA).Set(dept_name)
+                
+                print ("{}/{}: {}: {} ---> {}".format(i+1, len(bad_area_dict[picked_option]), output.linkify(area.Id), picked_option, target_option))
+
+            NOTIFICATION.messenger("Successfully fixed {} areas!".format(
+                len(bad_area_dict[picked_option])
+            ))
+            t.Commit()
+
 
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
 def query_main_excel():
     NOTIFICATION.messenger("Reading excel file...")
-    source_excel = "{}\\DC\\ACCDocs\\Ennead Architects LLP\\2151_NYULI\\Project Files\\00_EA-EC Teams Files\\4_Programming\\_Public Shared\\Web Portal Only_ACTIVE.NYULI_Program_EA.EC.xlsx".format(os.getenv("USERPROFILE"))
+    
 
-    raw_data = EXCEL.read_data_from_excel(source_excel, 
+    raw_data = EXCEL.read_data_from_excel(DepartmentOption.SOURCE_EXCEL, 
                                       worksheet="EA Benchmarking DGSF Tracker", 
                                       return_dict=True,
                                       headless=True) # if have permission lock---> set it as always availble in this PC from desktop connecter.
@@ -305,13 +362,13 @@ def query_main_excel():
 
 
     if res == opts[0]:
-        solution.fix_assignments(changed_para=DEPARTMENT_KEY_PARA)
+        solution.fix_department_assignments()
 
     if res == opts[1][0]:
-        solution.fix_assignments(changed_para=PROGRAM_TYPE_KEY_PARA)
+        solution.fix_program_type_assignments()
 
     if res == opts[2][0]:
-        solution.fix_assignments(changed_para=PROGRAM_TYPE_DETAIL_KEY_PARA)
+        solution.fix_program_type_detail_assignments()
 
 
 
