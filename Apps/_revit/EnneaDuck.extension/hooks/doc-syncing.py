@@ -145,10 +145,13 @@ def fill_drafter_info(doc):
 def update_modified_date(doc):
     all_sheets = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets).ToElements()
     all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
+    t = DB.Transaction(doc, "Update Modified Date")
+    t.Start()
     for element in all_sheets + all_views:
-        if element.LookupParameter("ModifiedDate"):
-            element.LookupParameter("ModifiedDate").Set(TIME.get_YYYY_MM_DD())
-
+        if REVIT_SELECTION.is_borrowed(element):
+            if element.LookupParameter("ModifiedDate"):
+                element.LookupParameter("ModifiedDate").Set(TIME.get_YYYY_MM_DD())
+    t.Commit()
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error(is_silent=True)
 def doc_syncing(doc):
