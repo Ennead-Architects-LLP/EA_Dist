@@ -35,7 +35,8 @@ def column_number_to_letter(number, is_upper=True):
 
 def letter_to_index(letter, start_from_zero=False):
     """Get the index of a letter in the alphabet.
-    A -> 0, B -> 1, C -> 2, etc.
+    if start_from_zero is True, A -> 0, B -> 1, C -> 2, etc.
+    if start_from_zero is False, A -> 1, B -> 2, C -> 3, etc.
 
     Args:
         letter (str): A single letter.
