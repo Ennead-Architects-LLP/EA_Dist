@@ -231,8 +231,10 @@ class Solution:
             # Apply changes in transaction
             t = DB.Transaction(DOC, "Fix program type: {}".format(picked_source_program_type_name))
             t.Start()
-            for area in picked_option:
+            for i, area in enumerate(picked_option) :
+                old_program_type = area.LookupParameter(PROGRAM_TYPE_KEY_PARA).AsString()
                 area.LookupParameter(PROGRAM_TYPE_KEY_PARA).Set(target_option)
+                print ("{}: {} : {} --> {}".format(i+1, output.linkify(area.Id), old_program_type, target_option))
             NOTIFICATION.messenger("Fixed {} areas".format(len(picked_option)))
             t.Commit()
 
@@ -334,6 +336,8 @@ def create_department_instances(data, excel_section_list):
 
 ################## main code below #####################
 if __name__ == "__main__":
+    from pyrevit import script
+    output = script.get_output()
     query_main_excel()
 
 
