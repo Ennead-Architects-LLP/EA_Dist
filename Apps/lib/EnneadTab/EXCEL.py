@@ -33,7 +33,7 @@ from collections import defaultdict
 def column_number_to_letter(number, is_upper=True):
     return chr(number + 64 + (0 if is_upper else 32))
 
-def letter_to_index(letter):
+def letter_to_index(letter, start_from_zero=False):
     """Get the index of a letter in the alphabet.
     A -> 0, B -> 1, C -> 2, etc.
 
@@ -46,12 +46,12 @@ def letter_to_index(letter):
     if isinstance(letter, int):
         return letter
     try:
-        return ord(letter.upper()) - ord("A")
+        return ord(letter.upper()) - ord("A") + (0 if start_from_zero else 1)
     except TypeError:
         return None
 
 
-def get_column_index(letter):
+def get_column_index(letter, start_from_zero=False):
     """Get the index of an Excel column.
 
     Args:
@@ -64,11 +64,11 @@ def get_column_index(letter):
         return letter
     
     if len(letter) == 1:
-        return letter_to_index(letter)
+        return letter_to_index(letter, start_from_zero)
     elif len(letter) == 2:
         char1 = letter[0]
         char2 = letter[1]
-        return 26 * (letter_to_index(char1) + 1) + letter_to_index(char2)
+        return 26 * (letter_to_index(char1, start_from_zero) + 1) + letter_to_index(char2, start_from_zero)
     else:
         return None
 
