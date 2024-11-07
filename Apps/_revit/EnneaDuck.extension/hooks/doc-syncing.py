@@ -147,7 +147,7 @@ def update_modified_date(doc):
     all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
     t = DB.Transaction(doc, "Update Modified Date")
     t.Start()
-    for element in all_sheets + all_views:
+    for element in list(all_sheets) + list(all_views):
         if REVIT_SELECTION.is_borrowed(element):
             if element.LookupParameter("ModifiedDate"):
                 element.LookupParameter("ModifiedDate").Set(TIME.get_YYYY_MM_DD())
