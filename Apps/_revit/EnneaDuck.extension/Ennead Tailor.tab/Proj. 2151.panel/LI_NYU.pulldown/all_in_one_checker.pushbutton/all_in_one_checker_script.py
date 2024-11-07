@@ -381,12 +381,16 @@ class InternalCheck:
         key_column = "B"
         print ("avaibale excel departments: {}".format(EXCEL.get_column_values(data, key_column).keys()))
         for department_name in self.option.DEPARTMENT_PARA_MAPPING.keys():
-            row = EXCEL.search_row_in_column_by_value(data, key_column, search_value=department_name, is_fuzzy=True)
+            row = EXCEL.search_row_in_column_by_value(data, 
+                                                      key_column, 
+                                                      search_value=department_name, 
+                                                      is_fuzzy=True)
 
             target = data.get((row,EXCEL.get_column_index("P")), None)
             if target:
                 target = float(target)
                 print ("target value found for [{}]: {}".format(department_name, target))
+                
                 # dummy_target_data.update(self.option.DEPARTMENT_PARA_MAPPING[department_name], target)
                 print ("\n\n")  
         
