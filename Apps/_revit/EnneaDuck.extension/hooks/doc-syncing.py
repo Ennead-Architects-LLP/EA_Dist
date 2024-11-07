@@ -1,6 +1,6 @@
 from pyrevit import EXEC_PARAMS
 from Autodesk.Revit import DB # pyright: ignore
-
+import random
 
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
@@ -22,6 +22,8 @@ def update_2151(doc):
         folder = "Ennead Tailor.tab\\Proj. 2151.panel\\LI_NYU.pulldown"
         func_name = "dgsf_area_data_check"
         MODULE_HELPER.run_revit_script(folder, func_name, doc)
+
+        update_modified_date(doc)
 
     if not doc.Title.lower().startswith("2151_"):
         return
@@ -143,6 +145,8 @@ def fill_drafter_info(doc):
 
 
 def update_modified_date(doc):
+    if random.random() < 0.9:
+        return
 
     # Get collectors for both categories at once
     collectors = {
@@ -180,7 +184,7 @@ def doc_syncing(doc):
 
     # do this after checking ques so the primary EXE_PARAM is same as before
     fill_drafter_info(doc)
-    update_modified_date(doc)
+    
     update_2151(doc)
 
     TIMESHEET.update_timesheet(doc.Title)
