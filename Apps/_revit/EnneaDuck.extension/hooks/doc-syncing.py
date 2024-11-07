@@ -143,6 +143,10 @@ def fill_drafter_info(doc):
 
 
 def update_modified_date(doc):
+    sample_sheet = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets).FirstElement()
+    sample_view = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).FirstElement()
+    if not sample_sheet.LookupParameter("ModifiedDate") and not sample_view.LookupParameter("ModifiedDate"):
+        return
     all_sheets = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Sheets).ToElements()
     all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
     t = DB.Transaction(doc, "Update Modified Date")
@@ -152,6 +156,8 @@ def update_modified_date(doc):
             if element.LookupParameter("ModifiedDate"):
                 element.LookupParameter("ModifiedDate").Set(TIME.get_YYYY_MM_DD())
     t.Commit()
+
+    
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error(is_silent=True)
 def doc_syncing(doc):
