@@ -12,7 +12,7 @@ import proDUCKtion # pyright: ignore
 proDUCKtion.validify()
 
 from EnneadTab import NOTIFICATION, ERROR_HANDLE, USER, FOLDER, EXCEL, ENVIRONMENT
-from EnneadTab.REVIT import REVIT_SELECTION, REVIT_FAMILY
+from EnneadTab.REVIT import REVIT_SELECTION, REVIT_FAMILY, REVIT_SPATIAL_ELEMENT
 from Autodesk.Revit import DB # pyright: ignore  
 # from Autodesk.Revit import UI # pyright: ignore
 try:
@@ -118,10 +118,12 @@ class InternalCheck:
                         output.linkify(area.Id)))
                 continue
 
-            if area.Area <= 0:
+            if REVIT_SPATIAL_ELEMENT.is_element_bad(area):
                 if self.show_log:
+                    status = REVIT_SPATIAL_ELEMENT.get_element_status(area)
 
-                    print("\nArea has no size!\nIt might not be enclosed or placed....{} @ Level [{}] @ [{}]".format(output.linkify(area.Id),
+                    print("\nArea has no size!\nIt is {}....{} @ Level [{}] @ [{}]".format(status,
+                                                                                           output.linkify(area.Id, area.LookupParameter(self.option.DEPARTMENT_KEY_PARA).AsString()),
                                                                                                    level.Name,
                                                                                                    area_scheme_name))
                 else:

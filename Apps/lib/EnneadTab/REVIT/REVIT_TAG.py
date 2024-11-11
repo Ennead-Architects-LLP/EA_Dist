@@ -15,60 +15,66 @@ except:
     globals()["DOC"] = object()
 
 
-def get_tagged_element(tag, doc):
-    """Get the element that a tag is referencing"""
-    try:
-        # Try getting Host property first (for family instance tags)
-        if hasattr(tag, "Host") and tag.Host:
-
-            return tag.Host
+def get_tagged_elements(tag, doc):
+    """Get the elements that a tag is referencing. Always return a list even only one host.
+    
+    Args:
+        tag: Revit tag element
+        doc: Current Revit document
         
-        if hasattr(tag, "TaggedLocalElementId"):
-            host = doc.GetElement(tag.TaggedLocalElementId)
-            if host:
-               
-                return host
-
-        if hasattr(tag, "TaggedElementId "):
-            host = doc.GetElement(tag.TaggedElementId )
-            if host:
-       
-                return host
-
-        # Try GetTaggedLocalElement next (for other element tags)
-        if hasattr(tag, "GetTaggedLocalElement"):
-            host = tag.GetTaggedLocalElement()
-            if host:
-
-                return host
+    Returns:
+        List of elements, or None if no tagged elements found
+    """
+    try:
+        # Check Host property first (for family instance tags)
+        if hasattr(tag, "Host") and tag.Host:
+            return tag.Host
+            
+        # Check different tag reference properties
+        for property_name in ["TaggedLocalElementIds", "TaggedElementIds"]:
+            if hasattr(tag, property_name):
+                hosts = [doc.GetElement(id) for id in getattr(tag, property_name) if doc.GetElement(id)]
+                if hosts:
+                    return hosts if len(hosts) >= 1 else None
+                    
+        # Last resort - check tagged references
+        if hasattr(tag, "GetTaggedReferences"):
+            hosts = [doc.GetElement(ref.ElementId) for ref in tag.GetTaggedReferences() if doc.GetElement(ref.ElementId)]
+            if hosts:
+                return hosts if len(hosts) >= 1 else None
                 
-        # Last resort - try getting via tagged reference
-        if hasattr(tag, "GetTaggedReference"):
-            host_ref = tag.GetTaggedReference() 
-            if host_ref:
-                host = doc.GetElement(host_ref.ElementId)
-                if host:
-                 
-                    return host
-                
-       
         return None
         
-    except Exception as e:
-       
+    except Exception:
         return None
 
 
 def purge_tags(bad_host_family_names, tag_category, doc = DOC):
-    """get all the tags from project, if its host's name is in the list, delete it"""
-
+    """get all the tags from project, if its host's name is in the list, delete it.
+    Note that: if tag is tagging multiple elements and anyone of them is in the list, the shared tag will be deleted.
+    This should not be too much of a issue in most case it is used.
+    
+    Args:
+        bad_host_family_names: list of family names that are not allowed to be tagged
+        tag_category: the category of the tags to be deleted
+        doc: the current document
+    """
+    from pyrevit import script
+    output = script.get_output()
     all_tags = DB.FilteredElementCollector(doc).OfCategory(tag_category).WhereElementIsNotElementType().ToElements()
     for tag in all_tags:
-        host = get_tagged_element(tag, doc)
+        hosts = get_tagged_elements(tag, doc)
+        if len(hosts) > 1:
+            is_shared = True
+        else:
+            is_shared = False
 
-
-        if host and host.FamilyName in bad_host_family_names:
-            doc.Delete(tag.Id)
+        for host in hosts:
+            if host.Symbol.FamilyName in bad_host_family_names:
+                doc.Delete(tag.Id)
+                if is_shared:
+                    print ("Shared tag deleted for element: {}".format(output.linkify(host.Id)))
+                
 
 
 
