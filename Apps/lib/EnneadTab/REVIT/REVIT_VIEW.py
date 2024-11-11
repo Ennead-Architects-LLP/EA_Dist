@@ -279,6 +279,89 @@ def show_warnings_in_view(view, doc):
 
 
 
+def process_link(doc, mapping_dict, print_link_view_names = False):
+    """sample_mapping_dict = {
+    "title": "2151_A_EA_NYULI_Hospital_EXT",
+    "level_maps": {
+        "level_name_1": "link view name 1",
+        "level_name_2": "link view name 2",
+    },
+    # use view map for more detailed control such as context and phasing
+    "view_maps": {
+        "my view_1": "link view_1",
+        "my view_2": "link view_2",
+    },
+    # ignore views from host file to prevent modifying
+    "ignore_views": [
+        "view_name_to_ignore_1", 
+        "view_name_to_ignore_2"
+        ]
+}
+
+
+    Args:
+        doc (_type_): _description_
+        mapping_dict (_type_): _description_
+        print_link_view_names (bool, optional): _description_. Defaults to False.
+    """
+    from pyrevit import script
+    output = script.get_output()
+    # do not process link for self, this makes no sense
+    if doc.Title == mapping_dict["title"]:
+        return
+
+    
+    link_doc = REVIT_SELECTION.get_revit_link_doc_by_name(mapping_dict["title"], doc)
+    if not link_doc:
+        print ("Link doc [{}] not found".format(mapping_dict["title"]))
+        return
+
+    
+    if print_link_view_names:
+        linked_views = DB.FilteredElementCollector(link_doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
+        linked_views = sorted(list(linked_views), key=lambda x: (str(x.ViewType),x.Name))
+        for linked_view in linked_views:
+            print("{}:[{}] {}".format(link_doc.Title, linked_view.ViewType, linked_view.Name))
+        
+    link_instance = REVIT_SELECTION.get_revit_link_instance_by_name(link_doc.Title, doc)
+    output.print_md("## Processing Link: [{}]".format(link_doc.Title))
+    
+    setting = DB.RevitLinkGraphicsSettings ()
+    setting.LinkVisibilityType = DB.LinkVisibility.ByLinkView
+
+    all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
+    for view in all_views:
+        # ignore views from host file to prevent modifying
+        if view.Name in mapping_dict.get("ignore_views", []):
+            continue
+        
+        # Check view maps first for direct view mapping
+        if view.Name in mapping_dict.get("view_maps", {}):
+            linked_view_name = mapping_dict["view_maps"][view.Name]
+            
+        # Otherwise try to map by level
+        elif hasattr(view, "GenLevel") and view.GenLevel and \
+             view.GenLevel.Name in mapping_dict.get("level_maps", {}):
+            linked_view_name = mapping_dict["level_maps"][view.GenLevel.Name]
+            
+        else:
+            continue
+
+
+
+        linked_view = get_view_by_name(linked_view_name, doc = link_doc)
+
+
+        if not linked_view:
+            print("Linked view [{}] not found".format(linked_view_name))
+            continue
+        setting.LinkedViewId = linked_view.Id
+        try:
+            view.SetLinkOverrides (link_instance.Id, setting)
+            print("Set link view overrides for view [{}] using [{}][{}]".format(output.linkify(view.Id, title=view.Name), link_doc.Title, linked_view.Name))
+        except Exception as e:
+            print("Error setting link viewoverrides for view [{}]: {}".format(output.linkify(view.Id, title=view.Name), e))
+
 
 
 

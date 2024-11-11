@@ -48,6 +48,11 @@ Watch the progress, when it says finished it will close itself, and it is ready 
 <br>
 
 ## 2. EnneadTab-For-Revit
+> [!NOTE]
+> Attention, __Revit 2025__ users!
+> <br>
+> Due to the significant .Net framework changes from 2024 to 2025, pyRevit is not yet supported for Revit 2025. <br>
+> Therefore, EnneadTab-For-Revit is not supported for Revit 2025 yet. Please check back later.
 
 
 ### 2.1. EnneadTab-For-Revit

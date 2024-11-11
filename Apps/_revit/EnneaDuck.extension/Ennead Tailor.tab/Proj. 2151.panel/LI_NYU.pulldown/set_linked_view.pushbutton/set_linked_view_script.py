@@ -7,8 +7,8 @@ __title__ = "Set Linked View"
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
 
-from EnneadTab import ERROR_HANDLE, LOG
-from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_VIEW, REVIT_SELECTION
+from EnneadTab import ERROR_HANDLE, LOG, USER
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_VIEW
 from Autodesk.Revit import DB # pyright: ignore 
 
 # UIDOC = REVIT_APPLICATION.get_uidoc()
@@ -17,14 +17,54 @@ DOC = REVIT_APPLICATION.get_doc()
 MAPPING_DICT_EWING_COLE = {
     "title": "20230633_A24_CENTRAL",
     "level_maps": {
-        "L2": "FINAL CONCEPT PLAN - LEVEL 2_SD Decentralized Core",
-        "L3": "FINAL CONCEPT PLAN - LEVEL 3_SD Decentralized Core",
+        "B1": "N/A",
+        "L1": "FINAL CONCEPT PLAN - LEVEL 1_OPT 1",
+        "L2": "L2",
+        "L3": "FINAL CONCEPT PLAN - LEVEL 3",
         "L4": "FINAL CONCEPT PLAN - LEVEL 4_SD Decentralized Core",
-        "L5": "FINAL CONCEPT PLAN - LEVEL 5_SD Decentralized Core",
+        "L5 MEP": "LEVEL 5 REFERENCE PLAN",
+        "L6": "FINAL CONCEPT PLAN - LEVEL 6_LDR+NICU",
+        "L7": "FINAL CONCEPT PLAN - LEVEL 7",
+        "L8": "FINAL CONCEPT PLAN - LEVEL 8",
+        "L9": "N/A",
+        "L10": "N/A",
+        "L11": "N/A",
+        "L12": "N/A",
+        "L13 MEP": "N/A",
+        "ROOF LEVEL": "N/A",
+        "T.O.CORE": "N/A",
     }
 }
 
-PRINK_LINK_VIEW_NAMES = True
+MAPPING_DICT_EXT = {
+    "title": "2151_A_EA_NYULI_Hospital_EXT",
+    "level_maps": {
+        "B1": "T-000_10_T Tower B1(Phase I)",
+        "L1": "T-001_10_T Tower L1(Phase I)",
+        "L2": "T-002_10_T Tower L2(Phase I)",
+        "L3": "T-003_10_T Tower L3(Phase I)",
+        "L4": "T-004_10_T Tower L4(Phase I)",
+        "L5 MEP": "T-005_10_T Tower L5 MEP(Phase I)",
+        "L6": "T-006_10_T Tower L6(Phase I)",
+        "L7": "T-007_10_T Tower L7(Phase I)",
+        "L8": "T-008_10_T Tower L8(Phase I)",
+        "L9": "T-009_10_T Tower L9(Phase I)",
+        "L10": "T-010_10_T Tower L10(Phase I)",
+        "L11": "T-011_10_T Tower L11(Phase I)",
+        "L12": "T-012_10_T Tower L12(Phase I)",
+        "L13 MEP": "T-013_10_T Tower L13 MEP(Phase I)",
+        "ROOF LEVEL": "T-014_10_ROOF LEVEL(Phase I)",
+        "T.O.CORE": "T-015_10_T Tower T.O.CORE(Phase I)",
+    },
+    # use view map for more detailed control such as context and phasing
+    "view_maps": {
+        "my view": "link view",
+    }
+}
+PRINK_LINK_VIEW_NAMES = False
+if USER.IS_DEVELOPER:
+    PRINK_LINK_VIEW_NAMES = False # change to to True for personal debugging
+
 
 
 @LOG.log(__file__, __title__)
@@ -32,47 +72,10 @@ PRINK_LINK_VIEW_NAMES = True
 def set_linked_view(doc):
     t = DB.Transaction(doc, __title__)
     t.Start()
-    process_link(doc, MAPPING_DICT_EWING_COLE)
+    REVIT_VIEW.process_link(doc, MAPPING_DICT_EWING_COLE, print_link_view_names = PRINK_LINK_VIEW_NAMES)
+    REVIT_VIEW.process_link(doc, MAPPING_DICT_EXT, print_link_view_names = PRINK_LINK_VIEW_NAMES)
     t.Commit()
 
-
-def process_link(doc,mapping_dict):
-    link_doc = REVIT_SELECTION.get_revit_link_doc_by_name(mapping_dict["title"], doc)
-    if not link_doc:
-        print ("Link doc [{}] not found".format(mapping_dict["title"]))
-        return
-
-    
-    if PRINK_LINK_VIEW_NAMES:
-        linked_views = DB.FilteredElementCollector(link_doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
-        linked_views = sorted(list(linked_views), key=lambda x: (str(x.ViewType),x.Name))
-        for linked_view in linked_views:
-            print("{}:[{}] {}".format(link_doc.Title, linked_view.ViewType, linked_view.Name))
-        
-    link_instance = REVIT_SELECTION.get_revit_link_instance_by_name(link_doc.Title, doc)
-    
-    setting = DB.RevitLinkGraphicsSettings ()
-    setting.LinkVisibilityType = DB.LinkVisibility.ByLinkView
-
-    all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
-    for view in all_views:
-        if not hasattr(view, "GenLevel"):
-            continue
-        if not view.GenLevel:
-            continue
-        level_name = view.GenLevel.Name
-        if level_name not in mapping_dict["level_maps"]:
-            continue
-        linked_view = REVIT_VIEW.get_view_by_name(mapping_dict["level_maps"][level_name], doc = link_doc)
-        if not linked_view:
-            print("Linked view [{}] not found".format(mapping_dict["level_maps"][level_name]))
-            continue
-        setting.LinkedViewId = linked_view.Id
-        try:
-            view.SetLinkOverrides (link_instance.Id, setting)
-            print("Set link view overrides for view [{}] using [{}][{}]".format(output.linkify(view.Id, title=view.Name), link_doc.Title, linked_view.Name))
-        except Exception as e:
-            print("Error setting link viewoverrides for view [{}]: {}".format(output.linkify(view.Id, title=view.Name), e))
 
 
 
