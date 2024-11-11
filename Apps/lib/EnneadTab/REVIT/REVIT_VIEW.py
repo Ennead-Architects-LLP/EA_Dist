@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import ENVIRONMENT, NOTIFICATION, DATA_FILE
-
-import REVIT_APPLICATION
+import ENVIRONMENT, NOTIFICATION, DATA_FILE, ERROR_HANDLE
+from pyrevit.coreutils import envvars
 import REVIT_SELECTION
+import traceback
 
+# Let's play "Module Loading Game" 🎮
 try:
+    from Autodesk.Revit import DB  # Level 1: Import DB
+    import REVIT_APPLICATION  # Level 2: Import our module
 
-    from Autodesk.Revit import DB # pyright: ignore
-    from Autodesk.Revit import UI # pyright: ignore
-    UIDOC = REVIT_APPLICATION.get_uidoc() 
     DOC = REVIT_APPLICATION.get_doc()
 
-    
-    from pyrevit.coreutils import envvars
-    
-    
-except:
-    globals()["UIDOC"] = object()
-    globals()["DOC"] = object()
 
+        
+except Exception as e:
+    globals()["DOC"] = None
+    ERROR_HANDLE.print_note("REVIT_VIEW.py: Failed to import modules")
+    ERROR_HANDLE.print_note(traceback.format_exc())
 
 def get_view_by_name( view_name, doc = DOC):
     all_views = DB.FilteredElementCollector(doc).OfClass(DB.View).ToElements()
