@@ -642,6 +642,14 @@
         "tab": "Render.tab",
         "tab_icon": "Render.tab\\icon.png"
     },
+    "Render.tab\\enscape_asset_locator.button\\enscape_asset_locator_left.py": {
+        "script": "Render.tab\\enscape_asset_locator.button\\enscape_asset_locator_left.py",
+        "icon": "Render.tab\\enscape_asset_locator.button\\icon.png",
+        "alias": "EnscapeAssetLocator",
+        "doc": "Help you find the Enscape asset folder by search name, so you can manipulate asset material.",
+        "tab": "Render.tab",
+        "tab_icon": "Render.tab\\icon.png"
+    },
     "Render.tab\\import_selected_camera.button\\import_selected_camera_left.py": {
         "script": "Render.tab\\import_selected_camera.button\\import_selected_camera_left.py",
         "icon": "Render.tab\\import_selected_camera.button\\icon.png",
