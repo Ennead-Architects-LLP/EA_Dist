@@ -660,7 +660,8 @@ def pick_category(doc=DOC):
 def get_revit_link_instance_by_name(link_doc_name, doc=DOC):
     link_instances = DB.FilteredElementCollector(doc).OfClass(DB.RevitLinkInstance).ToElements()
     for link_instance in link_instances:
-        if link_instance.GetLinkDocument().Title == link_doc_name:
+        link_doc = link_instance.GetLinkDocument()
+        if link_doc and link_doc.Title == link_doc_name:
             return link_instance
     return None
 
