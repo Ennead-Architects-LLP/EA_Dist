@@ -2525,7 +2525,7 @@ EA_RebaseFile</script>
     </macro_item>
     <macro_item guid="e2a7b677-1d0c-446e-8889-b9e5ded0eb71" bitmap_id="433929e8-4c3c-4d67-9b13-4ff4f8040cb2">
       <text>
-        <locale_1033>(1634)ExportWithoutCrv</locale_1033>
+        <locale_1033>ExportWithoutCrv_1643</locale_1033>
       </text>
       <tooltip>
         <locale_1033>Export the rhino file as dwg but solidate all blocks and remove all crvs.</locale_1033>
@@ -2534,13 +2534,13 @@ EA_RebaseFile</script>
         <locale_1033>Export the rhino file as dwg but solidate all blocks and remove all crvs.</locale_1033>
       </help_text>
       <button_text>
-        <locale_1033>(1634)ExportWithoutCrv</locale_1033>
+        <locale_1033>ExportWithoutCrv_1643</locale_1033>
       </button_text>
       <menu_text>
-        <locale_1033>(1634)ExportWithoutCrv</locale_1033>
+        <locale_1033>ExportWithoutCrv_1643</locale_1033>
       </menu_text>
       <script>EA_ActivateEnneadTab
-EA_(1634)ExportWithoutCrv</script>
+EA_ExportWithoutCrv_1643</script>
     </macro_item>
     <macro_item guid="c2e9d4ff-0aa9-4661-a9c9-1518dea4fdec" bitmap_id="2799f78b-fa30-44a7-8b27-44cf1487210e">
       <text>
