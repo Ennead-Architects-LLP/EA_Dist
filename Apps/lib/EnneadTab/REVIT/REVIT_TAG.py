@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from EnneadTab import NOTIFICATION
+from EnneadTab import NOTIFICATION, ERROR_HANDLE
 import REVIT_APPLICATION
 
 try:
@@ -64,16 +64,26 @@ def purge_tags(bad_host_family_names, tag_category, doc = DOC):
     all_tags = DB.FilteredElementCollector(doc).OfCategory(tag_category).WhereElementIsNotElementType().ToElements()
     for tag in all_tags:
         hosts = get_tagged_elements(tag, doc)
+        if hosts is None:
+            continue
         if len(hosts) > 1:
             is_shared = True
         else:
             is_shared = False
 
         for host in hosts:
-            if host.Symbol.FamilyName in bad_host_family_names:
-                doc.Delete(tag.Id)
-                if is_shared:
-                    print ("Shared tag deleted for element: {}".format(output.linkify(host.Id)))
+            if host is None:
+                continue
+            try:
+                if hasattr(host, "Symbol"):
+                    if host.Symbol.FamilyName in bad_host_family_names:
+                        doc.Delete(tag.Id)
+                        if is_shared:
+                            print ("Shared tag deleted for element: {}".format(output.linkify(host.Id)))
+                else:
+                    ERROR_HANDLE.print_note("Tag is not tagging a valid element: {}, {}".format(output.linkify(tag.Id), host))
+            except Exception as e:
+                ERROR_HANDLE.print_note(e)
                 
 
 
@@ -94,7 +104,7 @@ def retag_by_family_type(tag_family_name, tag_type_name, host_family_name, host_
         return
         
     for tag in all_tags:
-        host = get_tagged_element(tag, doc)
+        host = get_tagged_elements(tag, doc)
         if host and host.FamilyName == host_family_name and host.TypeName == host_type_name:
             try:
                 # Here's the correct way to change the tag type
