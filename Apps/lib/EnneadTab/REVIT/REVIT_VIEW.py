@@ -281,7 +281,7 @@ def get_link_action_map(link_instance):
     return {"link instance override": link_instance.Id, "link type override": link_instance.Document.GetElement(link_instance.GetTypeId()).Id}
 
 
-def process_link(doc, mapping_dict, print_link_view_names = False):
+def process_link(doc, mapping_dict, print_link_view_names = False, total_reset = False):
     """sample_mapping_dict = {
     "title": "2151_A_EA_NYULI_Hospital_EXT",
     "level_maps": {
@@ -305,6 +305,7 @@ def process_link(doc, mapping_dict, print_link_view_names = False):
         doc (_type_): _description_
         mapping_dict (_type_): _description_
         print_link_view_names (bool, optional): _description_. Defaults to False.
+        total_reset (bool, optional): Destroy all local overrides, Dangerous. Defaults to False.
     """
     from pyrevit import script
     output = script.get_output()
@@ -327,12 +328,25 @@ def process_link(doc, mapping_dict, print_link_view_names = False):
         
     link_instance = REVIT_SELECTION.get_revit_link_instance_by_name(link_doc.Title, doc)
     output.print_md("## Processing Link: [{}]".format(link_doc.Title))
-    
+
+    def reset_link_view_overrides(view):
+        try:
+            map = get_link_action_map(link_instance)
+            view.RemoveLinkOverrides  (map["link type override"])
+            view.RemoveLinkOverrides  (map["link instance override"])  
+        except:
+            pass
+
+        
     setting = DB.RevitLinkGraphicsSettings ()
     setting.LinkVisibilityType = DB.LinkVisibility.ByLinkView
 
     all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).ToElements()
     for view in all_views:
+        if total_reset:
+            reset_link_view_overrides(view)
+            continue
+        
         # ignore views from host file to prevent modifying
         if view.Name in mapping_dict.get("ignore_views", []):
             continue
@@ -404,12 +418,15 @@ def check_linked_views(doc):
                 if link_override_settings.LinkVisibilityType == DB.LinkVisibility.ByHostView:
           
                     continue
-
+                elif link_override_settings.LinkVisibilityType == DB.LinkVisibility.ByLinkView:
+                    additional_info = ""
+                else:
+                    additional_info = "(ByLinkView With Custom Settings)"
                 linked_doc = link_instance.GetLinkDocument()
                 linked_view = linked_doc.GetElement(link_override_settings.LinkedViewId)
                 if not linked_view:
                     continue
-                print("{}. [{}] has linked view [{}] from [{}]. Setting using [{}]".format(count + 1, output.linkify(view.Id, title=view.Name), linked_view.Name, linked_doc.Title, action))
+                print("{}. [{}] has linked view [{}] from [{}]. Setting using [{}] {}".format(count + 1, output.linkify(view.Id, title=view.Name), linked_view.Name, linked_doc.Title, action, additional_info))
                 count += 1
 
     print ("\n\nDone. {} views have linked views.".format(count))
