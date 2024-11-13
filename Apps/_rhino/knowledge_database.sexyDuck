@@ -805,7 +805,7 @@
     "Tailor.tab\\export_without_crv.button\\export_without_crv_left.py": {
         "script": "Tailor.tab\\export_without_crv.button\\export_without_crv_left.py",
         "icon": null,
-        "alias": "(1634)ExportWithoutCrv",
+        "alias": "ExportWithoutCrv_1643",
         "doc": "Export the rhino file as dwg but solidate all blocks and remove all crvs.",
         "tab": "Tailor.tab",
         "tab_icon": "Tailor.tab\\icon.png"
