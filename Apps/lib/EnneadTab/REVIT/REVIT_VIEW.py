@@ -5,9 +5,9 @@ from pyrevit.coreutils import envvars
 import REVIT_SELECTION
 import traceback
 
-# Let's play "Module Loading Game" 🎮
+
 try:
-    from Autodesk.Revit import DB  # Level 1: Import DB
+    from Autodesk.Revit import DB #pyright: ignore
     import REVIT_APPLICATION  # Level 2: Import our module
 
     DOC = REVIT_APPLICATION.get_doc()
@@ -277,6 +277,8 @@ def show_warnings_in_view(view, doc):
     show_in_convas_graphic(graphic_datas, view = view)
     NOTIFICATION.messenger("Warnings marked!")
 
+def get_link_action_map(link_instance):
+    return {"link instance override": link_instance.Id, "link type override": link_instance.Document.GetElement(link_instance.GetTypeId()).Id}
 
 
 def process_link(doc, mapping_dict, print_link_view_names = False):
@@ -357,13 +359,60 @@ def process_link(doc, mapping_dict, print_link_view_names = False):
             continue
         setting.LinkedViewId = linked_view.Id
         try:
-            view.SetLinkOverrides (link_instance.Id, setting)
+            map = get_link_action_map(link_instance)
+            view.SetLinkOverrides (map["link type override"], setting)
             print("Set link view overrides for view [{}] using [{}][{}]".format(output.linkify(view.Id, title=view.Name), link_doc.Title, linked_view.Name))
         except Exception as e:
             print("Error setting link viewoverrides for view [{}]: {}".format(output.linkify(view.Id, title=view.Name), e))
 
 
+def check_linked_views(doc):
+    from pyrevit import script
+    output = script.get_output()
 
+    link_instances = DB.FilteredElementCollector(doc).OfClass(DB.RevitLinkInstance).ToElements()
+    if len(link_instances) == 0:
+        print ("No link instances found in the project.")
+        return
+    
+    all_views = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Views).WhereElementIsNotElementType().ToElements()
+    count = 0
+    def can_support_link_view(view, link_instance):
+        """Check if a view has link overrides for a given link instance"""
+        try:
+            _ = view.GetLinkOverrides(link_instance.Id)
+            return True
+        except:
+            return False
+
+
+
+    for view in sorted(all_views, key=lambda x: x.Name):
+        if view.IsTemplate:
+            continue
+        if not can_support_link_view(view, link_instances[0]):
+            continue
+
+        for link_instance in link_instances:
+            
+            for action, action_id in get_link_action_map(link_instance).items():
+                link_override_settings = view.GetLinkOverrides(action_id)
+        
+                if not link_override_settings:
+                  
+                    continue
+                if link_override_settings.LinkVisibilityType == DB.LinkVisibility.ByHostView:
+          
+                    continue
+
+                linked_doc = link_instance.GetLinkDocument()
+                linked_view = linked_doc.GetElement(link_override_settings.LinkedViewId)
+                if not linked_view:
+                    continue
+                print("{}. [{}] has linked view [{}] from [{}]. Setting using [{}]".format(count + 1, output.linkify(view.Id, title=view.Name), linked_view.Name, linked_doc.Title, action))
+                count += 1
+
+    print ("\n\nDone. {} views have linked views.".format(count))
 
 def unit_test():
     if ENVIRONMENT.IS_REVIT_ENVIRONMENT:
