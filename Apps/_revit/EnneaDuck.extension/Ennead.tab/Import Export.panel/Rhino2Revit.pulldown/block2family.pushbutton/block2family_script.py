@@ -123,7 +123,7 @@ def load_family(file):
     # load to project
     option = DB.SaveAsOptions()
     option.OverwriteExistingFile = True
-    family_container_folder = FOLDER.USER_DESKTOP_FOLDER + "\\EnneadTab Temp Family Folder"
+    family_container_folder = ENVIRONMENT.ONE_DRIVE_DESKTOP_FOLDER + "\\EnneadTab Temp Family Folder"
     if not os.path.exists(family_container_folder):
         os.mkdir(family_container_folder)
     family_doc.SaveAs(family_container_folder + "\\" + block_name + ".rfa",
