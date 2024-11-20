@@ -9,15 +9,18 @@ if ENVIRONMENT.IS_RHINO_ENVIRONMENT:
 
 def update_my_rui():
 
-    rs.CloseToolbarCollection("EnneadTab_For_Rhino_Installer", prompt=False)
-    # close current toolbar so not holding it.
-    rs.CloseToolbarCollection("EnneadTab_For_Rhino", prompt=False)
 
-    # close existing toolbar from 1.0 if exists
-    if "EnneadTab" in rs.ToolbarCollectionNames():
-        rs.CloseToolbarCollection("EnneadTab.rui", prompt=False)
 
-    my_local_version = FOLDER.copy_file_to_local_dump_folder(ENVIRONMENT.RHINO_FOLDER + "\\EnneadTab_For_Rhino.rui")
+    for tool_bar_name in rs.ToolbarCollectionNames():
+        if "enneadtab" in tool_bar_name.lower():
+            rs.CloseToolbarCollection(tool_bar_name, prompt=False)
+
+    if rs.ExeVersion() >= 8:
+        rui_file = "EnneadTab_For_Rhino_Modern.rui"
+    else:
+        rui_file = "EnneadTab_For_Rhino_Classic.rui"
+
+    my_local_version = FOLDER.copy_file_to_local_dump_folder(ENVIRONMENT.RHINO_FOLDER + "\\" + rui_file)
     rs.OpenToolbarCollection(my_local_version)
 
 

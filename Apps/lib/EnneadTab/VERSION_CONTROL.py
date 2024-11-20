@@ -43,5 +43,5 @@ def unit_test():
 
 
 if __name__ == "__main__":
-    unit_test()
+
     show_last_success_update_time()
