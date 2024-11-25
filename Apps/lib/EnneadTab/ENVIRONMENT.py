@@ -129,8 +129,8 @@ def is_avd():
         import socket
 
         computer_name = socket.gethostname()
-
-    return "avd" in computer_name.lower()
+  
+    return "avd" in computer_name.lower() or "gpupd" in computer_name.lower()
 
 
 def is_Rhino_8():

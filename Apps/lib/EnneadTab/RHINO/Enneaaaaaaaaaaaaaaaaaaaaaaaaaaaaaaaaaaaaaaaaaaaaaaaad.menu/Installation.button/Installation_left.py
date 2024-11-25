@@ -47,4 +47,8 @@ def Installation():
     get_latest_left.get_latest(is_silient = False)
 
 
-    rs.MessageBox("Please remember to restart your Rhino now.")
+    if rs.ExeVersion() < 8:
+        rs.MessageBox("Please remember to restart your Rhino now.")
+    else:
+        rs.MessageBox("Please remember to restart your Rhino now.\n\nIf you do not see the side toolbar, check with the instruction page for the final step.")
+    

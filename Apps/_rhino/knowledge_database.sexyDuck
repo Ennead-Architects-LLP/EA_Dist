@@ -418,6 +418,14 @@
         "tab": "Knowledge.tab",
         "tab_icon": "Knowledge.tab\\icon.png"
     },
+    "Lab.tab\\quick_test_temp.button\\quick test temp_left.py": {
+        "script": "Lab.tab\\quick_test_temp.button\\quick test temp_left.py",
+        "icon": null,
+        "alias": "QuickTestTemp",
+        "doc": "This button does QuickTestTemp when left click",
+        "tab": "Lab.tab",
+        "tab_icon": "Lab.tab\\icon.png"
+    },
     "Lab.tab\\test_Rhino8.button\\test_Rhino8_left.py": {
         "script": "Lab.tab\\test_Rhino8.button\\test_Rhino8_left.py",
         "icon": null,
