@@ -7,7 +7,7 @@ __FONDATION__ = True
 
 import sys
 import os
-
+import webbrowser
 # this is needed becasue the first ever search need to be robust.
 def find_main_repo():
     print ("Looking for EnneadTab OS...")
@@ -51,4 +51,5 @@ def Installation():
         rs.MessageBox("Please remember to restart your Rhino now.")
     else:
         rs.MessageBox("Please remember to restart your Rhino now.\n\nIf you do not see the side toolbar, check with the instruction page for the final step.")
-    
+        url = "https://github.com/Ennead-Architects-LLP/EA_Dist/blob/main/Installation/How%20To%20Install.md#31-ennneatab-for-rhino"
+        webbrowser.open(url)
