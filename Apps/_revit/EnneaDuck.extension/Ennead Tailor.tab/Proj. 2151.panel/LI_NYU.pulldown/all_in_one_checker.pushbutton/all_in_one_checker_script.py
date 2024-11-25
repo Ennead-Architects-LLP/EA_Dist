@@ -141,7 +141,7 @@ class InternalCheck:
             if search_key_name:
                 department_name = area.LookupParameter(self.option.DEPARTMENT_KEY_PARA).AsString()
                 if department_name in self.option.DEPARTMENT_IGNORE_PARA_NAMES:
-                    print ("Ignore {} for calculation".format(department_name))
+                    print ("Ignore {} for calculation at [{}]".format(output.linkify(area.Id, title=department_name), level.Name))
                     
                     continue
                 department_nickname = para_mapping.get(department_name, None)
@@ -365,10 +365,10 @@ class InternalCheck:
             dummy_target_data.update(para_name, value)
 
         if USER.IS_DEVELOPER:
-            print ("\n\nThis is a developer version")
             if ENVIRONMENT.IS_AVD:
                 NOTIFICATION.messenger("Cannot update from excel in AVD becasue ACC desktop connector is not working in AVD.")
                 return
+            print ("\n\nThis is a developer version")
             self.update_from_excel(dummy_target_data)
 
                 

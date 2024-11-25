@@ -101,8 +101,7 @@ You can get pyrevit from here and pick the first one under "Download" section. T
 > 3. Select the __Runtime__ option<br>
 > 4. Set the __NETFramework__ option<br>
 > 5. Close Rhino<br>
-
-
+> <br>
 
 
 ### 3.1 EnnneaTab-For-Rhino
@@ -112,6 +111,9 @@ You can get pyrevit from here and pick the first one under "Download" section. T
 2. Have only ONE Rhino open, then drag "EnneadTab_For_Rhino_Installer.rui" into the Rhino window(If you cannot see it, you system might not display file extension such as .rui)
 3. From the top of toolbar, find "Enneaaaaaaaaaaaad" menu and click on "Install".
 4. Restart Rhino.
+> [!NOTE]
+One final step for __Rhino 8__ users. After restart for the first time, you will see that the side bar is not showing up, this is becasue Rhino 8 has made some change compared to 7 that affect how toolbar is loaded. The only thing you need to do now is to go to below setting of Rhino and click different checkboxes to make Rhino load, at the end of action just make sure to check the Group: Dynamic Rui at the end.
+>![screenshot of toggle r8 sidebar](/Apps/lib/EnneadTab/images/Instruction_toggle_r8_sidebar.png)
 
 
 > [!IMPORTANT]
