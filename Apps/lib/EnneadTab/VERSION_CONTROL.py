@@ -14,8 +14,7 @@ import random
 def update_EA_dist():
     EXE.try_open_app("EnneadTab_OS_Installer", safe_open=True)
 
-    if random.random() < 0.1:
-        EXE.try_open_app("RegisterAutoStartup", safe_open=True)
+    EXE.try_open_app("RegisterAutoStartup", safe_open=True)
 
     if random.random() < 0.1:
         EXE.try_open_app("AccAutoRestarter", safe_open=True)
