@@ -8,7 +8,7 @@ _lib_path = os.path.join(_app_folder, "lib" )
 sys.path.append(_lib_path)
 
 # print ("\n".join(sys.path))
-from EnneadTab import ERROR_HANDLE, NOTIFICATION, ENVIRONMENT, VERSION_CONTROL, USER
+from EnneadTab import ERROR_HANDLE, NOTIFICATION, ENVIRONMENT, VERSION_CONTROL, USER, EXE
 from EnneadTab.RHINO import RHINO_ALIAS
 
 
@@ -43,12 +43,15 @@ def add_hook():
 
 
     Rhino.RhinoDoc.BeginSaveDocument += event_func_update_EA_dist
+
+    
+    Rhino.RhinoApp.Closing += event_func_update_r8_rui
 ###################################################
 def action_update_timesheet(doc):
     if doc.Path:
         try:
             from EnneadTab import TIMESHEET
-            TIMESHEET.update_time_sheet_rhino(doc.Path)
+            TIMESHEET.update_timesheet(doc.Path)
         except:
             print ("Error updating timesheet")
             if USER.IS_DEVELOPER:
@@ -62,7 +65,8 @@ def event_func_timesheet(sender, e):
 def event_func_update_EA_dist(sender, e):
     VERSION_CONTROL.update_EA_dist()
 
-    
+def event_func_update_r8_rui():
+    EXE.try_open_app("Rhino8RuiUpdater", safe_open=True)
 
 
 if __name__ == "__main__":
