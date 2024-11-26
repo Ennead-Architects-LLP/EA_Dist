@@ -7,6 +7,14 @@
         "tab": "Ennead+.menu",
         "tab_icon": null
     },
+    "Ennead+.menu\\app_store.button\\app_store_left.py": {
+        "script": "Ennead+.menu\\app_store.button\\app_store_left.py",
+        "icon": "Ennead+.menu\\app_store.button\\icon.png",
+        "alias": "AppStore",
+        "doc": "Open the all apps avaibalie for enneadtab",
+        "tab": "Ennead+.menu",
+        "tab_icon": null
+    },
     "Ennead+.menu\\create_new_button.button\\new_button_left.py": {
         "script": "Ennead+.menu\\create_new_button.button\\new_button_left.py",
         "icon": "Ennead+.menu\\create_new_button.button\\icon.png",
