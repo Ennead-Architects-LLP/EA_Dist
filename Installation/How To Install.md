@@ -15,16 +15,16 @@ If you have "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem", delete ecosys
 
 
 ### 1.1 Download Installer
-Depending on your network access, you can download the installer from inside Ennead Network or from GitHub. __you do not need to do both__.
-#### 1.1.0 From inside Ennead Network
+Depending on your network access, you can use the installer from Ennead Network or download from GitHub. __You do not need to do both__.
+#### 1.1.a From inside Ennead Network
 Run this installer from L drive.
 > - L:\4b_Applied Computing\EnneadTab-DB\Stand Alone Tools\EnneadTab_OS_Installer.exe
 
 <br>
 <br>
 
-#### 1.1.1 From GitHub
-See link below to download "EnneadTab_OS_Installer.exe". Save anywhere.
+#### 1.1.b From GitHub
+See link below to download "EnneadTab_OS_Installer.exe". Save anywhere. Use this method for computer without access to Ennead Network, such as your traveling laptop.
 
 - https://github.com/Ennead-Architects-LLP/EA_Dist/blob/main/Installation/EnneadTab_OS_Installer.exe
 
@@ -35,13 +35,13 @@ See link below to download "EnneadTab_OS_Installer.exe". Save anywhere.
 
 
 > [!NOTE]
-> Some computer's firewall(such as windows smart defender) might mark this exe as potential virus, but it is really NOT virus, I promise! Just continue download and save that exe file. If for whatever reason your firewall still reject the download, or your firewall refuse to run the exe, try method in step 1.1.0.
+> Some computer's firewall(such as windows smart defender) might mark this exe as potential virus, but it is really NOT virus, I promise! Just continue download and save that exe file. 
 
 <br>
 <br>
 
 ### 1.2 Install Ecosystem Folder
-Run the installer you just downloaded by double clicking the exe file. It might takes a few seconds (or minutes, depending on your internet speed) to unpack the contents. __This window will only show if there was no existing Ecosystem folder, aka a clean (re)installation. Otherwise it will be a silent installation, and you can move on to next step when you have the needed content.__
+Run the installer by double clicking the exe file. It might takes a few seconds (or minutes(depending on your internet speed) to unpack the contents. __This window will only show if there was no existing Ecosystem folder, aka a clean (re)installation. Otherwise it will be a silent installation, and you can move on to next step when you have the needed content.__
 ![os install in progress](/Apps/lib/EnneadTab/images/Instruction_getting_OS.png)
 
 Watch the progress, when it says finished it will close itself, and it is ready to move on installing Rhino and Revit Version. Follow __step 2.1 or 3.1__ below.
@@ -51,17 +51,18 @@ Watch the progress, when it says finished it will close itself, and it is ready 
 <br>
 
 ## 2. EnneadTab-For-Revit
+EnneadTab-For-Revit run over pyRevit framework. Make sure you have pyrevit installed before everything else.
+You can get pyrevit from here and pick the first one under "Download" section. There is no admin restriction to install: https://github.com/pyrevitlabs/pyRevit/releases
 > [!NOTE]
 > Attention, __Revit 2025__ users!
 > <br>
 > Due to the significant .Net framework changes from 2024 to 2025, pyRevit stable version is not supported for Revit 2025. <br>
-> Therefore, EnneadTab-For-Revit is suggeted to run with 2024 and before. However if you need to work wth 2025, EnneadTab for Revit can run as long as you have uninstall pyrevit 4.8 and install pyrevit 5 WIP. See link below. 
-> - L:\4b_Applied Computing\EnneadTab-DB\pyrevit-installers\pyRevit_5.0.0.24325_signed.exe
+> Therefore, EnneadTab-For-Revit is suggeted to run with 2024 and before. However if you need to work wth 2025, EnneadTab for Revit can run as long as you uninstall pyrevit 4.8 and install pyrevit 5 WIP, __it is adviced to not have both version in the same machine__. See link below for getting pyrevit 5.
+> - If you have Ennead Network access: L:\4b_Applied Computing\EnneadTab-DB\pyrevit-installers\pyRevit_5.0.0.24325_signed.exe
+> - Otherwise, download pyrevit 5 from here: https://www.pyrevitlabs.io/
 
 
 ### 2.1. EnneadTab-For-Revit
-0. EnneadTab-For-Revit run over pyRevit framework. Make sure you have pyrevit installed. 
-You can get pyrevit from here and pick the first one under "Download" section. There is no admin restriction to install: https://github.com/pyrevitlabs/pyRevit/releases
 
 1. No need to uninstall old version of EnneadTab-For-Revit, it will be handled automatically.
 
@@ -71,7 +72,7 @@ You can get pyrevit from here and pick the first one under "Download" section. T
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 
 4. Double click on 
-    - "EnneadTab-For-Revit.exe"(If you cannot see it, you system might not display file extension such as .exe)
+    - "EnneadTab-For-Revit.exe"
 
 5. You can now open Revit.
 
@@ -87,7 +88,7 @@ You can get pyrevit from here and pick the first one under "Download" section. T
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 
 3. Double click on 
-    - "EnneadTab_For_Revit_UnInstaller.exe"(If you cannot see it, you system might not display file extension such as .exe)
+    - "EnneadTab_For_Revit_UnInstaller.exe"
 
 4. You can now open Revit.
 
@@ -97,7 +98,7 @@ You can get pyrevit from here and pick the first one under "Download" section. T
 ## 3 EnnneaTab-For-Rhino
 
 ### 3.1 EnnneaTab-For-Rhino 7
-0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.3__, ignore if you have no previous version.
+0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.3__, ignore thsi step if you have no previous version. How do you know if you have previous version? If your Rhino toolbar are not saying "Ennead+" but instead saying "Ennead", you have previous version.
 1. Navigate to 
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 2. Have __ONLY ONE__ Rhino open, then drag "EnneadTab_For_Rhino_Installer.rui" into the Rhino window.
@@ -111,19 +112,19 @@ You can get pyrevit from here and pick the first one under "Download" section. T
 > Due to the significant .Net framework changes from Rhino 7 to 8, you will need to configure your Rhino 8 to be backward compatable before installing EnneadTab-for-Rhino. Therefore, compared to the installation of EnneadTab-for-Rhino 7, you will need to do a few more steps.
 
 
-0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.3__, ignore if you have no previous version.
-1. If you have not done this before, start __ONLY ONE__ Rhino for Windows, type the command __SetDotNetRuntime__, select the __Runtime__ option. Set the __NETFramework__ option. Close Rhino.
+0. Troughly uninstall __any__ previous EnneadTab-For-Rhino version by following __step 3.3__, ignore thsi step if you have no previous version. How do you know if you have previous version? If your Rhino toolbar are not saying "Ennead+" but instead saying "Ennead", you have previous version.
+1. If you have not done this before, start __ONLY ONE__ Rhino for Windows, type the command __SetDotNetRuntime__, select the __Runtime__ option. Set the __NETFramework__ option. Close Rhino. Again, this step is for Rhino 8 only.
 2. Navigate to 
     - "C:\Users\\[USER_NAME]\Documents\EnneadTab Ecosystem\EA_Dist\Installation"
 3. Have __ONLY ONE__ Rhino open, then drag "EnneadTab_For_Rhino_Installer.rui" into the Rhino window.
 4. From the top of toolbar, find "Enneaaaaaaaaaaaad" menu and click on "Install".
-5. You will see that the side bar is not showing up, this is becasue Rhino 8 has made some change compared to 7 that affect how toolbar is loaded. Now is to go to below setting of Rhino and click different checkboxes to make Rhino load, at the end of action just make sure to check the Group: Dynamic Rui at the end.
+5. You will see that the side bar is not showing up, this is becasue Rhino 8 has made some change compared to 7 that affect how toolbar is loaded. Now please go to below setting of Rhino and click different checkboxes randomly to make Rhino load, but finish it in a stage like below screenshot: just make sure to check the Group: Dynamic Rui at the end.
 ![screenshot of toggle r8 sidebar](/Apps/lib/EnneadTab/images/Instruction_toggle_r8_sidebar.png)
 6. Restart Rhino.
 
 
 > [!IMPORTANT]
-> Rhino only remember the setting of most recent closed Rhino. Using only one rhino help to make installation stick.
+> Rhino only remember the setting of most recent closed Rhino. Using only one rhino help to make installation stick. 
 
 > [!TIP]
 > After restart, every button should work just fine, But if you see error message such as "Cannot find EnneadTab" or "No module named Ennead.xxx", hit __ActivateEnneadTab__ from dropdown menu usually fix it.<br>
