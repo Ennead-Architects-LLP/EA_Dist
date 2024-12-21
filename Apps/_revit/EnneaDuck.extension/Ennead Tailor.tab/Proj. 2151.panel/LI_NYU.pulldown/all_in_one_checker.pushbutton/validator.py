@@ -5,7 +5,7 @@ from pyrevit import script
 
 
 from EnneadTab.REVIT import REVIT_VIEW, REVIT_UNIT, REVIT_FAMILY
-from EnneadTab import USER, ENVIRONMENT
+from EnneadTab import SAMPLE_FILE, USER
 
 
 
@@ -18,6 +18,9 @@ def validate_all(UI):
     # make sure the container view exsit
     validate_container_view(UI.doc, UI.option)
 
+    # make sure the calcualator family is a good family
+    if not is_family_valid(UI.doc, UI.option):
+        return False
 
     # make sure the final schdule view is meeting the requeirement
     validate_schedule_view(UI.doc, UI.option)
@@ -27,9 +30,6 @@ def validate_all(UI):
     show_logic(UI.doc, UI.option, UI.show_log)
     
     
-    # make sure the calcualator family is a good family
-    if not is_family_valid(UI.doc, UI.option):
-        return False
 
     # test if each type has exactly one instance
     if not is_family_types_valid(UI.doc, UI.option):
@@ -326,7 +326,7 @@ def set_type_order_index(doc, option):
 def is_family_valid(doc, option):
 
     # make sure family exists
-    sample_family_path = "{}\\Contents.panel\\2D Contents.pulldown\\HealthCare Data Calculator.content\\EnneadTab AreaData Calculator_content.rfa".format(ENVIRONMENT.REVIT_LIBRARY_TAB)
+    sample_family_path = SAMPLE_FILE.get_file("EnneadTab AreaData Calculator.rfa")
     REVIT_FAMILY.get_family_by_name(option.CALCULATOR_FAMILY_NAME, doc, load_path_if_not_exist=sample_family_path)
     
 
