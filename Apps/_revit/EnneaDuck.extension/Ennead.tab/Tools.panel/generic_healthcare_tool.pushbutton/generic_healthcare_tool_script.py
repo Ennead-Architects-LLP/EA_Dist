@@ -20,15 +20,18 @@ UIDOC = REVIT_APPLICATION.get_uidoc()
 DOC = REVIT_APPLICATION.get_doc()
             
 import dgsf_chart
-
+import color_pallete
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
 def generic_healthcare_tool(doc, show_log):
 
-    options = {"Detail DGSF Chart Update": dgsf_chart.dgsf_chart_update}
+    options = {
+        "Detail DGSF Chart Update": dgsf_chart.dgsf_chart_update,
+        "Update Color Pallete": color_pallete.update_color_pallete
+    }
 
-    select_option = forms.SelectFromList.show(options.keys(), multiselect=False, title="Select option")
+    select_option = forms.SelectFromList.show(options.keys(), multiselect=False, title="How can I help you today?", button_name="Help Me!")
     if select_option is None:
         return
 
