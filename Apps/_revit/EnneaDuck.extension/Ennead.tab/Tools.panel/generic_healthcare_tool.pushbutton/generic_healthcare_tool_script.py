@@ -19,14 +19,14 @@ from Autodesk.Revit import DB # pyright: ignore
 UIDOC = REVIT_APPLICATION.get_uidoc()
 DOC = REVIT_APPLICATION.get_doc()
             
-
+import dgsf_chart
 
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
 def generic_healthcare_tool(doc, show_log):
 
-    options = {"Detail DGSF Chart Update": dgsf_chart_update}
+    options = {"Detail DGSF Chart Update": dgsf_chart.dgsf_chart_update}
 
     select_option = forms.SelectFromList.show(options.keys(), multiselect=False, title="Select option")
     if select_option is None:
@@ -35,8 +35,7 @@ def generic_healthcare_tool(doc, show_log):
     func = options[select_option]
     func(doc)
     
-def dgsf_chart_update(doc):
-    pass
+
 ################## main code below #####################
 output = script.get_output()
 output.close_others()
