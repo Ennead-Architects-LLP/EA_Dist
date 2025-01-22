@@ -5,7 +5,7 @@
 import os
 import DATA_FILE
 import ENVIRONMENT
-
+import NOTIFICATION
 
 def get_api_key(app_name):
     """Returns the API key for the specified app.
@@ -25,8 +25,12 @@ def get_api_key(app_name):
     api_key_file = "EA_API_KEY.secret"
     L_drive_file_path = os.path.join(ENVIRONMENT.DB_FOLDER, api_key_file)
     if ENVIRONMENT.IS_OFFLINE_MODE:
-        return DATA_FILE.get_data(api_key_file)
-    data = DATA_FILE.get_data(L_drive_file_path)
+        data = DATA_FILE.get_data(api_key_file)
+        if not data:
+            NOTIFICATION.messenger("API key file not found, do you have L drive connection?")
+    else:
+        data = DATA_FILE.get_data(L_drive_file_path)
+
     return data.get(app_name)
 
 
