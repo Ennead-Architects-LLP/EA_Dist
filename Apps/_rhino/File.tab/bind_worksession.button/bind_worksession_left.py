@@ -10,7 +10,7 @@ import os
 import sys
 import time
 
-from EnneadTab import NOTIFICATION, SOUND, EMAIL
+from EnneadTab import NOTIFICATION, SOUND, EMAIL, FOLDER, TIME
 from EnneadTab import LOG, ERROR_HANDLE
 from EnneadTab.RHINO import RHINO_CLEANUP
 
@@ -64,7 +64,7 @@ def bind_worksession():
     for file in session_paths:
         file_string_link += " Detach \"{}\"".format(file)
     rs.Command("-WorkSession   {}  Saveas \"{}\" Enter Enter".format(file_string_link, 
-                                                                     EnneadTab.FOLDER.get_EA_dump_folder_file("temp_session.rws")))
+                                                                     FOLDER.get_EA_dump_folder_file("temp_session.rws")))
     
     NOTIFICATION.messenger(main_text = "Purging Unused Layers, Materials and Blocks")
     RHINO_CLEANUP.purge_layer()
@@ -81,7 +81,7 @@ def bind_worksession():
     NOTIFICATION.messenger(main_text = "Session Binding Done!")
     time_used = time.time() - begin_time
     EMAIL.email_to_self(subject="EnneadTab Auto Email: Session Binding Finished!",
-                                body="After {}, Your binding file is saved, check below:".format(EnneadTab.TIME.get_readable_time(time_used)),
+                                body="After {}, Your binding file is saved, check below:".format(TIME.get_readable_time(time_used)),
                                 body_folder_link_list=[final_path],
                                 body_image_link_list=["L:\\4b_Applied Computing\\03_Rhino\\12_EnneadTab for Rhino\\Source Codes\\Fun\\work_session_friend.jpg"])
     
