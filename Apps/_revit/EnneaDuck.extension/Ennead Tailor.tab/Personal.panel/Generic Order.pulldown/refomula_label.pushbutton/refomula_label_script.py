@@ -8,7 +8,7 @@ import proDUCKtion # pyright: ignore
 proDUCKtion.validify()
 
 from EnneadTab import ERROR_HANDLE, LOG
-# from EnneadTab.REVIT import REVIT_APPLICATION
+from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_SELECTION
 from Autodesk.Revit import DB # pyright: ignore 
 
 UIDOC = REVIT_APPLICATION.get_uidoc()
@@ -17,8 +17,9 @@ DOC = REVIT_APPLICATION.get_doc()
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
-def refomula_label():
-    pass
+def refomula_label(doc):
+
+    selection = REVIT_SELECTION.get_selection()
 
 
     # t = DB.Transaction(doc, __title__)
@@ -30,7 +31,7 @@ def refomula_label():
 
 ################## main code below #####################
 if __name__ == "__main__":
-    refomula_label()
+    refomula_label(DOC)
 
 
 
