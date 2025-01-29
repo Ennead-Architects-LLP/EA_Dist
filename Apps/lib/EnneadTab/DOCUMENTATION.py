@@ -10,6 +10,7 @@ import ENVIRONMENT
 import FOLDER
 import USER
 import OUTPUT
+import FOLDER
 
 
 
@@ -291,7 +292,7 @@ def show_tip_rhino():
             knowledge[command_name] = value
 
 
-    button, tip_data = random.choice(knowledge.items())
+    button, tip_data = random.choice(list(knowledge.items()))
     
 
     
@@ -317,41 +318,58 @@ def show_tip_rhino():
         else:
             final_commands.append("EA_{}".format(command))
     commands = " / ".join(final_commands)
-    # print data
-    info = "Button Name: {}\nCommand: {}\nTooltip: {}\nAccess: {}\nButton Icon:".format(button,
-                                                                                        commands,
-                                                                                        tip_data.get("doc"),
-                                                                                        access)
-    info += "\nFind this button in: {}\nTab Icon:".format(tab_name)
+
 
     
-    click_icon = "{}\\{}.png".format(os.path.join(os.path.dirname(__file__)), access)
-    
-    
+    output = OUTPUT.Output()
+    output.write ("EnneadTab Tip of the day:", OUTPUT.Style.Title)
 
-    def update_image_action(search_key, image_viewer):
+
+
+    
+    def update_image_action(search_key):
         
         icon_path = tip_data.get(search_key, None)
         if icon_path is None:
-            icon_path = os.path.join(os.path.dirname(__file__), "missing_icon.png")
+            icon_path = os.path.join("Knowledge.tab\\search_command.button", "missing_icon.png")
         
         icon_image_path = os.path.join(ENVIRONMENT.RHINO_FOLDER, icon_path)
 
 
-        if os.path.exists(icon_image_path):
-            image = Eto.Drawing.Bitmap(icon_image_path)
-            
+        return icon_image_path
+
+
+    button_icon = update_image_action("icon")
+    output.write(button_icon)
+
+
+    output.write("Did you know in [{}]...".format(commands), OUTPUT.Style.SubTitle)
+
+    output.write (tip_data.get("doc"))
+
+    output.insert_division()
+    
+    output.write ("Activated by {}".format(access), OUTPUT.Style.Footnote)
+    click_icon = "{}\\{}.png".format("{}\\Knowledge.tab\\search_command.button".format(ENVIRONMENT.RHINO_FOLDER), access)
+    output.write(click_icon)
 
     
-    update_image_action("icon", self.icon_tray_button_image_viewer)
-    update_image_action("tab_icon", self.icon_tray_tab_image_viewer)
+    output.write("Find this button in: {}".format(tab_name), OUTPUT.Style.Footnote)
+    tab_icon = update_image_action("tab_icon")
+    output.write(tab_icon)
+
     
+
+    output.plot()
+
+    
+
 
 
 def tip_of_day():
     """Show a random tip of the day.
     """
-    if random.random() < 0.8:
+    if random.random() < 0.4:
         return
     if ENVIRONMENT.is_Revit_environment():
         if random.random() < 0.95:
@@ -390,5 +408,5 @@ def get_floating_box_documentation():
     
     
 if __name__ == "__main__":
-    show_scott_tip()
+    show_tip_rhino()
     
