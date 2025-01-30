@@ -409,7 +409,15 @@ def get_floating_box_documentation():
     
     
     
-def generate_documentation():
+def generate_documentation(debug = False):
+    generate_rhino_documentation(debug)
+    generate_revit_documentation(debug)
+
+def generate_revit_documentation(debug):
+    pass
+
+
+def generate_rhino_documentation(debug):
     rhino_knowledge_dict = get_rhino_knowledge()
 
     def get_command_order(x):
@@ -422,9 +430,13 @@ def generate_documentation():
     
     import PDF
     import time
-    output =  "rhino_knowledge_{}.pdf".format(time.time())
-    PDF.documentation2pdf(rhino_knowledge,output)
-    os.startfile(output)
+    if debug:
+        output =  "rhino_knowledge_{}.pdf".format(time.time())
+        PDF.documentation2pdf(rhino_knowledge,output)
+        os.startfile(output)
+    else:
+        output = "{}\\EnneadTab_For_Rhino_HandBook.pdf".format(ENVIRONMENT.INSTALLATION_FOLDER)
+        PDF.documentation2pdf(rhino_knowledge,output)
 
     # import WEB
     # output =  "rhino_knowledge_{}.html".format(time.time())
@@ -434,5 +446,5 @@ def generate_documentation():
     
     
 if __name__ == "__main__":
-    generate_documentation()
+    generate_documentation(debug=True)
     
