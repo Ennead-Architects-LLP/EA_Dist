@@ -150,9 +150,11 @@ class PDFGenerator:
         tab_table.drawOn(canvas, page_width - self.RIGHT_MARGIN - 200, page_height - self.TOP_MARGIN + 10)
         
         # Add page number at bottom center
-        canvas.drawCentredString(page_width / 2, self.BOTTOM_MARGIN / 2, "{}".format(doc.page))
+        canvas.drawCentredString(page_width / 2, self.BOTTOM_MARGIN / 2, "{}".format(self.current_page_num))
         
         canvas.restoreState()
+
+        self.current_page_num += 1
     
     def generate_segment_pdf(self, segment_data, tab_name, tab_icon_path, temp_pdf_path):
         """Generate a temporary PDF for a single segment."""
@@ -162,11 +164,16 @@ class PDFGenerator:
         story = []
 
         for doc_data in segment_data:
-            alias = Paragraph(str(doc_data['alias']), self.command_style)
+            alias_info = doc_data.get('alias', "No alias")
+            if isinstance(alias_info, list):
+                alias_info = " / ".join(alias_info)
+            print (alias_info)
+            alias = Paragraph(alias_info, self.command_style)
             tooltip_text = Paragraph("<b>Tooltip:</b> {}".format(doc_data.get('doc', 'No description available')), self.tooltip_style)
+            access_text = Paragraph("<b>Access:</b> {}".format(doc_data.get('acess', 'No access available')), self.tooltip_style)
             icon = Image(os.path.join(ENVIRONMENT.RHINO_FOLDER, doc_data['icon']), width=0.5 * inch, height=0.5 * inch) if doc_data.get('icon') else Spacer(1, 0.8 * inch)
             
-            data = [[icon, alias], ['', tooltip_text]]
+            data = [[icon, alias], ['', tooltip_text], ["", access_text]]
             table = Table(data, colWidths=[1.2 * inch, 6 * inch])
             table.setStyle([
                 ('SPAN', (0,0), (0,1)),
@@ -186,7 +193,7 @@ class PDFGenerator:
         temp_pdfs = []
         segmented_data = {}
         toc_entries = []
-        page_counter = 2  # Start after cover page
+        self.current_page_num = 1
         
         # Generate cover page
         cover_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
@@ -206,9 +213,9 @@ class PDFGenerator:
         for tab_name, segment in segmented_data.items():
             temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
             temp_pdfs.append(temp_pdf)
-            toc_entries.append((tab_name, page_counter))
+            toc_entries.append((tab_name, self.current_page_num))
             self.generate_segment_pdf(segment['data'], tab_name, segment['icon'], temp_pdf)
-            page_counter += 1  # Assuming each section starts on a new page
+            self.current_page_num += 1  
         
         # Generate table of contents
         toc_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
