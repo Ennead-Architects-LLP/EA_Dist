@@ -2581,34 +2581,22 @@ EA_MoveImg_1643</script>
     </macro_item>
     <macro_item guid="d8b3960e-5881-471b-b829-8232b9f47443" bitmap_id="a18d28d3-8a39-457d-b679-31cc171c1d22">
       <text>
-        <locale_1033>xiong_an_facade_hori_left</locale_1033>
+        <locale_1033>2419_Facade move</locale_1033>
       </text>
       <tooltip>
-        <locale_1033>N/A</locale_1033>
+        <locale_1033>xxxxxxxxxxxxxxxxxxxxx</locale_1033>
       </tooltip>
       <help_text>
-        <locale_1033>N/A</locale_1033>
+        <locale_1033>xxxxxxxxxxxxxxxxxxxxx</locale_1033>
       </help_text>
       <button_text>
-        <locale_1033>xiong_an_facade_hori_left</locale_1033>
+        <locale_1033>2419_Facade move</locale_1033>
       </button_text>
       <menu_text>
-        <locale_1033>xiong_an_facade_hori_left</locale_1033>
+        <locale_1033>2419_Facade move</locale_1033>
       </menu_text>
-      <script>! _-RunPythonScript (
-import os
-import sys
-common_folders = [&quot;github&quot;,&quot;dev-repo&quot;,&quot;duck-repo&quot;,&quot;design-repo&quot;]
-lib_folders = [os.path.join(os.environ['USERPROFILE'],x, &quot;EnneadTab-OS&quot;,&quot;Apps&quot;,&quot;lib&quot;,&quot;EnneadTab&quot;) for x in common_folders]
-lib_folders.append( os.path.join(os.environ['USERPROFILE'], 'Documents','EnneadTab Ecosystem','EA_Dist','Apps','lib','EnneadTab'))
-for lib_folder in lib_folders:
-    if os.path.exists(lib_folder):
-        sys.path.append(lib_folder)
-        break
-import MODULE_HELPER
-MODULE_HELPER.run_Rhino_button('Tailor.tab\\xiong_an_facade_hori.button\\xiong_an_facade_hori_left.py')
-)
-</script>
+      <script>EA_ActivateEnneadTab
+EA_2419_Facade move</script>
     </macro_item>
     <macro_item guid="03f78fb5-ca6c-4b10-bd73-b30697fbc419" bitmap_id="43e3303f-846c-42cf-a2f0-36ece901adae">
       <text>
