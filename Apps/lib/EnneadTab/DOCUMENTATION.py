@@ -307,12 +307,16 @@ def set_revit_knowledge():
 
 
     def strip_folder(folder):
-        return folder.split("")
+        return folder.replace(ENVIRONMENT.REVIT_PRIMARY_EXTENSION, "").lstrip("\\")
     
     data_dict = {}
     for root, dirs, files in os.walk(ENVIRONMENT.REVIT_PRIMARY_EXTENSION):
         for file in files:
             if not file.endswith("_script.py"):
+                continue
+            if "floating_script.py" in file:
+                continue
+            if ".temp" in root:
                 continue
             script_path = os.path.join(root, file)
 
@@ -333,10 +337,15 @@ def set_revit_knowledge():
             tab_icon_path = get_icon_from_path(panel_folder)
 
             
+            if not icon_path:
+                print (script_path)
+                raise
+
+    
 
             script_path = strip_folder(script_path)
             icon_path = strip_folder(icon_path)
-            tab_icon_path = strip_folder(tab_icon_path)
+
             
             data_dict[script_path] = {
                         "script":script_path,
@@ -504,33 +513,41 @@ def get_floating_box_documentation():
     
     
 def generate_documentation(debug = False):
-    generate_rhino_documentation(debug)
-    generate_revit_documentation(debug)
-
-def generate_revit_documentation(debug):
-    pass
+    generate_app_documentation(debug, app="Rhino")
+    generate_app_documentation(debug, app="Revit")
 
 
-def generate_rhino_documentation(debug):
-    rhino_knowledge_dict = get_rhino_knowledge()
+
+def generate_app_documentation(debug, app):
+    if app == "Rhino":
+        knowledge_dict = get_rhino_knowledge()
+    elif app == "Revit":
+        set_revit_knowledge()
+        knowledge_dict = get_revit_knowledge()
+    else:
+        raise
 
     def get_command_order(x):
         tab = x.get("tab")
         commands =  x.get("alias")
         if not isinstance(commands, list):
             commands = [commands]
-        return  "{}, {}".format(tab, commands)
-    rhino_knowledge = sorted(rhino_knowledge_dict.values(), key = get_command_order)
+
+        if not tab:
+            tab = "no tab"
+        
+        return  "{}, {}, {}".format("proj" in tab.lower(), tab, commands)
+    app_knowledge = sorted(knowledge_dict.values(), key = get_command_order)
     
     import PDF
     import time
     if debug:
-        output =  "rhino_knowledge_{}.pdf".format(time.time())
-        PDF.documentation2pdf(rhino_knowledge,output)
+        output =  "{}_knowledge_{}.pdf".format(app, time.time())
+        PDF.documentation2pdf(app, app_knowledge,output)
         os.startfile(output)
     else:
-        output = "{}\\EnneadTab_For_Rhino_HandBook.pdf".format(ENVIRONMENT.INSTALLATION_FOLDER)
-        PDF.documentation2pdf(rhino_knowledge,output)
+        output = "{}\\EnneadTab_For_{}_HandBook.pdf".format(ENVIRONMENT.INSTALLATION_FOLDER, app)
+        PDF.documentation2pdf(app, app_knowledge,output)
 
     # import WEB
     # output =  "rhino_knowledge_{}.html".format(time.time())
@@ -540,5 +557,5 @@ def generate_rhino_documentation(debug):
     
     
 if __name__ == "__main__":
-    # generate_documentation(debug=True)
-    set_revit_knowledge()
+    
+    generate_documentation(debug=True)
