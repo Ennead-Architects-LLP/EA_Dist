@@ -208,7 +208,7 @@ def _read_data_from_excel_online(url, worksheet, return_dict, headless):
 
 
 def _read_data_from_excel_locally(filepath, worksheet, return_dict, headless):
-    filepath = FOLDER.get_save_copy(filepath)
+    filepath = FOLDER.get_safe_copy(filepath)
     
     if filepath.endswith(".xlsx"):
         job_data = {
