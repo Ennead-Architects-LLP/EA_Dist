@@ -10,6 +10,8 @@ proDUCKtion.validify()
 from EnneadTab import ERROR_HANDLE, LOG
 from EnneadTab.REVIT import REVIT_APPLICATION
 from Autodesk.Revit import DB # pyright: ignore 
+from System import EventHandler, Uri # pyright: ignore 
+from Autodesk.Revit.DB.Events import DocumentChangedEventArgs # pyright: ignore 
 import traceback
 from pyrevit import forms
 # UIDOC = REVIT_APPLICATION.get_uidoc()
@@ -30,9 +32,11 @@ class DocumentChangeTracker:
     def on_doc_changed(self, sender, args):
         # Track modifications
         for id in args.GetModifiedElementIds():
+            print ("modifed", id)
             self.changes.append(("Modified", id))
         # Track deletions
         for id in args.GetDeletedElementIds():
+            print ("deleted", id)
             self.changes.append(("Deleted", id))
             
     def clear(self):
@@ -48,29 +52,28 @@ def merge_ost(doc):
     if not target_sub_category:
         return
     
-    print(bad_sub_category)
-    print(target_sub_category)
-    
+
     # Setup change tracker
     change_tracker = DocumentChangeTracker()
-    doc.Application.DocumentChanged += change_tracker.on_doc_changed
+    doc.Application.DocumentChanged += EventHandler[DocumentChangedEventArgs](change_tracker.on_doc_changed)
     try:
         dry_delete(doc, bad_sub_category, change_tracker)
     except:
         print (traceback.format_exc())
+    doc.Application.DocumentChanged -= EventHandler[DocumentChangedEventArgs](change_tracker.on_doc_changed)
 
 def dry_delete(doc, bad_sub_category, change_tracker):
+    print("deleting {}: {}".format(bad_sub_category.Parent.Name, bad_sub_category.Name))
     t = DB.Transaction(doc, __title__)
     t.Start()
-    print ("$$$$$$")
-    print (bad_sub_category)
-    print (bad_sub_category.Id)
-    
-    doc.Delete(bad_sub_category.Id)
+    try:
+        doc.Delete(bad_sub_category.Id)
+    except:
+        t.RollBack()
+        print ("Might not be able to delete build-in category, deleting canceled")
     
     # Print affected elements
     print("Changes detected during subcategory deletion:")
-    print("delete {}: {}".format(bad_sub_category.Parent.Name, bad_sub_category.Name))
     print(change_tracker.changes)
     for change_type, element_id in change_tracker.changes:
         try:
@@ -88,8 +91,7 @@ def dry_delete(doc, bad_sub_category, change_tracker):
     
     t.RollBack()
     
-    # Cleanup event handler
-    doc.Application.DocumentChanged -= change_tracker.on_doc_changed
+  
 
 def output_element_info(doc, element_id):
     try:
