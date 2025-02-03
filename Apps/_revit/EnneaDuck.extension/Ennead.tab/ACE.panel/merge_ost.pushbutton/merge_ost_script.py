@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__doc__ = "Sen Zhang has not writed documentation for this tool, but he should!"
+__doc__ = "Consider using Ideate instead"
 __title__ = "Merge\nObject Style"
 
 import proDUCKtion # pyright: ignore 
@@ -10,7 +10,7 @@ proDUCKtion.validify()
 from EnneadTab import ERROR_HANDLE, LOG
 from EnneadTab.REVIT import REVIT_APPLICATION
 from Autodesk.Revit import DB # pyright: ignore 
-
+import traceback
 from pyrevit import forms
 # UIDOC = REVIT_APPLICATION.get_uidoc()
 DOC = REVIT_APPLICATION.get_doc()
@@ -54,9 +54,18 @@ def merge_ost(doc):
     # Setup change tracker
     change_tracker = DocumentChangeTracker()
     doc.Application.DocumentChanged += change_tracker.on_doc_changed
-    
+    try:
+        dry_delete(doc, bad_sub_category, change_tracker)
+    except:
+        print (traceback.format_exc())
+
+def dry_delete(doc, bad_sub_category, change_tracker):
     t = DB.Transaction(doc, __title__)
     t.Start()
+    print ("$$$$$$")
+    print (bad_sub_category)
+    print (bad_sub_category.Id)
+    
     doc.Delete(bad_sub_category.Id)
     
     # Print affected elements
