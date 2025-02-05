@@ -5,7 +5,15 @@ NYU Health as sample
 
 base of design need to have PIM #
 
-need to have "GFA Scheme" and "DGSF Scheme", each need to have a color scheme
+need to have "GFA Scheme" and "DGSF Scheme", each need to have a color scheme???
+area para name list
+
+
+parking para name list
+
+
+during early design, avoid using design option for total massing study. Such as T building VS L building. 
+Instead, duplicate the entire model for new scheme.
 """
 
 
