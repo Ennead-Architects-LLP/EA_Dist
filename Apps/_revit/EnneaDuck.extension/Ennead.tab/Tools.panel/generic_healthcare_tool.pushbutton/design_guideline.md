@@ -77,12 +77,14 @@
 ### 6.2 Workflow
 
 
-## 7. Essential Families
 
+
+## 7. Essential Families
+### 7.1 System Families
+### 7.2 Furniture Families
 - Elevator
 - Elevator door
 - Parking stall
-
 - Parking Tag
 - Patient bed room planner
 
@@ -90,8 +92,6 @@
 ## 8. Exporting
 
 ### 8.1. Sheet List Organization
-
-
 
     A-000 General Information
     A-100 Floor Plans
@@ -103,23 +103,92 @@
     A-700 Finish Plans
     A-800 Schedules
 
+Sheet Setup:
 
-### 3.2. Exporting DWG and PDF
+### 3.2. Exporting DWG
+<div style="border: 1px solid yellow; padding: 10px;">
+#### CAD Layer Standards 🎨
+
+| Category | REDI-F Layer Name | Description | Color | Lineweight | Linetype |
+
+|----------|------------------|-------------|--------|------------|----------|
+| Architectural | A-CURB | Curbs for Equipment | 2-yellow | Default | Continuous |
+| Architectural | A-DOOR | Doors | 1-red | Default | Continuous |
+| Architectural | A-DOOR-DEN | Door number, hardware group, etc. | 4-cyan | Default | Continuous |
+| Architectural | A-FLOR-EVTR | Elevator cars and equipment | 2-yellow | Default | Continuous |
+| Architectural | A-FLOR-GRATE | Grating | 2-yellow | Default | Continuous |
+| Architectural | A-FLOR-DEN-ROOM | Room numbers | 7-white | Default | Continuous |
+| Architectural | A-FLOR-DEN-PRE-EPC | Pre-EPC Room numbers | 7-white | Default | Continuous |
+| Architectural | A-FLOR-DEN-TEXT | Room names, target, comments, etc. | 7-white | Default | Continuous |
+| Architectural | A-FLOR-SHFT | Shafts | 2-yellow | Default | Continuous |
+| Architectural | A-FLOR-SIGN | Signage | 1-red | Default | Continuous |
+| Architectural | A-FLOR-STRS | Stair treads, escalators, ladders, level changes, ramps, etc. depressions | 2-yellow | Default | Continuous |
+| Architectural | A-ROOF | Roof | 1-red | Default | Continuous |
+| Architectural | A-WALL-EXTR | Exterior Building Wall | 5-blue | Default | Continuous |
+| Architectural | A-WALL-INTR | Interior Building Wall | 3-green | Default | Continuous |
+| Architectural | A-WNDW | Windows, curtain walls, glazed partitions | 4-cyan | Default | Continuous |
+| General | DEFPOINTS | Defpoints | 7-white | Default | Continuous |
+| Electrical | E-LITE | Lighting | 3-green | Default | Continuous |
+| Electrical | E-LITE-EXIT | Exit lighting | 3-green | Default | Continuous |
+| Electrical | E-POWR-WALL | Power wall outlets and receptacles | 3-green | Default | Continuous |
+| Electrical | E-SAFETY-CRDNR | Card reader | 3-green | Default | Continuous |
+| Electrical | E-SAFETY-ICBS | Intercom/door buzzer system | 3-green | Default | Continuous |
+| Electrical | E-SYMB | Symbols | 3-green | Default | Continuous |
+| General | G-ANNO-TEXT | General Text | 7-white | Default | Continuous |
+| General | G-ANNO-TTLB | Border and Title Block | 7-white | Default | Continuous |
+| General | G-ANNO-TTLB-TEXT | Border and Title Block Text | 7-white | Default | Continuous |
+| General | G-LOGO | Title Block Logo | 94,56,150 | Default | Continuous |
+| General | G-SCALE | Scale | 7-white | Default | Continuous |
+| General | G-VP | Viewport | 7-white | Default | Continuous |
+| Interior | I-EQPM-FIX | Fixed Equipment, except HVAC | 6-magenta | Default | Continuous |
+| Interior | I-EQPM-MOV | Moveable equipment | 6-magenta | Default | Continuous |
+| Interior | I-FURN | Furniture | 6-magenta | Default | Continuous |
+| Interior | I-CASE | Cabinetry / Casement | 6-magenta | Default | Continuous |
+| Landscaping | L-SITE | Site improvements | 4-cyan | Default | Continuous |
+| Mechanical | M-HVAC-EQPM | Mechanical equip. (chiller, boiler etc.) | 6-magenta | Default | Continuous |
+| Plumbing | P-FIXT | Plumbing fixtures, bowls, sinks | 6-magenta | Default | Continuous |
+| Plumbing | P-SAFETY-SWSH | Emergency shower and eye wash | 2-yellow | Default | Continuous |
+| Structural | S-COLS | Columns | 2-yellow | Default | Center |
+| Structural | S-GRID | Column grid | 2-yellow | Default | Center |
+| Telecomm | T-JACK | Data/telephone jacks | 3-green | Default | Continuous |
+</div>
+
+- CAD Layer Mapping Check tool
+- File name format tool
+
+Desired Format:
 
     PIM#-SheetName-SheetName.dwg
-    PIM#-SheetName-SheetName.pdf
-
     Example:
+
     10662-A-101_First Floor Plan.dwg
 
 
-### 3.3. Exporting Revit
+### 3.3. Exporting PDF
+- File exportor
+
+Desired Format:
+    PIM#-SheetName-SheetName.pdf
+    Example:
+    10662-A-101_First Floor Plan.pdf
+
+### 3.4 Exporting Rhino
+- layer name mapping tool
+- workflow:
+    - Isolated System exporter
+    - Revit2Rhino
+
+
+### 3.5. Exporting Revit
+Desired Format:
 
     PIM#-Discipline.rvt
     Example:
     10662-A.rvt
 
 
+## 9. Material Specific Generator
+generate formated specfic doc based on revit family type image
 
 
 
