@@ -14,6 +14,8 @@ parking para name list
 
 during early design, avoid using design option for total massing study. Such as T building VS L building. 
 Instead, duplicate the entire model for new scheme.
+This might be controversy:
+the risk of using design option: 
 """
 
 
