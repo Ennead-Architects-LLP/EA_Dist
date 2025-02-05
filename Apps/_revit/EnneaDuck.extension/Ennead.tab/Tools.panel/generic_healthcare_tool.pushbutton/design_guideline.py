@@ -1,0 +1,19 @@
+import os
+
+note = """
+NYU Health as sample
+
+base of design need to have PIM #
+
+need to have "GFA Scheme" and "DGSF Scheme", each need to have a color scheme
+"""
+
+
+def show_design_outline(doc):
+    print (note)
+    
+    os.startfile(os.path.join(os.path.dirname(__file__),"Healthcare deliverable.PNG"))
+
+
+if __name__ == "__main__":
+    show_design_outline(None)
