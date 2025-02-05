@@ -1,42 +1,27 @@
 import os
 
-note = """
-NYU Health as sample
 
-base of design need to have PIM #
-
-need to have 
-"GFA Scheme"[Area Scheme]: Tracing of outline on each level, single area per level.
-"DGSF Scheme"[Room Based]: Use room for area. Use rooom seperation line as bounding element in SD stage, and wall as bounding element in DD stage
-
-
-area para name list
-
-
-room para name list
-
-
-parking para name list
-
-
-essential family list:
-    - elevator
-    - elevator door
-    - parking stall
-    - patient bed room planner
-
-
-during early design, avoid using design option for total massing study. Such as T building VS L building. 
-Instead, duplicate the entire model for new scheme.
-This might be controversy:
-the risk of using design option: 
-"""
-
+DESIGN_GUIDELINE_PATH = os.path.join(os.path.dirname(__file__), "design_guideline.md")
 
 def show_design_outline(doc):
-    print (note)
+    with open(DESIGN_GUIDELINE_PATH, 'r') as file:
+        content = file.read()
+    # Quack! Let's find those images!
+
+    png_files = [f for f in os.listdir(os.path.dirname(__file__)) 
+                 if f.lower().endswith('.png') and f != 'icon.png']
     
-    os.startfile(os.path.join(os.path.dirname(__file__),"Healthcare deliverable.PNG"))
+ 
+    from pyrevit import script
+    output = script.get_output()
+    output.print_md(content)
+
+
+
+    for file in png_files:
+        output.print_image(os.path.join(os.path.dirname(__file__), file))
+
+
 
 
 if __name__ == "__main__":
