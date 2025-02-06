@@ -300,6 +300,8 @@ class ProjectDataEditor:
             if new_name:
                 self.project_data["area_tracking"]["option_setting"][new_name] = \
                     self.project_data["area_tracking"]["option_setting"][source_option].copy()
+
+                self.project_data["area_tracking"]["option_setting"][new_name]["option_name"] = new_name
                 self._save_changes()
                 break
 

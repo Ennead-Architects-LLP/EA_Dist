@@ -32,8 +32,9 @@ def generic_healthcare_tool(doc, show_log):
         "0. How to HealthCare Project in Ennead(NYU as an example)(WIP)": design_guideline.show_design_outline,
         "1. Initialize Healthcare Project": healthcare_project_setup.setup_healthcare_project,
         "2. Edit Project Data Setup": healthcare_project_setup.edit_project_data_file,
-        "3. Detail DGSF Chart Update": dgsf_chart.dgsf_chart_update,
-        "4. Update Color Pallete From Excel": color_pallete.update_color_pallete,
+        "3. Open Design Option Setup": healthcare_project_setup.open_project_data_file,
+        "4. Detail DGSF Chart Update": dgsf_chart.dgsf_chart_update,
+        "5. Update Color Pallete From Excel": color_pallete.update_color_pallete,
     }
 
     select_option = forms.SelectFromList.show(sorted(options.keys()), multiselect=False, title="How can I help you today?", button_name="Help Me!")
