@@ -124,7 +124,7 @@ def update_project_levels_in_project_data(doc, proj_data):
     levels = list(DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Levels).WhereElementIsNotElementType().ToElements())
     levels.sort(key=lambda x: x.Elevation, reverse=True)
 
-    picked_levels = forms.SelectFromList.show(levels, name_attr="Name", title="Select Levels ti include in calculation", button_name="Select Levels", multiselect=True)
+    picked_levels = forms.SelectFromList.show(levels, name_attr="Name", title="Select Levels to include in calculation", button_name="Select Levels", multiselect=True)
     level_names = [level.Name for level in picked_levels]
 
     for option_setting in proj_data["area_tracking"]["option_setting"].values():
@@ -149,9 +149,10 @@ class ProjectDataEditor:
         # Define menu configurations
         self.main_menu = {
             "1. Reattach Project Data To Exisitng Setup": self._reattach_project_data,
-            "2. Area Tracking": self._edit_area_tracking,
-            "3. View Name Update": self._edit_auto_view_name_update,
+            "2. Healthcare Area Tracking": self._edit_area_tracking,
+            "3. Auto View Name Update": self._edit_auto_view_name_update,
             "4. Save and Close": None
+
         }
         
         self.area_tracking_menu = {
@@ -180,6 +181,8 @@ class ProjectDataEditor:
         
         while True:
             selection = self._show_menu("Project Data Editor", self.main_menu)
+            if not selection:
+                break
             function = self.main_menu[selection]
             if self._is_return_option(selection):
                 break
@@ -232,7 +235,7 @@ class ProjectDataEditor:
             if res in self.design_option_menu:
                 self.design_option_menu[res](selected_option)
 
-    def _toggle_setting(self, setting_path, prompt):
+    def _toggle_setting(self, setting_path, title):
         """Generic toggle setting handler"""
         options = {
             "1. Enable Auto Update": True,
@@ -242,9 +245,9 @@ class ProjectDataEditor:
         
         while True:
             res = self._show_menu(
-                "Update Setting",
+                title,
                 options,
-                prompt=prompt
+                
             )
             if self._is_return_option(res):
                 break
@@ -262,12 +265,17 @@ class ProjectDataEditor:
     def _edit_option_setting(self, option_name, setting_key, title):
         """Generic option setting editor"""
         while True:
+            if option_name not in self.project_data["area_tracking"]["option_setting"]:
+                NOTIFICATION.messenger("Option '{}' not found due to renaming, return to previous menu and re-select option using the new name.".format(option_name))
+                break
+            
             current_value = self.project_data["area_tracking"]["option_setting"][option_name][setting_key]
             new_value = forms.ask_for_string(
                 default=current_value,
                 prompt="Enter {} (ESC to cancel)".format(title.lower()),
                 title=title
             )
+
 
             
 
@@ -276,8 +284,14 @@ class ProjectDataEditor:
             
             if new_value.strip():  # Ensure non-empty value
                 self.project_data["area_tracking"]["option_setting"][option_name][setting_key] = new_value
+
+                if setting_key == "option_name":
+                    self.project_data["area_tracking"]["option_setting"][new_value] = self.project_data["area_tracking"]["option_setting"][option_name].copy()
+                    del self.project_data["area_tracking"]["option_setting"][option_name]
+
                 self._save_changes()
                 break
+
 
     def _select_design_option(self, title):
         """Generic design option selector"""
