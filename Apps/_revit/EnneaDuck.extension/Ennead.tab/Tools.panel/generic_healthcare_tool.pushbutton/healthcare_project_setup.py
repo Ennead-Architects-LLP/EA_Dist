@@ -1,4 +1,4 @@
-from EnneadTab import NOTIFICATION, FOLDER
+from EnneadTab import NOTIFICATION, FOLDER, ENVIRONMENT # pyright: ignore   
 from EnneadTab.REVIT import REVIT_PARAMETER
 from Autodesk.Revit import DB # pyright: ignore
 import os
@@ -73,11 +73,23 @@ def setup_healthcare_project(doc):
     if not setup_area_tracking_parameters(doc, proj_data):
         return t.RollBack()
 
+    if not setup_schedule_update_date_parameter(doc):
+        return t.RollBack()
+
 
     REVIT_PARAMETER.set_revit_project_data(doc, proj_data)
+    REVIT_PARAMETER.mark_doc_to_project_data_file(doc)
     t.Commit()
     open_project_data_file(doc)
     NOTIFICATION.messenger("Healthcare project setup complete.")
+
+def setup_schedule_update_date_parameter(doc):
+    para_name = "Last_Update_Date"
+    if not REVIT_PARAMETER.confirm_shared_para_exist_on_category(doc, 
+                                                                 para_name,
+                                                                 DB.BuiltInCategory.OST_Schedules):
+        return False
+    return True
 
 def setup_pim_number_parameter(doc):
     """Sets up PIM Number parameter in project info"""
@@ -136,9 +148,10 @@ class ProjectDataEditor:
         
         # Define menu configurations
         self.main_menu = {
-            "1. Area Tracking": self._edit_area_tracking,
-            "2. View Name Update": self._edit_auto_view_name_update,
-            "3. Save and Close": None
+            "1. Reattach Project Data To Exisitng Setup": self._reattach_project_data,
+            "2. Area Tracking": self._edit_area_tracking,
+            "3. View Name Update": self._edit_auto_view_name_update,
+            "4. Save and Close": None
         }
         
         self.area_tracking_menu = {
@@ -401,6 +414,13 @@ class ProjectDataEditor:
                 self._save_changes()
                 NOTIFICATION.messenger("Design option '{}' has been deleted.".format(option_to_delete))
                 break
+
+
+    def _reattach_project_data(self):
+        t = DB.Transaction(self.doc, "Reattach Project Data")
+        t.Start()
+        REVIT_PARAMETER.reattach_project_data(self.doc)
+        t.Commit()
 
 ############### ENTRY POINT ###############
 if __name__ == "__main__":
