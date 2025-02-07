@@ -151,17 +151,7 @@ def update_existing(doc):
     MODULE_HELPER.run_revit_script(folder, func_name, doc)
 
     
-def DEPRECIATED_update_with_generic_healthcare_tool(doc):
-    if not USER.IS_DEVELOPER:
-        return
-    health_care_projects = ["2151_a_ea_nyuli_hospital_ext"]
-    
-    if doc.Title.lower() not in health_care_projects:
-        return
-    
-    folder = "Ennead.tab\\Tools.panel"
-    func_name = "generic_healthcare_tool"
-    MODULE_HELPER.run_revit_script(folder, func_name, doc, show_log = False)
+
 
 
     
@@ -310,14 +300,10 @@ def doc_synced(doc):
         
 
 
-    proj_data = REVIT_PARAMETER.get_revit_project_data(doc)
-    if not proj_data:
-        DEPRECIATED_update_DOB_numbering(doc)
-        DEPRECIATED_update_sheet_name(doc)
-        DEPRECIATED_update_working_view_name(doc)
-        DEPRECIATED_update_with_generic_healthcare_tool(doc)
-        DEPRECIATED_update_project_2151(doc)
+    if not REVIT_PARAMETER.is_setup_project_data_para_exist(doc):
+        run_legacy_updates(doc)
     else:
+        proj_data = REVIT_PARAMETER.get_revit_project_data(doc)
         if proj_data["is_update_view_name_format"]:
             update_view_names(doc)
         if proj_data["area_tracking"]["auto_update_enabled"]:
@@ -363,7 +349,6 @@ def run_legacy_updates(doc):
     DEPRECIATED_update_DOB_numbering(doc)
     DEPRECIATED_update_sheet_name(doc)
     DEPRECIATED_update_working_view_name(doc)
-    DEPRECIATED_update_with_generic_healthcare_tool(doc)
     DEPRECIATED_update_project_2151(doc)
 
 def update_view_names(doc):
