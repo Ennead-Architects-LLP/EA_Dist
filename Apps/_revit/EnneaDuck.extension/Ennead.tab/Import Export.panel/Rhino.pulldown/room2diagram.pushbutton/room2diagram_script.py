@@ -49,7 +49,7 @@ class RoomDiagramExporter:
             revit_doc: Active Revit document
         """
         self.revit_doc = revit_doc
-        self.output_file = r"C:\Temp\EnneadTabRevitSelectionHelper.3dm"
+        self.output_file = r"C:\Temp\EnneadTabRevit2RhinoBubbleDiagram.3dm"
         self.rhino_doc = None
         
         self._setup_rhino_doc()
