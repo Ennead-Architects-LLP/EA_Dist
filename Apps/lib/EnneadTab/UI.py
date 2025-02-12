@@ -4,7 +4,7 @@ import DATA_FILE
 import EXE
 import NOTIFICATION
 import time
-
+import SOUND
 
 class ProgressBarManager:
     def __init__(self, items=None, title="Processing...", label_func = None):
@@ -47,6 +47,7 @@ class ProgressBarManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Clean up
         kill_progressbar()
+        SOUND.play_finished_sound()
   
 
 
