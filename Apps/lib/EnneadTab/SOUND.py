@@ -29,10 +29,10 @@ def play_error_sound():
     play_sound("sound_effect_error")
 
 def play_success_sound():
-    play_sound("sound_effect_success")
+    play_sound("sound_effect_mario_fireball")
 
 def play_finished_sound():
-    play_sound("sound_effect_finished")
+    play_sound("sound_effect_mario_message")
 
 def play_sound(file = "sound_effect_popup_msg3"):
     file = get_audio_path_by_name(file)
