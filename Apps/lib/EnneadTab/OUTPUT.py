@@ -254,18 +254,29 @@ class Output:
 
     @staticmethod
     def format_content(input):
+        """Format content for HTML output with special handling for images and buttons.
+        
+        Args:
+            input: Content to format, can be text, image path, or button command
+            
+        Returns:
+            str: Formatted HTML content
+        """
         if "bt_" in str(input):
             return "<button onclick='return sample_func(this)'>{}</button>".format(input.split("bt_")[1])
         
         if os.path.exists(str(input)):
-            size = 300
+            # Special case image sizes
             if "_large" in str(input):
-                size = 800
+                return "<img src='file://{}' height='800'>".format(input)
             elif "icon" in str(input):
-                size = 80
+                return "<img src='file://{}' height='80'>".format(input)
             elif "Click.png" in str(input):
-                size = 30
-            return "<img src='file://{}' height = '{}'>".format(input, size)
+                return "<img src='file://{}' height='30'>".format(input)
+            
+            # Default case: full width with maintained aspect ratio
+            return "<img src='file://{}' style='width: 100%; height: auto;'>".format(input)
+            
         return str(input).replace("\n", "<br>")
 
     # try to use a dummy top match pyrevit output method
