@@ -42,8 +42,23 @@ import FOLDER
 
 
 
+def darken_color(color, amount):
+    """Darken a color.
 
+    Args:
+        color (tuple): The color to darken.
+        amount (float): The amount to darken the color.
+    """
+    return tuple(int(max(0, c * (1 - amount))) for c in color)
 
+def lighten_color(color, amount):
+    """Lighten a color.
+
+    Args:
+        color (tuple): The color to lighten.
+        amount (float): The amount to lighten the color.
+    """ 
+    return tuple(int(min(255, c * (1 + amount))) for c in color)
 
 def from_rgb(r, g, b):
     """Generate a color object from rgb values.
@@ -85,7 +100,7 @@ def get_random_color(return_tuple = True):
     
     # Create desaturated version by setting saturation to 0.1
     # Keeps original hue and value, but reduces color intensity
-    grayed_hsv_color = (hsv_color[0], 0.1, hsv_color[2])
+    grayed_hsv_color = (hsv_color[0], 0.05, hsv_color[2])
     
     # Convert back to RGB colorspace
     grayed_rgb_color = hsv_to_rgb(*grayed_hsv_color)
