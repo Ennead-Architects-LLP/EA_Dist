@@ -15,6 +15,7 @@ __title__ = "Rename\nNesting Family"
 
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
+from pyrevit.revit import ErrorSwallower
 
 from EnneadTab import ERROR_HANDLE, LOG, UI
 from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY
@@ -54,15 +55,22 @@ class NestingFamilyRenamer:
         
         nested_families = DB.FilteredElementCollector(family_doc).OfClass(DB.Family).ToElements()
         for nested in nested_families:
-            if "*ConflictingName" in nested.Name:
-                new_name = nested.Name.replace("*ConflictingName", "")
-                try:
-                    nested.Name = new_name
-                    needs_update = True
-                    self.changes_made.append("In {}: Renamed {} to {}".format(
-                        family.Name, nested.Name + "*ConflictingName", new_name))
-                except Exception as e:
-                    print("Error renaming {}: because {}".format(nested.Name, e))
+            attemp = 0
+            while True:
+                if attemp > 10:
+                    break
+                if "*ConflictingName" in nested.Name:
+                    new_name = nested.Name.replace("*ConflictingName", "")
+                    try:
+                        nested.Name = new_name
+                        needs_update = True
+                        self.changes_made.append("In {}: Renamed {} to {}".format(
+                            family.Name, nested.Name + "*ConflictingName", new_name))
+                    except Exception as e:
+                        print("Error renaming {}: because {}".format(nested.Name, e))
+                        attemp += 1
+                else:
+                    break
         
         t_family.Commit()
         
@@ -82,7 +90,9 @@ class NestingFamilyRenamer:
     def process_all_families(self):
         """Process all families in the document."""
         all_families = DB.FilteredElementCollector(self.doc).OfClass(DB.Family).ToElements()
-        UI.progress_bar(all_families, self.process_family)
+
+        with ErrorSwallower() as ES:
+            UI.progress_bar(all_families, self.process_family)
 
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
