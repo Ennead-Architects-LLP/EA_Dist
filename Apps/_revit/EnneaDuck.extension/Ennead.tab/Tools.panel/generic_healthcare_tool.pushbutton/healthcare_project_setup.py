@@ -1,5 +1,5 @@
 from EnneadTab import NOTIFICATION, FOLDER, ENVIRONMENT # pyright: ignore   
-from EnneadTab.REVIT import REVIT_PARAMETER, REVIT_COLOR_SCHEME
+from EnneadTab.REVIT import REVIT_PARAMETER, REVIT_COLOR_SCHEME, REVIT_PROJ_DATA
 from Autodesk.Revit import DB # pyright: ignore
 import os
 from pyrevit import forms
@@ -70,7 +70,7 @@ def setup_healthcare_project(doc):
     t = DB.Transaction(doc, "setup healthcare project")
     t.Start()
 
-    proj_data = REVIT_PARAMETER.get_revit_project_data(doc)
+    proj_data = REVIT_PROJ_DATA.get_revit_project_data(doc)
     if not proj_data:
         proj_data = TEMPLATE_DATA
 
@@ -83,8 +83,8 @@ def setup_healthcare_project(doc):
         return t.RollBack()
 
 
-    REVIT_PARAMETER.set_revit_project_data(doc, proj_data)
-    REVIT_PARAMETER.mark_doc_to_project_data_file(doc)
+    REVIT_PROJ_DATA.set_revit_project_data(doc, proj_data)
+    REVIT_PROJ_DATA.mark_doc_to_project_data_file(doc)
     t.Commit()
     open_project_data_file(doc)
     NOTIFICATION.messenger("Healthcare project setup complete.")
