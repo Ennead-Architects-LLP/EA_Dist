@@ -229,7 +229,7 @@ class Output:
             report_file.write("</div>")
             report_file.write("<p style='text-align: center;' class='foot_note'>{}</p>".format(TIME.get_formatted_current_time()))
 
-            if Output._out and Output._out[0][0] != "<hr>":
+            if Output._out and Output._out[0][1] != "<hr>":
                 report_file.write("<hr>") 
 
             for header_style, content in Output._out:
