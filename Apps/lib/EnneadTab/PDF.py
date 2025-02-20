@@ -165,6 +165,10 @@ class PDFGenerator:
         canvas.restoreState()
 
         self.current_page_num += 1
+
+
+    def format_return_line(self, text):
+        return text.replace("\n", "<br/>")
     
     def generate_segment_pdf(self, segment_data, tab_name, tab_icon_path, temp_pdf_path):
         """Generate a temporary PDF for a single segment."""
@@ -181,7 +185,7 @@ class PDFGenerator:
             if isinstance(alias_info, list):
                 alias_info = " / ".join(alias_info)
             alias = Paragraph(alias_info, self.command_style)
-            tooltip_text = Paragraph("<b>Tooltip:</b> {}".format(doc_data.get('doc', 'No description available')), self.tooltip_style)
+            tooltip_text = Paragraph("<b>Tooltip:</b> {}".format(self.format_return_line(doc_data.get('doc', 'No description available'))), self.tooltip_style)
             if self.app == "Rhino":
                 access = "Left Click" if "_left" in doc_data.get("script") else "Right Click"
                 access_text = Paragraph("<b>Access:</b> {}".format(access), self.tooltip_style)
