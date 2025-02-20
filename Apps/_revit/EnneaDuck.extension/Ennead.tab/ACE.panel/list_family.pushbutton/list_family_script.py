@@ -136,7 +136,33 @@ class Deployer:
                     view.SetFilterVisibility (filter.Id, True)
         t.Commit()
 
+    def _get_textnote_type(self):
+        """Gets or creates text note type needed for labeling.
+        
+        Returns:
+            DB.TextNoteType: Text note type
+        """
+        pass
+        all_text_types = DB.FilteredElementCollector(self.doc).OfClass(DB.TextNoteType).WhereElementIsElementType().ToElements()
+        for label_text_type in all_text_types:
+            if label_text_type.LookupParameter("Type Name").AsString() == "Label":
+                return label_text_type
 
+
+        if not label_text_type:
+            t = DB.Transaction(self.doc, "Create Label Text Type")
+            t.Start()
+            sample_text_type_id = self.doc.GetDefaultElementTypeId(DB.ElementTypeGroup.TextNoteType)
+            label_text_type = self.doc.GetElement(sample_text_type_id).Duplicate("Label")
+            t.Commit()
+            
+        # Set label text type properties   
+        t = DB.Transaction(self.doc, "Set Label Text Type Properties")
+        t.Start()
+        label_text_type.LookupParameter("Text Font").Set("Impact")
+        label_text_type.LookupParameter("Text Size").Set(0.1)
+        t.Commit()
+        return label_text_type
     
     def _get_model_text_elements(self):
         """Gets or creates model text elements needed for labeling.
@@ -177,6 +203,39 @@ class Deployer:
         return sample_model_text, label_text_type
 
     def add_label_text(self, family):
+        if self.view.ViewType == DB.ViewType.DraftingView:
+            new_title = self._add_label_text_2d(family)
+        else:
+            new_title = self._add_label_text_3d(family)
+
+        self.item_collection.append(new_title)
+
+    def _add_label_text_2d(self, family):
+        """Adds descriptive text label for a family in a drafting view.
+        
+        Args:
+            family: Family to create label for
+        """
+
+        tnote_type = self._get_textnote_type()
+        t = DB.Transaction(self.doc, "Add Label Text")
+        t.Start()
+      
+        title = family.Name
+        new_note = DB.TextNote.Create(self.doc,
+                            self.view.Id,
+                            self.pointer,
+                            title,
+                            tnote_type.Id
+                            )
+        new_note.HorizontalAlignment = DB.HorizontalTextAlignment.Right
+        new_note.Location.Move(DB.XYZ(-1,0,0))
+
+
+        t.Commit()
+        return new_note
+
+    def _add_label_text_3d(self, family):
         """Adds descriptive text label for a family.
         
         Args:
@@ -221,7 +280,8 @@ class Deployer:
 
         self.max_label_width = max(self.max_label_width, size_x)
         t.Commit()
-        self.item_collection.append(new_text_model)
+        return new_text_model
+        
     
     def purge_old_dump_family(self):
         """Purges all previously created elements from the view.
@@ -229,6 +289,8 @@ class Deployer:
         Removes all elements with internal comments to clean up before new placement.
         """
         elements_to_purge = [
+            (DB.BuiltInCategory.OST_TextNotes, INTERNAL_COMMENT, "equals"),
+            (DB.BuiltInCategory.OST_DetailComponents, INTERNAL_COMMENT, "equals"),
             (DB.BuiltInCategory.OST_ModelText, INTERNAL_COMMENT, "equals"),
             (DB.BuiltInCategory.OST_GenericModel, INTERNAL_COMMENT, "equals"),
             (DB.BuiltInCategory.OST_Walls, FAMILY_DUMP_WALL_COMMENT, "startswith"),
@@ -236,7 +298,6 @@ class Deployer:
             (DB.BuiltInCategory.OST_Roofs, FAMILY_DUMP_ROOF_COMMENT, "startswith"),
             (DB.BuiltInCategory.OST_Floors, FAMILY_DUMP_FLOOR_COMMENT, "startswith"),
             (DB.BuiltInCategory.OST_CurtainWallPanels, INTERNAL_COMMENT, "equals"),
-            (DB.BuiltInCategory.OST_DetailComponents, INTERNAL_COMMENT, "equals"),
             (DB.FamilyInstance, INTERNAL_COMMENT, "equals")
         ]
         
@@ -269,6 +330,12 @@ class Deployer:
                         .ToElements()
 
         # print ("purging {} elements of category {}".format(len(elements), category_or_class))
+        if category_or_class == DB.BuiltInCategory.OST_TextNotes:
+            for element in elements:
+                self.doc.Delete(element.Id)
+            return
+
+        
         for element in elements:
             try:
                 comment = element.LookupParameter("Comments").AsString()
