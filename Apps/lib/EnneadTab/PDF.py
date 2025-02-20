@@ -119,18 +119,18 @@ class PDFGenerator:
         self.tooltip_style = ParagraphStyle(
             'TooltipStyle',
             parent=self.styles['BodyText'],
-            fontSize=10,
+            fontSize=8,
             textColor=colors.darkgrey
         )
         self.tab_header_style = ParagraphStyle(
             'TabHeaderStyle',
-            fontSize=9,
+            fontSize=10,
             textColor=colors.lightgrey,
             alignment=2
         )
         self.sub_title_style = ParagraphStyle(
             'SubtitleStyle',
-            fontSize=9,
+            fontSize=10,
             textColor=colors.darkgray,
             alignment=1
         )
