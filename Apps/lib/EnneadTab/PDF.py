@@ -300,7 +300,7 @@ class PDFGenerator:
             style_2 = ParagraphStyle('y',fontSize=9,textColor=colors.darkgray,alignment=2)
             table_data.append([tab_icon, 
                                Paragraph(tab_name, style_1),
-                               Paragraph("~~~~~~~~~~~~~~~~~~~~~~", self.sub_title_style), 
+                               Paragraph("~~~~~~~~~~~~~~~~~~~~", self.sub_title_style), 
                                Paragraph("Page {}".format(page_number), style_2)])
         
         toc_table = Table(table_data, colWidths=[0.3 * inch, 1.2 * inch, 1.8 * inch, 1.2 * inch])
