@@ -2,11 +2,16 @@ __title__ = "ViewToggle"
 
 KEY = "F4"
 
-__doc__ = """Toggles between Top and Perspective views.
-Left click to switch between views.
-Useful for quick view navigation during modeling.
+__doc__ = """Quick view navigation tool for Rhino.
 
-Also assign a keyboard shortcut: {}""".format(KEY)
+Features:
+- Toggles between Top and Perspective views
+- Left click to switch between views
+- Keyboard shortcut: {}
+- Optimizes modeling workflow with rapid view changes
+
+Usage:
+Click button to toggle between views.""".format(KEY)
 
 
 from EnneadTab import ERROR_HANDLE, LOG
@@ -26,7 +31,8 @@ def view_toggle():
 
 
     keyboard_setting = Rhino.ApplicationSettings.ShortcutKeySettings
-    keyboard_setting.SetMacro(Rhino.ApplicationSettings.ShortcutKey[KEY], "EA_{}".format(__title__))
+    keyboard_setting.SetMacro(Rhino.ApplicationSettings.ShortcutKey[KEY], 
+                              "EA_{}".format(__title__))
 
     
 if __name__ == "__main__":
