@@ -3,7 +3,7 @@
 import io
 import os
 import random
-import traceback
+
 import json
 
 import ENVIRONMENT
@@ -223,7 +223,7 @@ def get_title_tip_from_file(lucky_file, is_random_single):
         except Exception as e:
             if USER.is_EnneadTab_developer:
                 print ("\n\nDeveloper visible only logging:")
-                print (traceback.format_exc())
+                print (ERROR_HANDLE.get_alternative_traceback())
             return module_name, None, icon_path
     except Exception as e:
         if USER.is_EnneadTab_developer:
@@ -337,7 +337,7 @@ def set_revit_knowledge():
                 global_vars = extract_global_variables(script_path)
             except:
                 print (script_path)
-                print (traceback.format_exc())
+                print (ERROR_HANDLE.get_alternative_traceback())
                 continue
             icon_path = get_icon_from_path(script_path)
             if ".panel" in script_path:
