@@ -300,8 +300,7 @@ def EnneadTab_startup():
     
     check_C_drive_space()
 
-    if random.random() > 0.2:
-        DOCUMENTATION.tip_of_day()
+    DOCUMENTATION.tip_of_day()
 
   
         
