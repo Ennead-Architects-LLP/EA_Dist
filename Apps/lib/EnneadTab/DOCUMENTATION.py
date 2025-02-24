@@ -493,7 +493,7 @@ def tip_of_day():
     """Show a random tip of the day.
     """
     if not USER.IS_DEVELOPER:
-        if random.random() < 0.4:
+        if random.random() < 0.2:
             return
 
         
