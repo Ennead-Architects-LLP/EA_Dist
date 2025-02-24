@@ -504,8 +504,8 @@
     "Lab.tab\\text2script.button\\text2script_right.py": {
         "script": "Lab.tab\\text2script.button\\text2script_right.py",
         "icon": "Lab.tab\\text2script.button\\icon.png",
-        "alias": "Text2Script",
-        "doc": "This button does Text2Script when right click",
+        "alias": "Text2ScriptSetting",
+        "doc": "This button does Text2ScriptSetting when right click",
         "tab": "Lab.tab",
         "tab_icon": "Lab.tab\\icon.png",
         "is_popular": false
