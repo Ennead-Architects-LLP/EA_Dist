@@ -1,3 +1,7 @@
+import sys
+if hasattr(sys, "setdefaultencoding"):
+    sys.setdefaultencoding('utf-8')  # This line ensures the default encoding is UTF-8
+
 """Utilities for showing tips and documentation for tools."""
 
 import io
@@ -488,8 +492,11 @@ def show_tip_rhino():
 def tip_of_day():
     """Show a random tip of the day.
     """
-    if random.random() < 0.4:
-        return
+    if not USER.IS_DEVELOPER:
+        if random.random() < 0.4:
+            return
+
+        
     if ENVIRONMENT.is_Revit_environment():
         if random.random() < 0.95:
             show_tip_revit()
