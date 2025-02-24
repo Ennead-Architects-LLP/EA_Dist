@@ -3666,22 +3666,22 @@ EA_Text2Script</script>
     </macro_item>
     <macro_item guid="6037e8bd-d69f-4723-8927-35a4a503e4b2" bitmap_id="cad37d35-087e-4500-96df-870f6c0f8974">
       <text>
-        <locale_1033>Text2Script</locale_1033>
+        <locale_1033>Text2ScriptSetting</locale_1033>
       </text>
       <tooltip>
-        <locale_1033>This button does Text2Script when right click</locale_1033>
+        <locale_1033>This button does Text2ScriptSetting when right click</locale_1033>
       </tooltip>
       <help_text>
-        <locale_1033>This button does Text2Script when right click</locale_1033>
+        <locale_1033>This button does Text2ScriptSetting when right click</locale_1033>
       </help_text>
       <button_text>
-        <locale_1033>Text2Script</locale_1033>
+        <locale_1033>Text2ScriptSetting</locale_1033>
       </button_text>
       <menu_text>
-        <locale_1033>Text2Script</locale_1033>
+        <locale_1033>Text2ScriptSetting</locale_1033>
       </menu_text>
       <script>EA_ActivateEnneadTab
-EA_Text2Script</script>
+EA_Text2ScriptSetting</script>
     </macro_item>
     <macro_item guid="7c275daf-2cc3-4f62-8277-dc37d88ca7dd" bitmap_id="a8f74541-3f86-455e-8239-d144d66ac83c">
       <text>

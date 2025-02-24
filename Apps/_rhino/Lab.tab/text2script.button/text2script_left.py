@@ -22,13 +22,8 @@ import sys
 
 for path in rs.SearchPathList():
     sys.path.append(path)
-    print(path)
 
-from EnneadTab import FOLDER # pyright: ignore
-from EnneadTab import SECRET # pyright: ignore
-from EnneadTab import NOTIFICATION # pyright: ignore
-from EnneadTab import DATA_FILE # pyright: ignore
-from EnneadTab import SOUND # pyright: ignore
+from EnneadTab import FOLDER, SECRET, NOTIFICATION, DATA_FILE, SOUND
 
 import time
 import traceback
