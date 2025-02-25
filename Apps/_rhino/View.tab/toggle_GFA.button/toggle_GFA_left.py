@@ -168,18 +168,26 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
 
 
         if not self.cached_data:
+            # print("no cached data, making new")
             # print (len(self.cached_data))
             self.data = [(x, get_area_and_crv_geo_from_layer(x))   for x in get_schedule_layers()]
             self.cached_data = self.data[:]
             # self.is_reseted = False
         else:
             # print (len(self.cached_data))
+            # print ("using cached data")
             self.data = self.cached_data
         #print "start post draw"
+        # print ("#######data length: ", len(self.data))
+        # for i, item in enumerate(self.data):
+        #     layer, values = item
+        #     print (i+1, "data from layer: ", layer)
+        #     for v in values:
+        #         print (i+1, v)
 
         for data in self.data:
             layer, values = data
-            area, edges, faces, note = values
+            total_area, edges, faces, note = values
 
 
 
@@ -329,20 +337,20 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
                 sub_title = parent_layer
             """
 
-            area = values[0]
+            layer_tatal_area = values[0]
             note = values[3]
             #print note
-            if area == 0:
+            if layer_tatal_area == 0:
                 continue
             
             factor =  self.layer_factor(layer)
             if factor != 1:
-                area *= factor
+                layer_tatal_area *= factor
 
-            grand_total += area
+            grand_total += layer_tatal_area
             #sub_total += area
 
-            text = "{}: {}".format(RHINO_LAYER.rhino_layer_to_user_layer(layer), convert_area_to_good_unit(area))
+            text = "{}: {}".format(RHINO_LAYER.rhino_layer_to_user_layer(layer), convert_area_to_good_unit(layer_tatal_area))
             if note:
                 text += note
             pt = Rhino.Geometry.Point2d(pt[0], pt[1] + offset)
