@@ -326,12 +326,13 @@ def EnneadTab_startup():
     register_xaml_path()
     check_minimal_version_for_enneadtab()
 
-    try:
-        ENCOURAGING.warming_quote()
-    except:
-        pass
 
-    NOTIFICATION.duck_pop(main_text = "Hello {}!\nEnneaDuck welcome you back!".format(USER.USER_NAME))
+    if random.random() < 0.2:
+        ENCOURAGING.warming_quote()
+    elif random.random() < 0.5:
+        JOKE.joke_quote()
+    else:
+        NOTIFICATION.duck_pop(main_text = "Hello {}!\nEnneaDuck welcome you back!".format(USER.USER_NAME))
     
 
     HOLIDAY.festival_greeting()
