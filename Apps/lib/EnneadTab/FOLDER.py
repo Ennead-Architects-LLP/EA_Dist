@@ -322,11 +322,9 @@ def secure_filename_in_folder(output_folder, desired_name, extension):
                     )
 
                 except Exception as e:
-                    print(
-                        "filename clean up failed: skip {} becasue: {}".format(
-                            file_name, e
-                        )
-                    )
+                    import traceback
+                    print("filename clean up failed: skip {} becasue: ".format(file_name))
+                    print (traceback.format_exc())
 
 if __name__ == "__main__":
     pass
