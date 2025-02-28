@@ -60,28 +60,60 @@ def average_RGB(R, G, B):
 
 
 def convert_image_to_greyscale(original_image_path, new_image_path=None):
-    """Convert an image to greyscale.
+    """Convert an image to grayscale.
+    Simple and reliable implementation for IronPython 2.7.
 
     Args:
         original_image_path (str): The full path to the image to convert.
-        new_image_path (str): The full path to save the new image. If None, the original image will be overwritten. Careful: defaults to None!
+        new_image_path (str): The full path to save the new image. If None, the original image will be overwritten.
     """
     if new_image_path is None:
         new_image_path = original_image_path
-    image = SD.Image.FromFile(original_image_path)
-    for x in range(image.Width):
-        for y in range(image.Height):
-            pixel_color = image.GetPixel(x, y)
-            R = pixel_color.R
-            G = pixel_color.G
-            B = pixel_color.B
-            A = pixel_color.A
-            new_color = SD.Color.FromArgb(
-                A, average_RGB(R, G, B), average_RGB(R, G, B), average_RGB(R, G, B)
-            )
-            image.SetPixel(x, y, new_color)
-    image.Save(new_image_path)
-    return image
+
+    original = None
+    bitmap = None
+    try:
+        # Load original image
+        original = SD.Image.FromFile(original_image_path)
+        bitmap = SD.Bitmap(original)
+        
+        # Process the image
+        for x in range(bitmap.Width):
+            for y in range(bitmap.Height):
+                # Get pixel color
+                color = bitmap.GetPixel(x, y)
+                # Calculate grayscale using luminance formula
+                gray = int(color.R * 0.299 + color.G * 0.587 + color.B * 0.114)
+                # Create new gray color preserving alpha
+                new_color = SD.Color.FromArgb(color.A, gray, gray, gray)
+                # Set pixel
+                bitmap.SetPixel(x, y, new_color)
+        
+        # Save the result
+        if os.path.exists(new_image_path):
+            try:
+                os.remove(new_image_path)
+            except:
+                pass
+        bitmap.Save(new_image_path, SD.Imaging.ImageFormat.Jpeg)
+        
+    except Exception as e:
+        print("Error converting image to grayscale: {}".format(str(e)))
+        import traceback
+        print(traceback.format_exc())
+        
+    finally:
+        # Clean up resources
+        if original is not None:
+            try:
+                original.Dispose()
+            except:
+                pass
+        if bitmap is not None:
+            try:
+                bitmap.Dispose()
+            except:
+                pass
 
 
 def create_bitmap_text_image(text, size = (64, 32), bg_color = (0, 0, 0), font_size = 9):
