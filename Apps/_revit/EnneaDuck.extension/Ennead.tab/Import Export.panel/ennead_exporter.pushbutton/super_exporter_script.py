@@ -1241,9 +1241,29 @@ class SuperExporter(REVIT_FORMS.EnneadTabModelessForm):
 
 
     def update_preview_image(self, view_or_sheet):
-        REVIT_EXPORT.export_image(view_or_sheet, "exporter_preview", FOLDER.DUMP_FOLDER, is_thumbnail = True)
-        self.set_image_source(self.preview_image, FOLDER.get_EA_dump_folder_file("exporter_preview.jpg"))
+        if hasattr(view_or_sheet, "SheetName"):
+            file_name = view_or_sheet.SheetName
+        else:
+            file_name = view_or_sheet.Name
 
+        # rotate the preview image becasue it taksj a while for the image generation and conversion, 
+        # i do not want to wait, soo just assign a new name to preview image and 
+        if not hasattr(self, "preview_image_counter"):
+            self.preview_image_counter = 0
+        self.preview_image_counter += 1
+        self.preview_image_counter = self.preview_image_counter % 10
+        file_name = "preview_image_{}.jpg".format(self.preview_image_counter)
+        file = REVIT_EXPORT.export_image(view_or_sheet, 
+                                    file_name, 
+                                    FOLDER.DUMP_FOLDER, 
+                                    is_thumbnail = True)
+        if os.path.exists(file):
+            try:
+                self.set_image_source(self.preview_image, FOLDER.get_EA_dump_folder_file(file))
+            except:
+                import traceback
+                print ("Error in update_preview_image: {}".format(file))
+                print (traceback.format_exc())
 
     def initiate_loading_message(self):
         self.textblock_export_status.Text = "..."
