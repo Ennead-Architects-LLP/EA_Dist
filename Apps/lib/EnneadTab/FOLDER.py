@@ -53,7 +53,7 @@ def copy_file(original_path, new_path):
     COPY.copyfile(original_path, new_path)
 
 
-def copy_file_to_folder(original_path, target_folder, handle_BW_file = False):
+def copy_file_to_folder(original_path, target_folder):
     """Copy file to target folder, preserving filename.
 
     Args:
@@ -68,8 +68,6 @@ def copy_file_to_folder(original_path, target_folder, handle_BW_file = False):
     """
 
     new_path = original_path.replace(os.path.dirname(original_path), target_folder)
-    if handle_BW_file:
-        new_path = new_path.replace("_BW", "")
     try:
         COPY.copyfile(original_path, new_path)
     except Exception as e:
