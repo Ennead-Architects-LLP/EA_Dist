@@ -10,6 +10,8 @@ Key Features:
 - File extension management
 - Local and shared dump folder operations
 - Automated backup scheduling
+
+Compatible with Python 2.7 and Python 3.x
 """
 
 import time
@@ -329,4 +331,5 @@ def secure_filename_in_folder(output_folder, desired_name, extension):
                     )
 
 if __name__ == "__main__":
-    pass
+    file = get_EA_dump_folder_file("save_copy_{}_".format(time.time()) + "test.txt")
+    print(file)
