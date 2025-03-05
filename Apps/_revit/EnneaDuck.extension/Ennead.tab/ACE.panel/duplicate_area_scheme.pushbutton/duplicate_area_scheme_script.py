@@ -78,7 +78,7 @@ class AreaSchemeDuplicator:
         """Let user select which views to duplicate."""
         # Get all views that use original area scheme
         all_views = DB.FilteredElementCollector(self.doc).OfClass(DB.View).WhereElementIsNotElementType().ToElements()
-        views_using_original_scheme = [v for v in all_views if v.AreaScheme and v.AreaScheme.Id == self.original_area_scheme.Id]
+        views_using_original_scheme = [v for v in all_views if hasattr(v, "AreaScheme") and v.AreaScheme.Id == self.original_area_scheme.Id]
 
         self.selected_views = forms.SelectFromList.show(
             [self.ViewOption(v) for v in views_using_original_scheme],
@@ -146,7 +146,7 @@ class AreaSchemeDuplicator:
                 target_param.Set(source_param.AsElementId())
         except Exception as e:
             # Log error but continue with other parameters
-            print(f"Could not set parameter '{para_name}': {str(e)}")
+            print("Could not set parameter '{}'".format(para_name))
     
     def _transfer_area(self, area):
         """Transfer an area from the original view to the new view."""
