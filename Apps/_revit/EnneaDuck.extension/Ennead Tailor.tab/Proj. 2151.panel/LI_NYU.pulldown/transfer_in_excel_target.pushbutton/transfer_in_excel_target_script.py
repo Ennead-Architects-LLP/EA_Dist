@@ -51,11 +51,11 @@ def transfer_in_excel_target(doc):
     output = script.get_output()
 
     output.print_md("## Program Target Dict")
-    output.print_md("| Program | Target |")
-    output.print_md("| --- | --- |")
+    table_data = []
     for item in sorted(program_target_dict.keys()):
-        output.print_md("| {} | {} |".format(item, program_target_dict[item]))
-    output.print_md("---")
+        table_data.append([item, pretty_print_area(program_target_dict[item])])
+    output.print_table(table_data, columns = ["Program", "Target"])
+ 
     print ("If your parater use value other than those above, it cannot find the target value.")
 
 
@@ -76,7 +76,12 @@ def transfer_in_excel_target(doc):
             if fuzzy_searach:
                 comment += " Did you mean: [{}]?".format(fuzzy_searach)
         else:   
-            comment = "Target: " + desired_program_area
+
+            current_area = area.Area
+            diff_number = current_area - desired_program_area
+            diff = pretty_print_area(abs(diff_number))
+            diff_note = "You are {} more than the target.".format(diff) if diff_number > 0 else "You are {} less than the target.".format(diff)
+            comment = "Target: {}. {}".format(pretty_print_area(desired_program_area), diff_note)
 
         if REVIT_SELECTION.is_changable(area):
             area.LookupParameter("Comments").Set(comment)
@@ -85,7 +90,7 @@ def transfer_in_excel_target(doc):
 
     t.Commit()
 
-    print ("Done! All areas commentshave been updated. At the moment, there is not couting for how many itme of this same program used. Need a solution to for scheme indepedent.")
+    print ("Done! All areas comments have been updated.\nAt the moment, there is not couting for how many itme of this same program used. Need a solution to for scheme indepedent.")
     
 
 def get_program_target_dict():
@@ -117,15 +122,19 @@ def get_program_target_dict():
         program_name = formated_name(program_name)
 
         try:
-            out[program_name] = str(int(target_cell_value)) + " SF"
+            target_cell_value = float(target_cell_value)
+            out[program_name] = target_cell_value
         except:
-            print (program_name, target_cell_value)
+            pass
+            # print (program_name, target_cell_value)
             # ignore some non-number cell such as target/Factor
 
     
     return out
 
 
+def pretty_print_area(number):
+    return str(int(number)) + " SF"
 
 
 
