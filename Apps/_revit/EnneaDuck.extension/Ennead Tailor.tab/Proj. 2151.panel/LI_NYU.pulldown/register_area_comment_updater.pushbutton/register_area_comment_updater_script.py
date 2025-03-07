@@ -31,10 +31,11 @@ if not target_dir in sys.path:
 class AreaCommentsUpdaterFromExcel(REVIT_UPDATER.EnneadTabUpdater):
     @ERROR_HANDLE.try_catch_error()
     def Initialize(self):
-        from transfer_in_excel_target_script import process_area, get_program_target_dict
+        from transfer_in_excel_target_script import process_area, get_program_target_dict, print_data_as_table
         self.process_area = process_area
         self.program_target_dict = get_program_target_dict()
         self.app_name = "area_comment_updater"
+        self.print_data_as_table = print_data_as_table
 
     @ERROR_HANDLE.try_catch_error()
     def Execute(self, data):
@@ -75,6 +76,9 @@ def register_area_comment_updater(doc):
 
     # Register the updater with a trigger for area elements
     if not DB.UpdaterRegistry.IsUpdaterRegistered(updater_id, doc):
+        
+        updater.print_data_as_table(updater.program_target_dict)
+        
         DB.UpdaterRegistry.RegisterUpdater(updater, doc)
         
         # Create a filter for area elements
