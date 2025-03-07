@@ -219,6 +219,11 @@ class OptionValidation:
                                       REVIT_VIEW.get_default_view_type("drafting").Id)
         view.Name = self.option.CALCULATOR_CONTAINER_VIEW_NAME
         view.Scale = 250
+        try:
+            view.LookupParameter("Views_$Group").Set("Ennead")
+            view.LookupParameter("Views_$Series").Set("Healthcare")
+        except:
+            pass
         t.Commit()
         return True
 
@@ -366,6 +371,12 @@ class OptionValidation:
         # test if schedule has all required parameters as field
         # create a schedule with defined rules(get viewschedule.definition, then add field, and set order)
         view = REVIT_VIEW.get_view_by_name(self.option.FINAL_SCHEDULE_VIEW_NAME, doc = self.doc)
+
+
+        if not REVIT_SELECTION.is_changable(view):
+            owner = REVIT_SELECTION.get_owner(view)
+            self.output.print_md("## Schedule view [{}] is owned by [{}]".format(self.option.FINAL_SCHEDULE_VIEW_NAME, owner))
+            return
 
         t = DB.Transaction(self.doc, "Check schedule contents.")
         t.Start()

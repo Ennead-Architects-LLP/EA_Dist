@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __doc__ = "Registration tool for automatic Area comment updates from Excel data. Monitors area elements for changes and syncs with external data."
-__title__ = "(Un)Register Area Comment Updater"
+__title__ = "(Un)Register Area Comment Live Updater"
 
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
