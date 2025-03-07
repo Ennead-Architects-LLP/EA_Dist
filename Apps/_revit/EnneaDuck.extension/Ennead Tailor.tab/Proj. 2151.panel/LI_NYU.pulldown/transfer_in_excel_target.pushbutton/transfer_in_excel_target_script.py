@@ -87,6 +87,8 @@ def process_area(area, program_target_dict):
 def transfer_in_excel_target(doc):
 
     program_target_dict = get_program_target_dict()
+
+    print_data_as_table(program_target_dict)
     
 
  
@@ -102,7 +104,7 @@ def transfer_in_excel_target(doc):
 
     t.Commit()
 
-    print ("Done! All areas comments have been updated.\nAt the moment, there is not couting for how many itme of this same program used. Need a solution to for scheme indepedent.")
+    print ("Done! All areas comments have been updated.")
     
 
 def get_program_target_dict():
@@ -143,20 +145,23 @@ def get_program_target_dict():
 
     DATA_FILE.set_data(out, "excel_program_target_dict.sexyDuck")
 
-    # make a table
+
+    return out
+
+
+def print_data_as_table(data):
     output = script.get_output()
     output.print_md("## Program Target Dict")
     table_data = []
-    for item in sorted(out.keys()):
-        table_data.append([item, pretty_print_area(out[item])])
+    for item in sorted(data.keys()):
+        table_data.append([item, pretty_print_area(data[item])])
     output.print_table(table_data, columns = ["Program", "Target"])
  
     print ("If your parater use value other than those above, it cannot find the target value.")
+    print ("At the moment, there is not couting for how many itme of this same program used. Need a solution to for scheme indepedent.")
 
     output.save_contents(FOLDER.get_EA_dump_folder_file("Program Target Dict.html"))
     os.startfile(FOLDER.get_EA_dump_folder_file("Program Target Dict.html"))
-
-    return out
 
 
 def pretty_print_area(number):
