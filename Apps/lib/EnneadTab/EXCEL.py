@@ -132,11 +132,13 @@ class ExcelDataItem:
         item: Cell content (any type)
         row (int): Row index
         column (int|str): Column index or letter reference
+        is_bold (bool): If True, the text will be bold
         cell_color (tuple): RGB color tuple for cell background
         text_color (tuple): RGB color tuple for text
         border_style (int): Border style specification
         border_color (tuple): RGB color tuple for border
         top_border_style (int): Top border style specification
+        bottom_border_style (int): Bottom border style specification
         side_border_style (int): Left/right border style specification
     """
     def __init__(
@@ -144,11 +146,13 @@ class ExcelDataItem:
         item,
         row,
         column,
+        is_bold = False,
         cell_color=None,
         text_color=None,
         border_style=None,
         border_color=None,
         top_border_style=None,
+        bottom_border_style=None,
         side_border_style=None,
     ):
         """_summary_
@@ -157,11 +161,13 @@ class ExcelDataItem:
             item (_type_): _description_
             row (_type_): _description_
             column (_type_): _description_
+            is_bold (bool, optional): If True, the text will be bold. Defaults to False.
             cell_color (_type_, optional): _description_. Defaults to None.
             text_color (_type_, optional): _description_. Defaults to None.
             border_style (_type_, optional): _description_. Defaults to None.
             border_color (_type_, optional): _description_. Defaults to None.
             top_border_style (_type_, optional): _description_. Defaults to None.
+            bottom_border_style (_type_, optional): _description_. Defaults to None.
             side_border_style (_type_, optional): _description_. Defaults to None.
         """
         if isinstance(column, str):
@@ -175,11 +181,13 @@ class ExcelDataItem:
         self.item = item
         self.row = row
         self.column = column
+        self.is_bold = is_bold
         self.cell_color = cell_color
         self.text_color = text_color
         self.border_style = border_style
         self.border_color = border_color
         self.top_border_style = top_border_style
+        self.bottom_border_style = bottom_border_style
         self.side_border_style = side_border_style
     def __str__(self):
         info = "ExcelDataItem: {} @ ({}, {})".format(self.item, self.row, self.column)
@@ -192,12 +200,14 @@ class ExcelDataItem:
             "item": self.item,
             "row": self.row,
             "column": self.column,
+            "is_bold": self.is_bold,
             "cell_color": self.cell_color,
             "text_color": self.text_color,
             "border_style": self.border_style,
             "border_color": self.border_color,
             "top_border_style": self.top_border_style,
             "side_border_style": self.side_border_style,
+            "bottom_border_style": self.bottom_border_style,
         }
 
     @classmethod
@@ -206,11 +216,13 @@ class ExcelDataItem:
             item=data["item"],
             row=data["row"],
             column=data["column"],
+            is_bold=data["is_bold"],
             cell_color=data["cell_color"],
             text_color=data["text_color"],
             border_style=data["border_style"],
             border_color=data["border_color"],
             top_border_style=data["top_border_style"],
+            bottom_border_style=data["bottom_border_style"],
             side_border_style=data["side_border_style"]
         )
 
@@ -606,36 +618,30 @@ def save_data_to_excel(data, filepath, worksheet="EnneadTab", open_after=True, f
         if not open_after:
             NOTIFICATION.messenger(main_text="Excel saved at '{}'".format(filepath))
     except Exception as e:
-        # import ERROR_HANDLE
-        # print (ERROR_HANDLE.get_alternative_traceback())
-        NOTIFICATION.messenger(
-            main_text="the excel file you picked is still open, cannot override. Writing cancelled."
-        )
 
-        if USER.IS_DEVELOPER:
-            job_data = {
-                "mode": "write",
-                "filepath": filepath,
-                "worksheet": worksheet,
-                "freeze_row": freeze_row,
-                "data": ExcelDataItem.convert_datas_to_dict(data)
-            }
-      
-            DATA_FILE.set_data(job_data, "excel_handler_input.sexyDuck")
+        job_data = {
+            "mode": "write",
+            "filepath": filepath,
+            "worksheet": worksheet,
+            "freeze_row": freeze_row,
+            "data": ExcelDataItem.convert_datas_to_dict(data)
+        }
+    
+        DATA_FILE.set_data(job_data, "excel_handler_input.sexyDuck")
+        DATA_FILE.set_data(job_data, "DEBUGER_excel_handler_input.sexyDuck")
 
-            EXE.try_open_app("ExcelHandler")
-            max_wait = 100
-            wait = 0
-            while wait<max_wait:
-                job_data = DATA_FILE.get_data("excel_handler_input.sexyDuck")
-                if job_data.get("status") == "done":
-                    break
-                time.sleep(0.1)
-                wait += 1
-        
-
-    if open_after and os.path.exists(filepath):
-        os.startfile(filepath)
+        EXE.try_open_app("ExcelHandler")
+        max_wait = 100
+        wait = 0
+        while wait<max_wait:
+            job_data = DATA_FILE.get_data("excel_handler_input.sexyDuck")
+            if job_data.get("status") == "done":
+                break
+            time.sleep(0.1)
+            wait += 1
+    finally:
+        if open_after and os.path.exists(filepath):
+            os.startfile(filepath)
 
 
 def check_formula(excel, worksheet, highlight_formula=True):
