@@ -545,80 +545,89 @@ def save_data_to_excel(data, filepath, worksheet="EnneadTab", open_after=True, f
     Returns:
         bool: True if save successful, False otherwise
     """
+    def legacy_method():
+        # note to self: rework the format method in dataitem so can construct any combonation format
+        # note to self: rework the format method in dataitem so can construct any combonation format
+        # see doc here: https://xlsxwriter.readthedocs.io/format.html#format-set-border
+        def write_data_item(worksheet, data):
+            if any(
+                [data.cell_color, data.text_color, data.border_style, data.border_color, data.top_border_style]
+            ):
+                format_dict = {}
+                if data.cell_color:
+                    format_dict["bg_color"] = COLOR.rgb_to_hex(data.cell_color)
+                if data.text_color:
+                    format_dict["color"] = COLOR.rgb_to_hex(data.text_color)
+                if data.is_bold:
+                    format_dict["bold"] = True
+                if data.border_style:
+                    format_dict["border"] = data.border_style
+                if data.border_color:
+                    format_dict["border_color"] = COLOR.rgb_to_hex(data.border_color)
+                if data.top_border_style:
+                    format_dict["top"] = data.top_border_style
+                if data.bottom_border_style:
+                    format_dict["bottom"] = data.bottom_border_style
+                if data.side_border_style:
+                    format_dict["left"] = data.side_border_style
+                    format_dict["right"] = data.side_border_style
+                format = workbook.add_format(format_dict)
+                worksheet.write(data.row, data.column, data.item, format)
+            else:
+                worksheet.write(data.row, data.column, data.item)
+
+            # if data.cell_color:
+            #     hex_color = COLOR.rgb_to_hex(data.cell_color)
+            #     format = workbook.add_format({'bg_color' : hex_color})
+            #     worksheet.write(data.row,
+            #                     data.column,
+            #                     data.item,
+            #                     format)
+            # elif data.text_color:
+            #     hex_color = COLOR.rgb_to_hex(data.text_color)
+            #     format = workbook.add_format({'color' : hex_color})
+            #     worksheet.write(data.row,
+            #                     data.column,
+            #                     data.item,
+            #                     format)
+
+            # else:
+            #     worksheet.write(data.row,
+            #                     data.column,
+            #                     data.item)
+
+        workbook = xlsxwriter.Workbook(filepath)
+
+        worksheet_item = workbook.add_worksheet(worksheet)
+        for data_entry in data:
+            write_data_item(worksheet_item, data_entry)
+
+        column_max_width_dict = dict()
+        for entry in data:
+            column, item = entry.column, entry.item
+            if column not in column_max_width_dict.keys():
+                column_max_width_dict[column] = 0
+            column_max_width_dict[column] = max(
+                column_max_width_dict[column], 1.1 * len(str(item))
+            )
+
+        for column in column_max_width_dict.keys():
+            worksheet_item.set_column(column, column, column_max_width_dict[column])
+
+        if freeze_row:
+            worksheet_item.freeze_panes(freeze_row, 0)
+
+        try:
+            workbook.close()
+            if not open_after:
+                NOTIFICATION.messenger(main_text="Excel saved at '{}'".format(filepath))
+        except Exception as e:
+            print (ERROR_HANDLE.get_alternative_traceback())
+
+        return True
 
 
-    # note to self: rework the format method in dataitem so can construct any combonation format
-    # see doc here: https://xlsxwriter.readthedocs.io/format.html#format-set-border
-    def write_data_item(worksheet, data):
-        if any(
-            [data.cell_color, data.text_color, data.border_style, data.border_color, data.top_border_style]
-        ):
-            format_dict = {}
-            if data.cell_color:
-                format_dict["bg_color"] = COLOR.rgb_to_hex(data.cell_color)
-            if data.text_color:
-                format_dict["color"] = COLOR.rgb_to_hex(data.text_color)
-            if data.border_style:
-                format_dict["border"] = data.border_style
-            if data.border_color:
-                format_dict["border_color"] = COLOR.rgb_to_hex(data.border_color)
-            if data.top_border_style:
-                format_dict["top"] = data.top_border_style
-            if data.side_border_style:
-                format_dict["left"] = data.side_border_style
-                format_dict["right"] = data.side_border_style
-            format = workbook.add_format(format_dict)
-            worksheet.write(data.row, data.column, data.item, format)
-        else:
-            worksheet.write(data.row, data.column, data.item)
-
-        # if data.cell_color:
-        #     hex_color = COLOR.rgb_to_hex(data.cell_color)
-        #     format = workbook.add_format({'bg_color' : hex_color})
-        #     worksheet.write(data.row,
-        #                     data.column,
-        #                     data.item,
-        #                     format)
-        # elif data.text_color:
-        #     hex_color = COLOR.rgb_to_hex(data.text_color)
-        #     format = workbook.add_format({'color' : hex_color})
-        #     worksheet.write(data.row,
-        #                     data.column,
-        #                     data.item,
-        #                     format)
-
-        # else:
-        #     worksheet.write(data.row,
-        #                     data.column,
-        #                     data.item)
-
-    workbook = xlsxwriter.Workbook(filepath)
-
-    worksheet_item = workbook.add_worksheet(worksheet)
-    for data_entry in data:
-        write_data_item(worksheet_item, data_entry)
-
-    column_max_width_dict = dict()
-    for entry in data:
-        column, item = entry.column, entry.item
-        if column not in column_max_width_dict.keys():
-            column_max_width_dict[column] = 0
-        column_max_width_dict[column] = max(
-            column_max_width_dict[column], 1.1 * len(str(item))
-        )
-
-    for column in column_max_width_dict.keys():
-        worksheet_item.set_column(column, column, column_max_width_dict[column])
-
-    if freeze_row:
-        worksheet_item.freeze_panes(freeze_row, 0)
-
-    try:
-        workbook.close()
-        if not open_after:
-            NOTIFICATION.messenger(main_text="Excel saved at '{}'".format(filepath))
-    except Exception as e:
-
+    def new_method():
         job_data = {
             "mode": "write",
             "filepath": filepath,
@@ -639,9 +648,14 @@ def save_data_to_excel(data, filepath, worksheet="EnneadTab", open_after=True, f
                 break
             time.sleep(0.1)
             wait += 1
-    finally:
-        if open_after and os.path.exists(filepath):
-            os.startfile(filepath)
+
+        return True
+    
+    if not new_method():
+        legacy_method()
+    
+    if open_after and os.path.exists(filepath):
+        os.startfile(filepath)
 
 
 def check_formula(excel, worksheet, highlight_formula=True):
