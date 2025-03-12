@@ -12,15 +12,9 @@ from __future__ import print_function, division, absolute_import
 import datetime
 import os
 import random
-import sys
 
-try:
-    from pyrevit import script
-except ImportError:
-    pass
 
 import FOLDER
-import EXE
 import SOUND
 import ENVIRONMENT
 import NOTIFICATION
@@ -28,7 +22,7 @@ import OUTPUT
 
 # Python 2/3 compatibility
 try:
-    basestring  # Python 2
+    basestring  # Python 2 # pyright: ignore
 except NameError:
     basestring = str  # Python 3
 
@@ -175,8 +169,9 @@ def display_greeting(image_name, title_text="Greeting from EnneadTab",
     image_file = "{0}\\{1}".format(ENVIRONMENT.IMAGE_FOLDER, image_name)
     
     output = OUTPUT.get_output()
-    output.write("# {0}".format(title_text), OUTPUT.Style.Title)
-    output.write(image_file)
+    output.write(title_text, OUTPUT.Style.Title)
+    if os.path.exists(image_file):
+        output.write(image_file)
     
     if md_text:
         output.write(md_text)
