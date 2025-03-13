@@ -110,6 +110,15 @@ class PDFGenerator:
         self.BOTTOM_MARGIN = 1 * inch
         
         self.styles = getSampleStyleSheet()
+        self.book_title_style = ParagraphStyle(
+            'BookTitleStyle',
+            parent=self.styles['Heading1'],
+            fontSize=60,
+            alignment=1,
+            textColor=colors.white,
+            backColor=colors.transparent,
+            fontName='Helvetica-Bold'
+        )
         self.command_style = ParagraphStyle(
             'CommandStyle',
             parent=self.styles['Heading2'],
@@ -326,7 +335,11 @@ class PDFGenerator:
 
         story = [
             Spacer(1, 3 * inch),
-            Paragraph("<b>EnneadTab-For-{}</b>".format(self.app), self.styles['Title']),
+            Paragraph("<b>EnneadTab</b>", self.book_title_style),
+            Spacer(1, 0.5 * inch),
+            Paragraph("<b>For</b>", self.book_title_style),
+            Spacer(1, 0.5 * inch),
+            Paragraph("<b>{}</b>".format(self.app), self.book_title_style),
             Spacer(1, 2 * inch),
             Paragraph("Secret Documentation", style),
             Paragraph("{}".format(TIME.get_YYYY_MM_DD()), style)
