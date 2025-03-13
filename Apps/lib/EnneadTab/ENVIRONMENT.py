@@ -360,9 +360,9 @@ def alert_l_drive_not_available(play_sound = False):
         return True
     try:
         import NOTIFICATION
-        NOTIFICATION.messenger(main_text = "L drive is not available, please check your network connection or activate L drive manually.")
+        NOTIFICATION.messenger(main_text = "L drive is not available, please check your network connection or activate L drive manually.\nEnneadTab will still work, just without some public asset.")
     except:
-        print("L drive is not available, please check your network connection or activate L drive manually.")
+        print("L drive is not available, please check your network connection or activate L drive manually.\nEnneadTab will still work, just without some public asset.")
     if play_sound:
         try:
             import SOUND
