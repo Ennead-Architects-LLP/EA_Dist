@@ -693,7 +693,7 @@ class Deployer:
                                                             DB.Plane.CreateByNormalAndOrigin(DB.XYZ.BasisY, self.pointer),
                                                             True)
             if len(list(mirrored_ids)) > 0:
-                print ("mirrored_ids: {}".format(mirrored_ids))
+              
                 temp_instance = self.doc.GetElement(list(mirrored_ids)[0])
                 if temp_instance:
                     self.doc.Delete(instance.Id)
