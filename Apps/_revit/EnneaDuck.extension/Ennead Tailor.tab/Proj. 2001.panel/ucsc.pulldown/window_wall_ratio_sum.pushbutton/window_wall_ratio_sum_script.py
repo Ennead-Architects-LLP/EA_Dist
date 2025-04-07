@@ -7,7 +7,7 @@ __title__ = "Window Wall Ratio Sum"
 import proDUCKtion # pyright: ignore 
 proDUCKtion.validify()
 
-from EnneadTab import ERROR_HANDLE, LOG, TIME
+from EnneadTab import ERROR_HANDLE, LOG, TIME, NOTIFICATION
 from EnneadTab.REVIT import REVIT_APPLICATION, REVIT_FAMILY, REVIT_VIEW
 from Autodesk.Revit import DB # pyright: ignore 
 
@@ -111,6 +111,8 @@ def window_wall_ratio_sum(doc):
         schedule.LookupParameter("Last_Update_Date").Set(TIME.get_formatted_current_time())
 
     t.Commit()
+
+    NOTIFICATION.messenger("Window Wall Ratio Update completed")
 
 
 
