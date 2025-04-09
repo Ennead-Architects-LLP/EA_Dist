@@ -354,12 +354,12 @@ def run_legacy_updates(doc):
 def update_view_names(doc):
     """Update view names - because nobody likes unnamed views wandering around!"""
     # Update sheet views
-    script = "Ennead.tab\\Tools.panel\\general_renamer.pushbutton\\general_renamer_script.py"
+    script = "EnneadTab.tab\\Tools.panel\\general_renamer.pushbutton\\general_renamer_script.py"
     sheets = DB.FilteredElementCollector(doc).OfClass(DB.ViewSheet).WhereElementIsNotElementType().ToElements()
     MODULE_HELPER.run_revit_script(script, "rename_views", doc, sheets, True, False)
 
     # Update working views
-    script = "Ennead.tab\\Manage.panel\\working_view_cleanup.pushbutton\\manage_working_view_script.py"
+    script = "EnneadTab.tab\\Manage.panel\\working_view_cleanup.pushbutton\\manage_working_view_script.py"
     fullpath = "{}\\{}".format(ENVIRONMENT.REVIT_PRIMARY_EXTENSION, script)
     ref_module = imp.load_source("manage_working_view_script", fullpath)
     
@@ -369,7 +369,7 @@ def update_view_names(doc):
 
 def update_area_tracking(doc):
     """Update area tracking - keeping those square feet in check!"""
-    fullpath = "{}\\Ennead.tab\\Tools.panel\\generic_healthcare_tool.pushbutton\\dgsf_chart.py".format(
+    fullpath = "{}\\EnneadTab.tab\\Tools.panel\\generic_healthcare_tool.pushbutton\\dgsf_chart.py".format(
         ENVIRONMENT.REVIT_PRIMARY_EXTENSION)
     ref_module = imp.load_source("dgsf_chart", fullpath)
     ref_module.dgsf_chart_update(doc, show_log=False)
