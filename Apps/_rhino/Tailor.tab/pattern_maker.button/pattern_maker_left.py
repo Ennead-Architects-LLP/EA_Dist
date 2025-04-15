@@ -186,7 +186,7 @@ def pattern_maker():
     
     rs.EnableRedraw(False)
     for location in sorted(block_dict.keys(), key=lambda x: (x[1], x[0])): # row first, then column
-        current_object_name = rs.ObjectName(block_dict[location])
+      
         # if considering header blocks, then skip treatment of header blocks in first run so the guid stay
         if "header_blocks" in locals():
             if rs.ObjectName(block_dict[location]) == "header":
@@ -200,15 +200,8 @@ def pattern_maker():
         rs.ObjectColor(new_block, TYPE_DEFINITIONS[block_type].get('color', (0, 0, 0)))
 
     if "header_blocks" in locals():
-        import pprint
-        print ("header location map is : ")
-        print (pprint.pprint(header_location_map))
-        print ("################################")
-        
+
         for location in sorted(header_block_dict.keys(), key=lambda x: (x[1], x[0])): # row first, then column
-            if location not in header_location_map:
-                # print ("location {} is not in header_location_map, this is wrong...".format(location))
-                continue
             block = header_block_dict[location]
             current_transform = rs.BlockInstanceXform(block)
             block_type = header_location_map[location]
