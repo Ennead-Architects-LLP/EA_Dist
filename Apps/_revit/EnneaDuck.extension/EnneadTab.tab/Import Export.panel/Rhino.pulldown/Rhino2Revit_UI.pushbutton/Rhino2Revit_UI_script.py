@@ -333,6 +333,13 @@ class Rhino2Revit_UI(forms.WPFWindow):
     def pick_files(self, sender, args):
         # print "pick files"
         recent_output_folder = ENVIRONMENT.ONE_DRIVE_DESKTOP_FOLDER
+        recent_out_data = DATA_FILE.get_data("rhino2revit_out_paths")
+        if recent_out_data:
+            if recent_out_data["3dm_out_paths"]:
+                recent_output_folder = os.path.dirname(recent_out_data["3dm_out_paths"][-1])
+            if recent_out_data["dwg_out_paths"]:
+                recent_output_folder = os.path.dirname(recent_out_data["dwg_out_paths"][-1])
+            
             
             
         files = forms.pick_file(files_filter='Rhino and AutoCAD (*.3dm; *.dwg)|*.3dm; *.dwg|'
