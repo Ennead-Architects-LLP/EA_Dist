@@ -402,7 +402,7 @@ def update_keynote_from_excel(keynote_data_conn):
 
     options = [["Update Keynote from Excel", "Update keynote data from an Excel file."], "Abort Abort Abort!!!!!!"]
 
-    res = REVIT_FORMS.dialogue(main_text="Update Keynote from Excel.", sub_text="This is a dangerour game.", options=options, icon="warning")
+    res = REVIT_FORMS.dialogue(main_text="Update Keynote from Excel.", sub_text="This is a dangerour game. I am going to use the 'Update' worksheet in the Excel file to update the keynote data. Adding one if missing, and updating the existing ones with new description.\nYou will have a chance to pick a parent for the new keynotes, if you did not assign one in the Excel file.", options=options, icon="warning")
     if res != options[0][0]:
         return
 
@@ -412,7 +412,7 @@ def update_keynote_from_excel(keynote_data_conn):
     if not excel_path:
         return
 
-    data = EXCEL.read_data_from_excel(excel_path, worksheet="New", return_dict=True)
+    data = EXCEL.read_data_from_excel(excel_path, worksheet="Update", return_dict=True)
 
     data = EXCEL.parse_excel_data(data, "KEYNOTE ID")
 
@@ -423,14 +423,14 @@ def update_keynote_from_excel(keynote_data_conn):
     available_parents.extend([x.key for x in keynotes])
    
     # prompt to select a record
-    new_parent = forms.SelectFromList.show(
+    new_parent_for_new_keynote = forms.SelectFromList.show(
         natsorted(available_parents),
         title='Select New Parent',
         multiselect=False,
-        button_name="Pick new parent to attach to..."
+        button_name="Pick new parent to attach to if you are creating a new keynote and did not assign in excel..."
         )
     
-    if not new_parent:
+    if not new_parent_for_new_keynote:
         return
 
 
@@ -439,13 +439,22 @@ def update_keynote_from_excel(keynote_data_conn):
     with kdb.BulkAction(keynote_data_conn):
         for k, v in data.items():
             v = v.get("KEYNOTE DESCRIPTION")
+           
             if k in all_keys:
                 current_keynote_text = [x for x in all_keynotes if x.key == k][0].text
                 if current_keynote_text != v:
                     kdb.update_keynote_text(keynote_data_conn, k, v)
                     print ("Update [{}]: {}".format(k, v))
             else:
-                kdb.add_keynote(keynote_data_conn, k, v, new_parent)
+                assigned_parent = v.get("PARENT FOR NEW KEYNOTE")
+                if assigned_parent is not None and assigned_parent not in all_keys:
+                    print ("You are trying to create [{}] and attach it to [{}] as parent, but [{}] is not found in the keynote database. I am going to use [{}] as parent instead.".format(k, assigned_parent, assigned_parent, new_parent_for_new_keynote))
+                    assigned_parent = None
+                    
+                if assigned_parent:
+                    kdb.add_keynote(keynote_data_conn, k, v, assigned_parent)
+                else:
+                    kdb.add_keynote(keynote_data_conn, k, v, new_parent_for_new_keynote)
                 print ("Add [{}]: {}".format(k, v))
     
 
