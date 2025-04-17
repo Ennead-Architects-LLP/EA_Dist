@@ -173,8 +173,12 @@ def clean_temporary_executables():
             try:
                 # Remove the file or directory
                 if os.path.isfile(file_path):
+                    if USER.IS_DEVELOPER:
+                        print("[Developer only log] Removing temporary file: {}".format(file_path))
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
+                    if USER.IS_DEVELOPER:
+                        print("[Developer only log] Removing temporary directory: {}".format(file_path))
                     os.rmdir(file_path)
             except Exception as e:
                 ERROR_HANDLE.print_note("Error removing {}: {}".format(file_path, e))
