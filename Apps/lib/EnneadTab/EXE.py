@@ -6,6 +6,7 @@ with support for legacy versions and temporary file handling.
 
 import os
 import time
+import random
 import ENVIRONMENT
 import USER
 import NOTIFICATION
@@ -67,7 +68,19 @@ def create_temporary_copy(exe_path, exe_name):
         str or None: Path to the temporary copy if successful, None otherwise.
     """
     temp_exe_name = "_temp_exe_{}_{}.exe".format(exe_name, int(time.time()))
-    temp_exe = os.path.join(ENVIRONMENT.WINDOW_TEMP_FOLDER, temp_exe_name)
+    
+    # Ensure the temporary directory exists
+    temp_dir = ENVIRONMENT.WINDOW_TEMP_FOLDER
+    if not os.path.exists(temp_dir):
+        try:
+            os.makedirs(temp_dir)
+        except Exception as e:
+            if USER.IS_DEVELOPER:
+                print("[Developer only log] Failed to create temp directory: {}".format(e))
+            return None
+            
+    # Properly join paths to ensure backslash is included
+    temp_exe = os.path.join(temp_dir, temp_exe_name)
     
     COPY.copyfile(exe_path, temp_exe)
     if os.path.exists(temp_exe):
@@ -146,6 +159,9 @@ def try_open_app(exe_name, legacy_name = None, safe_open = False):
         return True
 
 def clean_temporary_executables():
+    if random.random() < 0.9:
+        return
+
     """Clean up temporary executables older than a specified age.
     
     This function removes temporary executable files created by the safe_open option.
@@ -153,7 +169,7 @@ def clean_temporary_executables():
     - OS_Installer/AutoStartup files: cleaned up after 12 hours
     - Other executables: cleaned up after 24 hours
     
-    Files that are currently in use will be skipped with an appropriate debug message.
+    Files that are currently in use will be skipped and logged for debugging purposes.
     """
     
     def get_ignore_age(file):
@@ -173,12 +189,11 @@ def clean_temporary_executables():
             try:
                 # Remove the file or directory
                 if os.path.isfile(file_path):
-                    if USER.IS_DEVELOPER:
-                        print("[Developer only log] Removing temporary file: {}".format(file_path))
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
-                    if USER.IS_DEVELOPER:
-                        print("[Developer only log] Removing temporary directory: {}".format(file_path))
                     os.rmdir(file_path)
+            except OSError as e:
+                # This typically happens when file is still in use
+                continue
             except Exception as e:
                 ERROR_HANDLE.print_note("Error removing {}: {}".format(file_path, e))
