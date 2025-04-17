@@ -7,12 +7,12 @@ __doc__ = "A floating window that give you information of the creator, editor an
 __title__ = "What\nHappened?"
 __tip__ = True
 __is_popular__ = True
-from Autodesk.Revit.UI import IExternalEventHandler, ExternalEvent
-from System import EventHandler
-import System
+from Autodesk.Revit.UI import IExternalEventHandler, ExternalEvent # pyright: ignore
+from System import EventHandler # pyright: ignore
+import System # pyright: ignore
 
 
-from Autodesk.Revit.Exceptions import InvalidOperationException
+from Autodesk.Revit.Exceptions import InvalidOperationException # pyright: ignore
 from pyrevit.forms import WPFWindow
 # from pyrevit import forms #
 from pyrevit import script #
@@ -108,7 +108,7 @@ class who_did_that_ModelessForm(WPFWindow):
     def __init__(self):
         self.pre_actions()
 
-        xaml_file_name = "who_did_ModelessForm.xaml" ###>>>>>> if change from window to dockpane, the top level <Window></Window> need to change to <Page></Page>
+        xaml_file_name = "what_happened_ModelessForm.xaml" ###>>>>>> if change from window to dockpane, the top level <Window></Window> need to change to <Page></Page>
         WPFWindow.__init__(self, xaml_file_name)
 
         self.title_text.Text = "What Happened?"
@@ -126,12 +126,12 @@ class who_did_that_ModelessForm(WPFWindow):
         self.hostapp = HOST_APP#_HostApplication(__revit__)
         if self.hostapp.is_newer_than(version = 2023, or_equal = True):
             self.main_who_did_bt.Visibility = System.Windows.Visibility.Collapsed
-            from Autodesk.Revit.UI.Events import SelectionChangedEventArgs
-            __revit__.SelectionChanged += EventHandler[SelectionChangedEventArgs](self.selection_update_event_handler_function)
+            from Autodesk.Revit.UI.Events import SelectionChangedEventArgs # pyright: ignore
+            __revit__.SelectionChanged += EventHandler[SelectionChangedEventArgs](self.selection_update_event_handler_function) # pyright: ignore
         
         
-        from Autodesk.Revit.UI.Events import ViewActivatedEventArgs 
-        __revit__.ViewActivated += EventHandler[ViewActivatedEventArgs ](self.view_update_event_handler_function)
+        from Autodesk.Revit.UI.Events import ViewActivatedEventArgs # pyright: ignore
+        __revit__.ViewActivated += EventHandler[ViewActivatedEventArgs ](self.view_update_event_handler_function) # pyright: ignore
         
         self.update_active_view_info()
         self.Show()
@@ -234,15 +234,15 @@ class who_did_that_ModelessForm(WPFWindow):
         self.Close()
         if self.hostapp.is_newer_than(version = 2023, or_equal = True):
             try:
-                from Autodesk.Revit.UI.Events import SelectionChangedEventArgs
-                __revit__.SelectionChanged -= EventHandler[SelectionChangedEventArgs](self.selection_update_event_handler_function)
+                from Autodesk.Revit.UI.Events import SelectionChangedEventArgs # pyright: ignore
+                __revit__.SelectionChanged -= EventHandler[SelectionChangedEventArgs](self.selection_update_event_handler_function) # pyright: ignore
             except:
                 pass
             
         # in case application has no ViewActivatred event...reason unknown
         try:
-            from Autodesk.Revit.UI.Events import ViewActivatedEventArgs 
-            __revit__.ViewActivated -= EventHandler[ViewActivatedEventArgs ](self.view_update_event_handler_function)
+            from Autodesk.Revit.UI.Events import ViewActivatedEventArgs # pyright: ignore
+            __revit__.ViewActivated -= EventHandler[ViewActivatedEventArgs ](self.view_update_event_handler_function) # pyright: ignore
         except:
             pass
     def mouse_down_main_panel(self, sender, args):
