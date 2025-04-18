@@ -9,14 +9,14 @@ Shows total distance with a curve, and displays X, Y, Z differences as color-cod
 Measurements remain on screen until a new measurement is started.
 """
 
-import Rhino
-import rhinoscriptsyntax as rs
-import scriptcontext as sc
-import System
+import Rhino # type: ignore
+import scriptcontext as sc # type: ignore
+import System # type: ignore
 
-from EnneadTab import ERROR_HANDLE, LOG
+from EnneadTab import ERROR_HANDLE, LOG, SOUND
 from EnneadTab.RHINO import RHINO_CONDUIT
 
+MEASUREMENT_DISPLAY_KEY = "measure3d_display"
 
 class MeasurementDisplay(RHINO_CONDUIT.RhinoConduit):
     """Display 3D measurements between points with colored components and labels."""
@@ -125,6 +125,9 @@ class MeasurementDisplay(RHINO_CONDUIT.RhinoConduit):
         
         # Draw component differences
         self._draw_component_differences(e, differences, end_point)
+
+
+        
     
     def _draw_labeled_point(self, e, point, label):
         """Draw a point with a text label."""
@@ -255,9 +258,10 @@ class MeasureGetPoint(Rhino.Input.Custom.GetPoint):
         
         # Update the display with current point
         if self.is_start_point:
-            sc.sticky["measure3d_display"].update_dynamic_point(point, is_start_point=True)
+            sc.sticky[MEASUREMENT_DISPLAY_KEY].update_dynamic_point(point, is_start_point=True)
         else:
-            sc.sticky["measure3d_display"].update_dynamic_point(point, is_start_point=False)
+            sc.sticky[MEASUREMENT_DISPLAY_KEY].update_dynamic_point(point, is_start_point=False)
+            SOUND.play_sound("sound_effect_menu_tap")   
         
         # Force a redraw to show changes
         sc.doc.Views.Redraw()
@@ -272,17 +276,17 @@ def measure_3d():
     allowing camera rotation and navigation while viewing the measurements.
     """
     # Use sc.sticky for persistent storage between script runs
-    if "measure3d_display" not in sc.sticky:
-        sc.sticky["measure3d_display"] = None
+    if MEASUREMENT_DISPLAY_KEY not in sc.sticky:
+        sc.sticky[MEASUREMENT_DISPLAY_KEY] = None
     
     # Clear previous display if it exists
-    if sc.sticky["measure3d_display"]:
-        sc.sticky["measure3d_display"].Enabled = False
+    if sc.sticky[MEASUREMENT_DISPLAY_KEY]:
+        sc.sticky[MEASUREMENT_DISPLAY_KEY].Enabled = False
         sc.doc.Views.Redraw()
     
     # Create new measurement display
-    sc.sticky["measure3d_display"] = MeasurementDisplay()
-    sc.sticky["measure3d_display"].Enabled = True
+    sc.sticky[MEASUREMENT_DISPLAY_KEY] = MeasurementDisplay()
+    sc.sticky[MEASUREMENT_DISPLAY_KEY].Enabled = True
     
     # Get first point with custom GetPoint
     gp_start = MeasureGetPoint(is_start_point=True)
@@ -290,14 +294,14 @@ def measure_3d():
     result = gp_start.Get()
     
     if result != Rhino.Input.GetResult.Point:
-        sc.sticky["measure3d_display"].Enabled = False
+        sc.sticky[MEASUREMENT_DISPLAY_KEY].Enabled = False
         return
     
     start_point = gp_start.Point()
-    sc.sticky["measure3d_display"].set_start_point(start_point)
+    sc.sticky[MEASUREMENT_DISPLAY_KEY].set_start_point(start_point)
     
     # Update display to indicate we're selecting end point
-    sc.sticky["measure3d_display"].set_selecting_end_point(True)
+    sc.sticky[MEASUREMENT_DISPLAY_KEY].set_selecting_end_point(True)
     
     # Get end point with custom GetPoint
     gp_end = MeasureGetPoint(is_start_point=False)
@@ -306,14 +310,14 @@ def measure_3d():
     result = gp_end.Get()
     
     if result != Rhino.Input.GetResult.Point:
-        sc.sticky["measure3d_display"].Enabled = False
+        sc.sticky[MEASUREMENT_DISPLAY_KEY].Enabled = False
         return
     
     end_point = gp_end.Point()
-    sc.sticky["measure3d_display"].set_end_point(end_point)
+    sc.sticky[MEASUREMENT_DISPLAY_KEY].set_end_point(end_point)
     
     # Print measurement results
-    sc.sticky["measure3d_display"].print_measurement_results()
+    sc.sticky[MEASUREMENT_DISPLAY_KEY].print_measurement_results()
     
     # Keep display visible until next measurement
     sc.doc.Views.Redraw()
@@ -322,9 +326,9 @@ def measure_3d():
 
 def clear_measurements():
     """Clear the current measurement display."""
-    if "measure3d_display" in sc.sticky and sc.sticky["measure3d_display"]:
-        sc.sticky["measure3d_display"].Enabled = False
-        sc.sticky["measure3d_display"] = None
+    if MEASUREMENT_DISPLAY_KEY in sc.sticky and sc.sticky[MEASUREMENT_DISPLAY_KEY]:
+        sc.sticky[MEASUREMENT_DISPLAY_KEY].Enabled = False
+        sc.sticky[MEASUREMENT_DISPLAY_KEY] = None
         sc.doc.Views.Redraw()
 
 

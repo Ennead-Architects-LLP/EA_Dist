@@ -68,19 +68,19 @@ if datetime.now().date() > datetime(2026, 5, 1).date():
     ECO_SYS_FOLDER = ECO_SYS_FOLDER_MODERN
 else:
     ECO_SYS_FOLDER = ECO_SYS_FOLDER_LEGACY
+    try:
+        if os.path.exists(ECO_SYS_FOLDER_LEGACY):
+            import shutil
+            for root, dirs, files in os.walk(ECO_SYS_FOLDER_LEGACY):
+                for file in files:
+                    if file.endswith(PLUGIN_EXTENSION):
+                        rel_path = os.path.relpath(os.path.join(root, file), 
+                                                ECO_SYS_FOLDER_LEGACY)
+                        shutil.copy(os.path.join(ECO_SYS_FOLDER_LEGACY, rel_path), 
+                                    os.path.join(ECO_SYS_FOLDER_MODERN, rel_path))
+    except:
+        pass
 
-try:
-    if os.path.exists(ECO_SYS_FOLDER_LEGACY):
-        import shutil
-        for root, dirs, files in os.walk(ECO_SYS_FOLDER_LEGACY):
-            for file in files:
-                if file.endswith(PLUGIN_EXTENSION):
-                    rel_path = os.path.relpath(os.path.join(root, file), 
-                                               ECO_SYS_FOLDER_LEGACY)
-                    shutil.copy(os.path.join(ECO_SYS_FOLDER_LEGACY, rel_path), 
-                                os.path.join(ECO_SYS_FOLDER_MODERN, rel_path))
-except:
-    pass
 ####################################
 DUMP_FOLDER = os.path.join(ECO_SYS_FOLDER, "Dump")
 INSTALLATION_FOLDER = os.path.join(ROOT, "Installation")
