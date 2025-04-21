@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-21 12:31:23.
+This is the distribution repository for EnneadTab updated on 2025-04-21 13:56:52.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-Remember, the best angle to approach a problem from is the "try" angle.
+A panda walks into a bar and says to the bartender "I'll have a Scotch and . . . . . . . . . . . . . . Coke thank you".     "Sure thing" the bartender replies and asks "but what's with the big pause?"     The panda holds up his hands and says "I was born with them"
