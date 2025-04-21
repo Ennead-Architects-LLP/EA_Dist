@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-21 11:04:55.
+This is the distribution repository for EnneadTab updated on 2025-04-21 12:31:23.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-Even when a balloon is half inflated, it is completely full.
+Remember, the best angle to approach a problem from is the "try" angle.
