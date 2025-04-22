@@ -102,3 +102,18 @@ def update_material_setting(doc, material_map):
                 setting_value = DB.Color(setting_value[0], setting_value[1], setting_value[2])
             setattr(material, setting_name, setting_value)
 
+def sanitize_material_name(name):
+    """Remove prohibited characters from material name.
+    
+    Args:
+        name (str): Original material name
+        
+    Returns:
+        str: Sanitized material name
+    """
+    name = name.replace("[imported]", '')
+    prohibited_chars = '{}[]|;<>?`~'
+    for char in prohibited_chars:
+        name = name.replace(char, '_')
+    name = name.strip()
+    return name
