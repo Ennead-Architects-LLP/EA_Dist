@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-21 22:29:17.
+This is the distribution repository for EnneadTab updated on 2025-04-22 00:58:31.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-What do you do when your bunny gets wet? You get your hare dryer.
+What creature is smarter than a talking parrot? A spelling bee.
