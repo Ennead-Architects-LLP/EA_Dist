@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-23 06:10:50.
+This is the distribution repository for EnneadTab updated on 2025-04-23 08:41:53.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-A panda walks into a bar and says to the bartender "I'll have a Scotch and . . . . . . . . . . . . . . Coke thank you".     "Sure thing" the bartender replies and asks "but what's with the big pause?"     The panda holds up his hands and says "I was born with them"
+Did you hear about the guy whose whole left side was cut off? He's all right now.
