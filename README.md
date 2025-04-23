@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-23 03:39:06.
+This is the distribution repository for EnneadTab updated on 2025-04-23 06:10:50.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-For Valentine's day, I decided to get my wife some beads for an abacus.  It's the little things that count.
+A panda walks into a bar and says to the bartender "I'll have a Scotch and . . . . . . . . . . . . . . Coke thank you".     "Sure thing" the bartender replies and asks "but what's with the big pause?"     The panda holds up his hands and says "I was born with them"
