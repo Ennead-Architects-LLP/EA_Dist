@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-25 06:10:28.
+This is the distribution repository for EnneadTab updated on 2025-04-25 09:00:22.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-What do you call a group of killer whales playing instruments? An Orca-stra.
+A ghost walks into a bar and asks for a glass of vodka but the bar tender says, "sorry we don't serve spirits"
