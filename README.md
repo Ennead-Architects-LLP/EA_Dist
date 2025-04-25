@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-25 09:00:22.
+This is the distribution repository for EnneadTab updated on 2025-04-25 09:58:41.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-A ghost walks into a bar and asks for a glass of vodka but the bar tender says, "sorry we don't serve spirits"
+How do you know if there's an elephant under your bed? Your head hits the ceiling!
