@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-25 17:18:51.
+This is the distribution repository for EnneadTab updated on 2025-04-25 19:35:13.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-A man walked in to a bar with some asphalt on his arm. He said "Two beers please, one for me and one for the road"
+Why does Waldo only wear stripes? Because he doesn't want to be spotted.
