@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-25 21:49:28.
+This is the distribution repository for EnneadTab updated on 2025-04-26 00:05:40.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-My new thesaurus is terrible. In fact, it's so bad, I'd say it's terrible.
+What do computers eat for a snack? Microchips!
