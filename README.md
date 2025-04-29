@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-29 09:33:52.
+This is the distribution repository for EnneadTab updated on 2025-04-29 12:48:29.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-Why did the Clydesdale give the pony a glass of water? Because he was a little horse!
+If at first you don't succeed, sky diving is not for you!
