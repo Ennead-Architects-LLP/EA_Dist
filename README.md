@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-28 20:34:33.
+This is the distribution repository for EnneadTab updated on 2025-04-28 23:48:06.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-My wife told me to rub the herbs on the meat for better flavor. That's sage advice.
+I wish I could clean mirrors for a living. It's just something I can see myself doing.
