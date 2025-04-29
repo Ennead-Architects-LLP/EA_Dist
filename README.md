@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-28 17:17:44.
+This is the distribution repository for EnneadTab updated on 2025-04-28 20:34:33.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-People used to laugh at me when I would say "I want to be a comedian", well nobody's laughing now.
+My wife told me to rub the herbs on the meat for better flavor. That's sage advice.
