@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-30 08:25:23.
+This is the distribution repository for EnneadTab updated on 2025-04-30 11:40:34.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-A man walked in to a bar with some asphalt on his arm. He said "Two beers please, one for me and one for the road"
+A man got hit in the head with a can of Coke, but he was alright because it was a soft drink.
