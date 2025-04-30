@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-04-30 11:40:34.
+This is the distribution repository for EnneadTab updated on 2025-04-30 14:58:23.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -15,4 +15,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 
-A man got hit in the head with a can of Coke, but he was alright because it was a soft drink.
+How many hipsters does it take to change a lightbulb? Oh, it's a really obscure number. You've probably never heard of it.
