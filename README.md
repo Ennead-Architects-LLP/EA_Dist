@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-01 16:11:22.
+This is the distribution repository for EnneadTab updated on 2025-05-01 17:46:51.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Some people eat light bulbs. They say it's a nice light snack.
+Why is there always a gate around cemeteries? Because people are always dying to get in.
