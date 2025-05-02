@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-02 16:16:42.
+This is the distribution repository for EnneadTab updated on 2025-05-02 19:17:49.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why is no one friends with Dracula? Because he's a pain in the neck.
+Two muffins were sitting in an oven, and the first looks over to the second, and says, "man, it's really hot in here". The second looks over at the first with a surprised look, and answers, "WHOA, a talking muffin!"
