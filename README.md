@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-02 10:04:11.
+This is the distribution repository for EnneadTab updated on 2025-05-02 10:14:25.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-I used to be a banker, but I lost interest.
+I was going to get a brain transplant, but I changed my mind
