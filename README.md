@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-02 19:17:49.
+This is the distribution repository for EnneadTab updated on 2025-05-02 22:17:41.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Two muffins were sitting in an oven, and the first looks over to the second, and says, "man, it's really hot in here". The second looks over at the first with a surprised look, and answers, "WHOA, a talking muffin!"
+I went to the zoo the other day, there was only one dog in it. It was a shitzu.
