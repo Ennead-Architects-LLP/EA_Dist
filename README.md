@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-03 01:18:06.
+This is the distribution repository for EnneadTab updated on 2025-05-03 04:19:28.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Child: Dad, make me a sandwich. Dad: Poof! You're a sandwich.
+If you ever get cold, just stand in the corner of a room for a while. They're normally around 90 degrees.
