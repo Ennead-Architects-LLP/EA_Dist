@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-03 22:25:12.
+This is the distribution repository for EnneadTab updated on 2025-05-04 01:28:54.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why did Sweden start painting barcodes on the sides of their battleships? So they could Scandinavian.
+A red and a blue ship have just collided in the Caribbean. Apparently the survivors are marooned.
