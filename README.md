@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-04 07:31:26.
+This is the distribution repository for EnneadTab updated on 2025-05-04 10:32:51.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-When does a joke become a dad joke? When it becomes apparent.
+You know what they say about cliffhangers...
