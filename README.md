@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-08 19:03:29.
+This is the distribution repository for EnneadTab updated on 2025-05-08 19:03:57.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Did you know that protons have mass? I didn't even know they were catholic.
+Why did the tree go to the dentist? It needed a root canal.
