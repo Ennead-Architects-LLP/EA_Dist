@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-08 19:03:57.
+This is the distribution repository for EnneadTab updated on 2025-05-08 19:24:31.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why did the tree go to the dentist? It needed a root canal.
+I couldn't figure out how the seat belt worked. Then it just clicked.
