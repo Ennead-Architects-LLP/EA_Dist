@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-08 09:34:33.
+This is the distribution repository for EnneadTab updated on 2025-05-08 14:12:24.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-My wife is on a tropical fruit diet, the house is full of stuff. It is enough to make a mango crazy.
+Why do choirs keep buckets handy? So they can carry their tune
