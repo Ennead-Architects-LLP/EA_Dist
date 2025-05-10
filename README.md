@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-10 07:34:35.
+This is the distribution repository for EnneadTab updated on 2025-05-10 10:36:00.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What do you call a duck that gets all A's? A wise quacker.
+How do you make holy water? You boil the hell out of it.
