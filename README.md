@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-11 04:40:44.
+This is the distribution repository for EnneadTab updated on 2025-05-11 07:41:42.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What do you call an alligator in a vest? An in-vest-igator!
+I decided to sell my Hoover.. well it was just collecting dust.
