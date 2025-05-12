@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-12 16:55:33.
+This is the distribution repository for EnneadTab updated on 2025-05-12 19:55:29.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-"Dad, I'm cold.""Go stand in the corner, I hear it's 90 degrees."
+Mahatma Gandhi, as you know, walked barefoot most of the time, which produced an impressive set of calluses on his feet.
