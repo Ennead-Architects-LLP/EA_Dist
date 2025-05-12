@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-12 13:56:57.
+This is the distribution repository for EnneadTab updated on 2025-05-12 16:55:33.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-How do you get a baby alien to sleep?  You rocket.
+"Dad, I'm cold.""Go stand in the corner, I hear it's 90 degrees."
