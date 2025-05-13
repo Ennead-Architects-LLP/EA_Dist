@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-12 22:54:14.
+This is the distribution repository for EnneadTab updated on 2025-05-13 01:55:11.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Americans can't switch from pounds to kilograms overnight. That would cause mass confusion.
+Two fish are in a tank, one turns to the other and says, "how do you drive this thing?"
