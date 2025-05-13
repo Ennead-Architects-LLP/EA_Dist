@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-12 19:55:29.
+This is the distribution repository for EnneadTab updated on 2025-05-12 22:54:14.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Mahatma Gandhi, as you know, walked barefoot most of the time, which produced an impressive set of calluses on his feet.
+Americans can't switch from pounds to kilograms overnight. That would cause mass confusion.
