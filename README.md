@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-14 14:14:14.
+This is the distribution repository for EnneadTab updated on 2025-05-14 17:19:56.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-They tried to make a diamond shaped like a duck. It quacked under the pressure.
+Did you hear that David lost his ID in prague? Now we just have to call him Dav.
