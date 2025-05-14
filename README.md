@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-14 11:12:21.
+This is the distribution repository for EnneadTab updated on 2025-05-14 14:14:14.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What biscuit does a short person like? Shortbread.
+They tried to make a diamond shaped like a duck. It quacked under the pressure.
