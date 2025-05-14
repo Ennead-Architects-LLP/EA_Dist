@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-14 05:08:34.
+This is the distribution repository for EnneadTab updated on 2025-05-14 08:10:44.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-How do you count cows? With a cowculator.
+Why can't you hear a pterodactyl go to the bathroom? The p is silent.
