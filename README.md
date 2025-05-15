@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-14 20:25:00.
+This is the distribution repository for EnneadTab updated on 2025-05-14 23:25:39.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-A Sandwich walks into a bar, the bartender says "Sorry, we don't serve food here"
+Wife told me to take the spider out instead of killing it... We had some drinks, cool guy, wants to be a web developer.
