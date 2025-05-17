@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-17 11:58:21.
+This is the distribution repository for EnneadTab updated on 2025-05-17 14:57:29.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Can February march? No, but April may.
+I applied to be a doorman but didn't get the job due to lack of experience. That surprised me, I thought it was an entry level position.
