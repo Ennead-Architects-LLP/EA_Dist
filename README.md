@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-18 15:04:04.
+This is the distribution repository for EnneadTab updated on 2025-05-18 18:03:34.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Can a kangaroo jump higher than the Empire State Building? Of course. The Empire State Building can't jump.
+What's the best thing about elevator jokes? They work on so many levels.
