@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-18 12:03:19.
+This is the distribution repository for EnneadTab updated on 2025-05-18 15:04:04.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why did the chicken get a penalty? For fowl play.
+Can a kangaroo jump higher than the Empire State Building? Of course. The Empire State Building can't jump.
