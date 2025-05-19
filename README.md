@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-18 21:05:58.
+This is the distribution repository for EnneadTab updated on 2025-05-19 00:07:55.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What do you call a nervous javelin thrower? Shakespeare.
+How many apples grow on a tree? All of them!
