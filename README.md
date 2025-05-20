@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-19 21:14:10.
+This is the distribution repository for EnneadTab updated on 2025-05-20 00:15:06.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why did the tomato blush? Because it saw the salad dressing.
+What happens when you anger a brain surgeon? They will give you a piece of your mind.
