@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-20 18:22:20.
+This is the distribution repository for EnneadTab updated on 2025-05-20 21:24:06.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why was the picture sent to prison? It was framed.
+A police officer caught two kids playing with a firework and a car battery. He charged one and let the other one off.
