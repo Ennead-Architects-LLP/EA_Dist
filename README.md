@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-22 12:28:22.
+This is the distribution repository for EnneadTab updated on 2025-05-22 15:29:09.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What's brown and sticky? A stick.
+Whoever invented the knock-knock joke should get a no bell prize.
