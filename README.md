@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-22 15:29:09.
+This is the distribution repository for EnneadTab updated on 2025-05-22 18:30:28.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Whoever invented the knock-knock joke should get a no bell prize.
+Why does a chicken coop only have two doors? Because if it had four doors it would be a chicken sedan.
