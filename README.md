@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-23 21:56:12.
+This is the distribution repository for EnneadTab updated on 2025-05-24 00:58:33.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why are fish so smart? Because they live in schools!
+Why do scuba divers fall backwards into the water? Because if they fell forwards they'd still be in the boat.
