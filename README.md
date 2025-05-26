@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-26 04:29:23.
+This is the distribution repository for EnneadTab updated on 2025-05-26 07:31:39.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why don't sharks eat clowns?  Because they taste funny.
+Two fish are in a tank, one turns to the other and says, "how do you drive this thing?"
