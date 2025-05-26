@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-26 07:31:39.
+This is the distribution repository for EnneadTab updated on 2025-05-26 10:33:26.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Two fish are in a tank, one turns to the other and says, "how do you drive this thing?"
+What do you call a troublesome Canadian high schooler? A poutine.
