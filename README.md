@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-25 19:22:59.
+This is the distribution repository for EnneadTab updated on 2025-05-25 22:24:35.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-How do astronomers organize a party? They planet.
+Can a kangaroo jump higher than the Empire State Building? Of course. The Empire State Building can't jump.
