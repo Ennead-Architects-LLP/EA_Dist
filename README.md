@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-25 22:24:35.
+This is the distribution repository for EnneadTab updated on 2025-05-26 01:27:42.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Can a kangaroo jump higher than the Empire State Building? Of course. The Empire State Building can't jump.
+Why do bees hum? Because they don't know the words.
