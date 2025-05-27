@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-26 22:41:02.
+This is the distribution repository for EnneadTab updated on 2025-05-27 01:40:36.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-I went to a book store and asked the saleswoman where the Self Help section was, she said if she told me it would defeat the purpose.
+Have you heard of the band 1023MB? They haven't got a gig yet.
