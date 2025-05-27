@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-27 14:05:05.
+This is the distribution repository for EnneadTab updated on 2025-05-27 16:38:35.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-What's brown and sounds like a bell? Dung!
+Parallel lines have so much in common. It's a shame they'll never meet.
