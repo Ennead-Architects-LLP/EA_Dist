@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-27 16:38:35.
+This is the distribution repository for EnneadTab updated on 2025-05-27 19:19:17.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Parallel lines have so much in common. It's a shame they'll never meet.
+Why do bees hum? Because they don't know the words.
