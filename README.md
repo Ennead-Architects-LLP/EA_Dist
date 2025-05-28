@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-28 16:07:28.
+This is the distribution repository for EnneadTab updated on 2025-05-28 18:48:31.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Why did the girl smear peanut butter on the road? To go with the traffic jam.
+Did you hear that David lost his ID in prague? Now we just have to call him Dav.
