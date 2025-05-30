@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-30 04:01:06.
+This is the distribution repository for EnneadTab updated on 2025-05-30 06:38:33.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-Instead of "the John," I call my toilet "the Jim." That way it sounds better when I say I go to the Jim first thing every morning.
+The great thing about stationery shops is they're always in the same place...
