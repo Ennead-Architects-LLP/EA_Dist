@@ -1,4 +1,4 @@
-This is the distribution repository for EnneadTab updated on 2025-05-29 20:11:23.
+This is the distribution repository for EnneadTab updated on 2025-05-29 22:47:21.
 
 It contains the Apps and Installation and Help-Docs folders.
 
@@ -14,4 +14,4 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 
 Wisdom of the day:
-How does a penguin build it's house? Igloos it together.
+How does a French skeleton say hello? Bone-jour.
