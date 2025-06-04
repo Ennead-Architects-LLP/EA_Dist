@@ -15,3 +15,5 @@ Special thanks to Ehsan and all the pyRevit team for providing the foundation fo
 
 Wisdom of the day:
 The great thing about stationery shops is they're always in the same place...
+
+test internal
