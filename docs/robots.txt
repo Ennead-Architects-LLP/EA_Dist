@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://Ennead-Architects-LLP.github.io/EA_Dist/sitemap.xml
