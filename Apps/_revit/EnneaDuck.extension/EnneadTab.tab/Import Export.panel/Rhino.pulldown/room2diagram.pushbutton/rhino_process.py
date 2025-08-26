@@ -161,18 +161,7 @@ class RhinoProcess(BaseProcessor):
             text_content = "{}\n{} SF".format(space_color_identifier, space_area)
             text_geo = Rhino.Display.Text3d(text_content)
             text_geo.HorizontalAlignment = Rhino.DocObjects.TextHorizontalAlignment.Center
-            
-            # Create text plane - handle both with and without RhinoInside
-            if RIR_IMPORT_OK:
-                text_geo.TextPlane = RIR_DECODER.ToPlane(DB.Plane.CreateByNormalAndOrigin(DB.XYZ(0,0,1), space.Location.Point))
-            else:
-                # Fallback: create a simple plane at the space location
-                location_point = space.Location.Point
-                text_geo.TextPlane = Rhino.Geometry.Plane(
-                    Rhino.Geometry.Point3d(location_point.X, location_point.Y, location_point.Z),
-                    Rhino.Geometry.Vector3d(0, 0, 1)
-                )
-            
+            text_geo.TextPlane = RIR_DECODER.ToPlane(DB.Plane.CreateByNormalAndOrigin(DB.XYZ(0,0,1), space.Location.Point))
             self.rhino_doc.Objects.AddText(text_geo, label_attr)
 
         # Process boundary curves (already converted to Rhino curves by base class)
