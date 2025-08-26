@@ -12,13 +12,18 @@ try:
     import System  # pyright: ignore
     clr.AddReference('RhinoCommon')
     import Rhino  # pyright: ignore
-    clr.AddReference('RhinoInside.Revit')
-    from RhinoInside.Revit.Convert.Geometry import GeometryDecoder as RIR_DECODER  # pyright: ignore
-    from RhinoInside.Revit.Convert.Geometry import GeometryEncoder as RIR_ENCODER  # pyright: ignore
-   
     IMPORT_OK = True
 except:
     IMPORT_OK = False
+
+# Try to import RhinoInside converters if available
+try:
+    clr.AddReference('RhinoInside.Revit')
+    from RhinoInside.Revit.Convert.Geometry import GeometryDecoder as RIR_DECODER  # pyright: ignore
+    from RhinoInside.Revit.Convert.Geometry import GeometryEncoder as RIR_ENCODER  # pyright: ignore
+    RIR_IMPORT_OK = True
+except:
+    RIR_IMPORT_OK = False
 
 from EnneadTab import FOLDER, ENVIRONMENT
 from EnneadTab.REVIT import REVIT_RHINO, REVIT_UNIT
@@ -156,7 +161,18 @@ class RhinoProcess(BaseProcessor):
             text_content = "{}\n{} SF".format(space_color_identifier, space_area)
             text_geo = Rhino.Display.Text3d(text_content)
             text_geo.HorizontalAlignment = Rhino.DocObjects.TextHorizontalAlignment.Center
-            text_geo.TextPlane = RIR_DECODER.ToPlane(DB.Plane.CreateByNormalAndOrigin(DB.XYZ(0,0,1), space.Location.Point))
+            
+            # Create text plane - handle both with and without RhinoInside
+            if RIR_IMPORT_OK:
+                text_geo.TextPlane = RIR_DECODER.ToPlane(DB.Plane.CreateByNormalAndOrigin(DB.XYZ(0,0,1), space.Location.Point))
+            else:
+                # Fallback: create a simple plane at the space location
+                location_point = space.Location.Point
+                text_geo.TextPlane = Rhino.Geometry.Plane(
+                    Rhino.Geometry.Point3d(location_point.X, location_point.Y, location_point.Z),
+                    Rhino.Geometry.Vector3d(0, 0, 1)
+                )
+            
             self.rhino_doc.Objects.AddText(text_geo, label_attr)
 
         # Process boundary curves (already converted to Rhino curves by base class)
