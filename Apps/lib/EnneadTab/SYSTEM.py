@@ -407,6 +407,8 @@ def about_me():
 
 
 
+
+
 def run_system_checks():
     """Run system checks with configurable probabilities.
     
@@ -467,5 +469,6 @@ run_system_checks()
 
 
 if __name__ == "__main__":
-    from REVIT import REVIT_ACC # type: ignore
-    REVIT_ACC.get_ACC_summary_data(show_progress=True)
+    about_me()
+    # from REVIT import REVIT_ACC # type: ignore
+    # REVIT_ACC.get_ACC_summary_data(show_progress=True)
