@@ -493,7 +493,7 @@ class WorkingViewManager(WPFWindow):
                     print ("skip {} becasue: {}".format(file_name, e))
 
 
-        final_path = FOLDER.copy_file_to_folder(opts.FilePath, output_folder)
+        final_path = FOLDER.copy_file_or_folder_to_folder(opts.FilePath, output_folder)
         os.remove(opts.FilePath)
         return final_path
 

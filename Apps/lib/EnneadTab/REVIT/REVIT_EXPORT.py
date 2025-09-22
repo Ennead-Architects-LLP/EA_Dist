@@ -494,7 +494,7 @@ def combine_final_pdf(output_folder, files_exported_for_this_issue, combined_pdf
     combined_pdf_file_path = os.path.join(output_folder, "{}.pdf".format(combined_pdf_name))
     PDF.pdfs2pdf(combined_pdf_file_path, list_of_filepaths, reorder = True)
     if copy_folder:
-        FOLDER.copy_file_to_folder(combined_pdf_file_path, copy_folder)
+        FOLDER.copy_file_or_folder_to_folder(combined_pdf_file_path, copy_folder)
 
 
 def dump_exported_files_to_copy_folder(output_folder, files_exported_for_this_issue, file_id_dict, copy_folder):
@@ -549,4 +549,4 @@ def dump_exported_files_to_copy_folder(output_folder, files_exported_for_this_is
             else:
                 new_folder = copy_folder[:]
 
-            FOLDER.copy_file_to_folder(file_path, new_folder, handle_BW_file = True)
+            FOLDER.copy_file_or_folder_to_folder(file_path, new_folder, handle_BW_file = True)

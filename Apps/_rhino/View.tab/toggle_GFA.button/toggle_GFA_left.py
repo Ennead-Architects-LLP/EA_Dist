@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __title__ = "ToggleGFA"
-__doc__ = """Toggles Gross Floor Area (GFA) visualization and calculation.
+__doc__ = r"""Toggles Gross Floor Area (GFA) visualization and calculation.
 
 Features:
 - Processes layers marked with [GFA] to calculate and display area information
@@ -27,8 +27,6 @@ import scriptcontext as sc # pyright: ignore
 import rhinoscriptsyntax as rs # pyright: ignore
 import sys
 sys.path.append("..\lib")
-
-
 
 import time
 import random
@@ -82,10 +80,10 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
                 return
 
         # print("added")
-        # this is added because single action to any object will trigger 
-        # replace geo method, that is a equal to delete and add in a very fast sequence. 
-        # So to ensure cached data is cleared after, need to add this. 
-        # IF in furutre is there a reanother hook that monitor direct modification or replace geo event, can use that instead.
+        # This is added because a single action to any object will trigger
+        # replace-geo method, which is equal to delete and add in a very fast sequence.
+        # So to ensure cached data is cleared after, need to add this.
+        # If in future there is another hook that monitors direct modification or replace-geo event, use that instead.
         self.cached_data = [] 
         self.reset_conduit_data("Document content changed, recalculating...")
   
@@ -112,7 +110,7 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
         if layer and layer.FullPath:
             if "[GFA]" not in layer.FullPath:
                 return
-        self.reset_conduit_data("Obj attribute modifed, recalculating...")
+        self.reset_conduit_data("Obj attribute modified, recalculating...")
     
     
     def reset_conduit_data(self, note=None):
@@ -223,10 +221,6 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
         if e is None or e.Display is None:
             return
 
-
-
-
-
         
         color = rs.CreateColor([87, 85, 83])
         color_hightlight = rs.CreateColor([150, 85, 83])
@@ -267,11 +261,11 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 10)
         e.Display.Draw2dText("Including curly bracket {factor} at end of layer name to allow factor multiply, such as {0.5} or {0} or whatever.", color_hightlight, pt, False, 10)
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 10)
-        e.Display.Draw2dText("Right click toggle button to bake data to Excel and/or generate checking srf.", color, pt, False, 10)
+        e.Display.Draw2dText("Right-click the toggle button to bake data to Excel and/or generate checking srf.", color, pt, False, 10)
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 10)
         e.Display.Draw2dText("The generated checking srf will also show area text dot but will not be exported to Excel.", color, pt, False, 10)
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 10)
-        e.Display.Draw2dText("For clarity reason, the generated checking srf layer will be purged.", color, pt, False, 10)
+        e.Display.Draw2dText("For clarity, the generated checking srf layer will be purged.", color, pt, False, 10)
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 15)
         e.Display.Draw2dText("Area unit auto-mapped from your Rhino unit: mm--> m" + u"\u00B2" + ", m--> m" + u"\u00B2" + ", inch--> ft" + u"\u00B2" + ", ft--> ft" + u"\u00B2" + "", color_hightlight, pt, False, 10)
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 10)
@@ -290,7 +284,7 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
         #sub_title = "X" * 10
         #sub_total = 0
         
-
+        layer_used = []
         for data in self.data:
 
             layer, values = data
@@ -327,6 +321,7 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
             pt = Rhino.Geometry.Point2d(pt[0], pt[1] + offset)
             color = rs.LayerColor(layer)
             e.Display.Draw2dText(text, color, pt, False, size)
+            layer_used.append(layer)
             
             if diff:  # Only process if there's a difference
                 # Pre-calculate common values
@@ -348,6 +343,16 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
 
             # draw curve from crv geo
 
+        for keyword in self.target_dict.keys():
+            for layer in layer_used:
+                if keyword in layer:
+                    break
+            else:   
+                pt = Rhino.Geometry.Point2d(pt[0], pt[1] + offset)
+                color = rs.CreateColor([250, 10, 10])
+                text = "OOps! Missing keyworded area [{}], target: {}".format(keyword, convert_area_to_good_unit(self.target_dict[keyword]))
+                e.Display.Draw2dText(text, color, pt, False, size)
+
         pt = Rhino.Geometry.Point2d(pt[0], pt[1] + 25)
         color = rs.CreateColor([87, 85, 83])
         #print "C"
@@ -365,7 +370,7 @@ class EA_GFA_Conduit(Rhino.Display.DisplayConduit):
 
 
         #print "Done"
-        #True = text center around thge define pt, Flase = lower-left
+        # True = text centered around the defined pt, False = lower-left
 
         root_layer = "GFA Internal Check Srfs"
 

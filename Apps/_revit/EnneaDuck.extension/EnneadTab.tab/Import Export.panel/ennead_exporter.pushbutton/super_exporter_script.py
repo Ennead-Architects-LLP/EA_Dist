@@ -11,6 +11,7 @@ proDUCKtion.validify()
 
 from pyrevit import forms, script
 from pyrevit.forms import WPFWindow
+import shutil
 import os
 import sys
 from pyrevit.revit import ErrorSwallower
@@ -804,9 +805,19 @@ class SuperExporter(REVIT_FORMS.EnneadTabModelessForm):
 
 
 
-            #file_name here contain extension
-            if os.path.exists(os.path.join(self.output_folder, file_name)):
-                os.remove(os.path.join(self.output_folder, file_name))
+            # file_name here contains extension; delete safely in case file is moved/absent. Or maybe this was a folder for the packaged dwg with parts
+            try:
+                target_path = os.path.join(self.output_folder, file_name)
+                if os.path.exists(target_path):
+                    if os.path.isfile(target_path):
+                        os.remove(target_path)
+                    if os.path.isdir(target_path):
+                        shutil.rmtree(target_path)  
+            except OSError as e:
+                import errno
+                # Ignore if file is already gone; rethrow other errors
+                if not (hasattr(e, 'errno') and e.errno == errno.ENOENT):
+                    raise
 
 
             if extension == ".pdf":
@@ -819,7 +830,13 @@ class SuperExporter(REVIT_FORMS.EnneadTabModelessForm):
                 dwg_setting_name = self.dwg_setting_name
                 DWG_option = DB.DWGExportOptions().GetPredefinedOptions(view_or_sheet.Document, dwg_setting_name)
                 if DWG_option:
-                    final_files = REVIT_EXPORT.export_dwg(view_or_sheet, raw_name, self.output_folder, dwg_setting_name, is_export_view_on_sheet)
+                    if is_export_view_on_sheet:
+                        local_output_folder = os.path.join(self.output_folder, file_name)
+                        if not os.path.exists(local_output_folder):
+                            os.makedirs(local_output_folder)
+                    else:
+                        local_output_folder = self.output_folder
+                    final_files = REVIT_EXPORT.export_dwg(view_or_sheet, raw_name, local_output_folder, dwg_setting_name, is_export_view_on_sheet)
 
                     self.files_exported_for_this_issue.extend(final_files)
                     for new_files in final_files:
