@@ -17,6 +17,8 @@ Compatible with Python 2.7 and Python 3.x
 import time
 import os
 import traceback
+import shutil
+import traceback
 
 # Try to import USER with error handling to avoid circular import warnings
 try:
@@ -85,7 +87,7 @@ def copy_file(original_path, new_path):
     COPY.copyfile(original_path, new_path)
 
 
-def copy_file_to_folder(original_path, target_folder, handle_BW_file = False):
+def copy_file_or_folder_to_folder(original_path, target_folder, handle_BW_file = False):
     """Copy file to target folder, preserving filename.
 
     Args:
@@ -99,16 +101,78 @@ def copy_file_to_folder(original_path, target_folder, handle_BW_file = False):
         Creates target folder if it doesn't exist.
     """
 
+    # Build destination path under target folder keeping name structure
     new_path = original_path.replace(os.path.dirname(original_path), target_folder)
     if handle_BW_file:
         new_path = new_path.replace("_BW", "")
+    
     try:
-        COPY.copyfile(original_path, new_path)
+        # Ensure destination directory exists
+        dest_dir = os.path.dirname(new_path)
+        if dest_dir:
+            secure_folder(dest_dir)
+
+        if os.path.isfile(original_path):
+            # Overwrite target file
+            COPY.copyfile(original_path, new_path)
+        else:
+            # Copy a directory; prefer clean copy, then fall back to merge copy
+            if os.path.exists(new_path):
+                try:
+                    shutil.rmtree(new_path)
+                except Exception:
+                    pass
+            try:
+                shutil.copytree(original_path, new_path)
+            except Exception as e:
+                # If destination exists or cannot be fully removed, perform merge copy
+                _merge_copy_dir(original_path, new_path)
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
 
     return new_path
 
+
+def remove_path(path):
+    """Remove a file or folder.
+    """
+    if not os.path.exists(path):
+        return
+    if os.path.isfile(path):
+        os.remove(path)
+    else:
+        shutil.rmtree(path)
+
+def _merge_copy_dir(src_dir, dst_dir):
+    """Merge-copy directory contents from src into dst, creating folders and
+    overwriting files as needed. Compatible with IronPython 2.7.
+    """
+    try:
+        if not os.path.exists(dst_dir):
+            secure_folder(dst_dir)
+        for root, dirs, files in os.walk(src_dir):
+            relative = root.replace(src_dir, "").lstrip("\\/")
+            target_root = os.path.join(dst_dir, relative) if relative else dst_dir
+            if not os.path.exists(target_root):
+                secure_folder(target_root)
+            for d in dirs:
+                candidate = os.path.join(target_root, d)
+                if not os.path.exists(candidate):
+                    try:
+                        os.makedirs(candidate)
+                    except Exception:
+                        pass
+            for f in files:
+                src_file = os.path.join(root, f)
+                dst_file = os.path.join(target_root, f)
+                try:
+                    COPY.copyfile(src_file, dst_file)
+                except Exception:
+                    # Best effort; skip problematic file
+                    pass
+    except Exception:
+        # Swallow merge errors to keep pipeline moving
+        pass
 
 def secure_folder(folder):
     """Create folder if it doesn't exist.
@@ -119,7 +183,9 @@ def secure_folder(folder):
     Returns:
         str: Path to secured folder
     """
-
+    parent_folder = os.path.dirname(folder)
+    if not os.path.exists(parent_folder):
+        os.makedirs(parent_folder)
     if not os.path.exists(folder):
         os.makedirs(folder)
     return folder

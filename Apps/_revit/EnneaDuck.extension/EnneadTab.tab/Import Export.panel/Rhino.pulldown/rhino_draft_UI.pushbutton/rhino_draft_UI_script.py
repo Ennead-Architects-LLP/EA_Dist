@@ -583,7 +583,7 @@ class RhinoDraft_UI(forms.WPFWindow):
 
         self.template_file_path = rhino_template_folder + "\\" + template
 
-        #FOLDER.copy_file_to_folder(file_path, FOLDER.DUMP_FOLDER)
+        #FOLDER.copy_file_or_folder_to_folder(file_path, FOLDER.DUMP_FOLDER)
         file_path = FOLDER.DUMP_FOLDER + "\\" + template
         final_file = file_path.replace(".3dm", "_{}.3dm".format(doc.ActiveView.Name
                                                                 .replace("/","-")))

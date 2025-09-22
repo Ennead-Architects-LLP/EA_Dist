@@ -60,7 +60,7 @@ def repath_all_dwgs(new_folder, dwg_type_list):
             file_path = file_ref.GetPath()
 
             file_path = DB.ModelPathUtils.ConvertModelPathToUserVisiblePath(file_path)
-            new_path = FOLDER.copy_file_to_folder(file_path, new_folder)
+            new_path = FOLDER.copy_file_or_folder_to_folder(file_path, new_folder)
             dwg_type.LoadFrom(new_path)
         except Exception as e:
             print("Skip this dwg: {}\nBecause: {}\n\n".format( dwg_type.LookupParameter("Type Name").AsString() , e ))

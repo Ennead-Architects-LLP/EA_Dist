@@ -1278,7 +1278,7 @@ def combine_final_pdf():
     combined_pdf_file_path = "{}\{}.pdf".format(output_folder, COMBINE_PDF_NAME)
     ARCHI_UTILITY.merge_pdfs(combined_pdf_file_path, list_of_filepaths, reorder = True)
     if COPY_FOLDER:
-        ARCHI_UTILITY.copy_file_to_folder(combined_pdf_file_path, COPY_FOLDER)
+        ARCHI_UTILITY.copy_file_or_folder_to_folder(combined_pdf_file_path, COPY_FOLDER)
 
 
 def dump_exported_files_to_copy_folder():
@@ -1330,7 +1330,7 @@ def dump_exported_files_to_copy_folder():
             else:
                 new_folder = COPY_FOLDER[:]
 
-            ARCHI_UTILITY.copy_file_to_folder(file_path, new_folder)
+            ARCHI_UTILITY.copy_file_or_folder_to_folder(file_path, new_folder)
 ################## main code below #####################
 output = script.get_output()
 output.close_others()
