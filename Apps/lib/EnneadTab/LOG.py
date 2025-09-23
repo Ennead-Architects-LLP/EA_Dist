@@ -260,8 +260,9 @@ def _try_urllib3_usage_implementation(environment, function_name, result):
             'Upgrade-Insecure-Requests': '1'
         }
         
-        # Encode form data
-        encoded_data = urllib3.util.urlencode(form_data)
+        # Encode form data using urllib.parse.urlencode
+        import urllib.parse
+        encoded_data = urllib.parse.urlencode(form_data).encode('utf-8')
         
         # Send request
         response = http.request('POST', g_form_url, body=encoded_data, headers=headers, timeout=30.0)

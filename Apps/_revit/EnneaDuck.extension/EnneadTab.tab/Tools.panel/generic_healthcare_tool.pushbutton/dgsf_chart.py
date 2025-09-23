@@ -1112,7 +1112,7 @@ def dgsf_chart_update(doc, show_log=True, dedicated_department=None):
 
         InternalCheck(doc, option, show_log).update_dgsf_chart()
 
-        if not USER.IS_DEVELOPER:
+        if True or not USER.IS_DEVELOPER:
             continue
         try:
             if dedicated_department is None:
