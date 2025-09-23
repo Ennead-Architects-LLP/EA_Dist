@@ -103,6 +103,7 @@ class PanelLocationMapper:
         self.spatial_index = None
         self.panel_dict = None
         self.family_name_cache = {}
+        self._panel_centers_cache = None
         
     def get_all_panels(self):
         """
@@ -139,6 +140,62 @@ class PanelLocationMapper:
             cell_size = REVIT_UNIT.mm_to_internal(2000)  # 2 meters
             self.spatial_index = SpatialIndex(panels, cell_size)
         return self.spatial_index
+
+    def build_panel_centers(self):
+        """
+        Build and cache a list of (panel_id, center_XYZ) for all panels.
+        """
+        if self._panel_centers_cache is None:
+            self._panel_centers_cache = []
+            for panel in self.get_all_panels():
+                center = REVIT_GEOMETRY.get_element_center(panel)
+                if center is not None:
+                    self._panel_centers_cache.append((panel.Id, center))
+        return self._panel_centers_cache
+
+    def get_nearest_panels_for_locations(self, location_mapped, used_panels=None):
+        """
+        For each location point, find the closest panel center (no family filtering, no fixed tolerance).
+        Skips panels already in used_panels to keep unique mapping.
+
+        Args:
+            location_mapped (list): List of DB.XYZ points
+            used_panels (set): Set of already assigned panel Ids
+
+        Returns:
+            dict: index -> DB.Element (panel)
+        """
+        if used_panels is None:
+            used_panels = set()
+
+        panel_dict = self.build_panel_dict()
+        centers = self.build_panel_centers()
+
+        location_to_panel = {}
+        for i, pt in enumerate(location_mapped):
+            best_panel_id = None
+            best_dist = None
+            for pid, cpt in centers:
+                if pid in used_panels:
+                    continue
+                d = pt.DistanceTo(cpt)
+                if best_dist is None or d < best_dist:
+                    best_dist = d
+                    best_panel_id = pid
+            if best_panel_id is not None:
+                panel = panel_dict.get(best_panel_id)
+                if panel is not None:
+                    location_to_panel[i] = panel
+                    used_panels.add(best_panel_id)
+                    # Debug info
+                    try:
+                        print("  NEAREST USED: Panel '{}' at location {} (distance: {:.2f} ft)".format(panel.Name, i + 1, best_dist))
+                    except:
+                        pass
+            else:
+                print("  No panels available to assign for location {}".format(i + 1))
+
+        return location_to_panel
     
     def get_panel_family_name(self, panel):
         """
@@ -219,7 +276,7 @@ class PanelLocationMapper:
             self.data = DATA_FILE.get_data("SAIF_panel_mapping")
         return self.data
     
-    def convert_coordinates(self, location, unit="mm"):
+    def convert_coordinates(self, location):
         """
         Convert coordinates from Rhino units to Revit internal units.
         
@@ -230,31 +287,22 @@ class PanelLocationMapper:
         Returns:
             list: List of DB.XYZ points in Revit internal units
         """
-        print("Converting coordinates from {} units...".format(unit))
+        unit_of_rhino = "m"
+        print("Converting coordinates from {} units...".format(unit_of_rhino))
         print("Sample original coordinates:")
         for i, pt in enumerate(location[:3]):
-            print("  Point {}: ({}, {}, {}) {}".format(i + 1, pt["X"], pt["Y"], pt["Z"], unit))
+            print("  Point {}: ({}, {}, {}) {}".format(i + 1, pt["X"], pt["Y"], pt["Z"], unit_of_rhino))
         
-        if unit == "mm":
+        if unit_of_rhino == "mm":
             converted = [DB.XYZ(REVIT_UNIT.mm_to_internal(pt["X"]), 
                           REVIT_UNIT.mm_to_internal(pt["Y"]), 
                           REVIT_UNIT.mm_to_internal(pt["Z"])) for pt in location]
-        elif unit == "m":
+        elif unit_of_rhino == "m":
             converted = [DB.XYZ(REVIT_UNIT.m_to_internal(pt["X"]), 
                           REVIT_UNIT.m_to_internal(pt["Y"]), 
                           REVIT_UNIT.m_to_internal(pt["Z"])) for pt in location]
-        elif unit in ["ft", "feet"]:
-            # If already in feet, no conversion needed (Revit internal units are feet)
-            converted = [DB.XYZ(pt["X"], pt["Y"], pt["Z"]) for pt in location]
-        elif unit in ["in", "inches"]:
-            # Convert inches to feet
-            converted = [DB.XYZ(pt["X"]/12.0, pt["Y"]/12.0, pt["Z"]/12.0) for pt in location]
         else:
-            # Fallback to millimeters if unit is unknown
-            print("Warning: Unknown unit '{}', assuming millimeters".format(unit))
-            converted = [DB.XYZ(REVIT_UNIT.mm_to_internal(pt["X"]), 
-                          REVIT_UNIT.mm_to_internal(pt["Y"]), 
-                          REVIT_UNIT.mm_to_internal(pt["Z"])) for pt in location]
+            raise ValueError("Unknown unit '{}', please use 'mm' or 'm'".format(unit_of_rhino))
         
         print("Sample converted coordinates (Revit internal units):")
         for i, pt in enumerate(converted[:3]):
@@ -370,6 +418,7 @@ class PanelLocationMapper:
                 param = panel.LookupParameter(param_name)
                 if param is not None:
                     param.Set(value)
+                    print ("Updated parameter '{}' on panel '{}' to {} ft or {} mm".format(param_name, panel.Name, value, value * 304.8))
                 else:
                     print("Warning: Parameter '{}' not found on panel '{}'".format(param_name, panel.Name))
                     success = False
@@ -411,12 +460,10 @@ class PanelLocationMapper:
         print("is_FRW: ", value["mapping_data"].get("is_FRW", False))
         
         locations = value["locations"]
-        print("Unit detected: ", value.get("unit", "mm (default)"))
         print("Number of locations: ", len(locations))
         
         # Convert coordinates
-        unit = value.get("unit", "mm")
-        location_mapped = self.convert_coordinates(locations, unit)
+        location_mapped = self.convert_coordinates(locations)
 
         
         # Debug: Show first few converted coordinates
@@ -450,6 +497,14 @@ class PanelLocationMapper:
                 tolerance, None, used_panels)
             # Update location_to_panel with remaining panels
             for i, panel in remaining_panels.items():
+                location_to_panel_dict[remaining_locations[i]] = panel
+
+        # Final fallback: nearest-neighbor assignment for any still-unmatched locations
+        if len(location_to_panel_dict) < len(location_mapped):
+            print("Using nearest-neighbor mapping for remaining locations...")
+            remaining_locations = [i for i in range(len(location_mapped)) if i not in location_to_panel_dict]
+            nn_map = self.get_nearest_panels_for_locations([location_mapped[i] for i in remaining_locations], used_panels)
+            for i, panel in nn_map.items():
                 location_to_panel_dict[remaining_locations[i]] = panel
         
         if location_to_panel_dict:
@@ -524,7 +579,7 @@ class PanelLocationMapper:
                     # Show first and last location coordinates
                     first_loc = locations[0]
                     last_loc = locations[-1]
-                    unit = value.get("unit", "mm")
+                    unit = "m"
                     print("    First location: ({}, {}, {}) {}".format(
                         first_loc.get("X", "N/A"), first_loc.get("Y", "N/A"), first_loc.get("Z", "N/A"), unit))
                     print("    Last location: ({}, {}, {}) {}".format(
@@ -533,11 +588,10 @@ class PanelLocationMapper:
         
         # Pre-build spatial index and panel dictionary
         print("Building spatial index...")
-        self.build_spatial_index()
+        spatial_index = self.build_spatial_index()
         self.build_panel_dict()
         
         # Print spatial index statistics
-        spatial_index = self.build_spatial_index()
         total_cells = len(spatial_index.spatial_grid)
         total_panels = len(panels)
         avg_panels_per_cell = total_panels / max(total_cells, 1)

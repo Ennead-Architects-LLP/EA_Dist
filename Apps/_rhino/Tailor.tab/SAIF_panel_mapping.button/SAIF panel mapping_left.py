@@ -1,30 +1,43 @@
 
 __title__ = "SaifPanelMapping"
-__doc__ = "This button does SaifPanelMapping when left click"
+__doc__ = "Maps SAIF panels using new naming convention CW01_SOLID X_YYYY_ZZZZ and CW06_SOLID X_YYYY_ZZZZ, extracting pier width (X) as-is"
 
 
 from EnneadTab import ERROR_HANDLE, LOG, DATA_FILE
 from EnneadTab.RHINO import RHINO_OBJ_DATA
 import rhinoscriptsyntax as rs
-import scriptcontext as sc
 import Rhino
 import re
+
+# Py2/Py3 compatibility for linters; define basestring if missing
+try:
+    basestring  # type: ignore[name-defined]
+except NameError:
+    # define for type checkers; in IronPython 2.7 this already exists
+    class basestring(str):
+        pass
 
 
 class SAIFPanelMapper:
     """
     A class to handle SAIF panel mapping functionality.
-    Finds actual block names in Rhino that match regex patterns and inherits mapping data.
+    
+    Maps SAIF panels using the new naming convention:
+    - CW01_SOLID X_YYYY_ZZZZ (tower main family)
+    - CW06_SOLID X_YYYY_ZZZZ (podium main family)
+    
+    Where X is the pier width extracted as-is (no plus 50), Y is block height, 
+    and Z are special notes like FRW (fire rescue window), PIER, CORNER, etc.
     """
     
     def __init__(self):
         """Initialize the mapper with raw mapping data."""
         self._RAW_MAPPING = {
-            # SystemType01 patterns - tower main family, extract width and add 50
-            "SystemType01_Pier (\\d+)_\\d+": {"family_name": "tower_main", "side_frame_w": "extract_width_plus_50", "is_FRW": False},
+            # Exact rule: CW01_SOLID (frame width)_(anything)
+            r"^CW01_SOLID (\d+)_(.+)$": {"family_name": "tower_main", "side_frame_w": "extract_width", "is_FRW": False},
             
-            # SystemType06 patterns - podium main family, extract width (no plus 50)
-            "SystemType06_Pier (\\d+)_\\d+": {"family_name": "podium_main", "side_frame_w": "extract_width", "is_FRW": False},
+            # Exact rule counterpart for CW06
+            r"^CW06_SOLID (\d+)_(.+)$": {"family_name": "podium_main", "side_frame_w": "extract_width", "is_FRW": False},
         }
         self.PANEL_MAPPING = self._refine_panel_mapping()
     
@@ -55,20 +68,7 @@ class SAIFPanelMapper:
                         mapping_data = self._RAW_MAPPING[key].copy()
                         
                         # Handle dynamic width extraction
-                        if mapping_data.get("side_frame_w") == "extract_width_plus_50":
-                            match = re.search(key, block_name, re.IGNORECASE)
-                            if match and len(match.groups()) > 0:
-                                # Extract the width value from the first capture group
-                                width_str = match.group(1)
-                                try:
-                                    width_value = int(width_str)
-                                    mapping_data["side_frame_w"] = width_value + 50
-                                    print("Extracted width {} from '{}', calculated side_frame_w: {} (plus 50)".format(
-                                        width_value, block_name, mapping_data["side_frame_w"]))
-                                except ValueError:
-                                    print("Warning: Could not parse width value '{}' from block '{}'".format(width_str, block_name))
-                                    mapping_data["side_frame_w"] = 0  # fallback value
-                        elif mapping_data.get("side_frame_w") == "extract_width":
+                        if mapping_data.get("side_frame_w") == "extract_width":
                             match = re.search(key, block_name, re.IGNORECASE)
                             if match and len(match.groups()) > 0:
                                 # Extract the width value from the first capture group
@@ -76,7 +76,7 @@ class SAIFPanelMapper:
                                 try:
                                     width_value = int(width_str)
                                     mapping_data["side_frame_w"] = width_value
-                                    print("Extracted width {} from '{}', calculated side_frame_w: {} (no plus 50)".format(
+                                    print("Extracted width {} from '{}', calculated side_frame_w: {}".format(
                                         width_value, block_name, mapping_data["side_frame_w"]))
                                 except ValueError:
                                     print("Warning: Could not parse width value '{}' from block '{}'".format(width_str, block_name))
@@ -156,6 +156,70 @@ class SAIFPanelMapper:
             print("Error getting center for block {}: {}".format(block, str(e)))
             return None
     
+    def _create_point_from_location(self, location):
+        """
+        Create a Rhino point from location coordinates.
+        
+        Args:
+            location (dict): Location dictionary with X, Y, Z coordinates
+            
+        Returns:
+            str: GUID of created point, or None if failed
+        """
+        try:
+            point_guid = rs.AddPoint([location["X"], location["Y"], location["Z"]])
+            if point_guid:
+                print("Created point at ({}, {}, {})".format(location["X"], location["Y"], location["Z"]))
+                return point_guid
+            else:
+                print("Warning: Failed to create point at ({}, {}, {})".format(location["X"], location["Y"], location["Z"]))
+                return None
+        except Exception as e:
+            print("Error creating point at ({}, {}, {}): {}".format(location["X"], location["Y"], location["Z"], str(e)))
+            return None
+    
+    def _group_objects(self, object_guids, group_name):
+        """
+        Group a list of object GUIDs with a given name.
+        
+        Args:
+            object_guids (list): List of object GUIDs to group
+            group_name (str): Name for the group
+            
+        Returns:
+            bool: True if grouping successful, False otherwise
+        """
+        try:
+            if not object_guids:
+                print("No objects to group")
+                return False
+                
+            # Filter out None values
+            valid_guids = [guid for guid in object_guids if guid is not None]
+            
+            if not valid_guids:
+                print("No valid objects to group")
+                return False
+            
+            # Create group
+            group_result = rs.AddGroup(group_name)
+            if group_result is None:
+                print("Warning: Failed to create group '{}'".format(group_name))
+                return False
+            
+            # Add objects to group
+            success = rs.AddObjectsToGroup(valid_guids, group_result)
+            if success:
+                print("Successfully grouped {} objects into group '{}'".format(len(valid_guids), group_name))
+                return True
+            else:
+                print("Warning: Failed to add objects to group '{}'".format(group_name))
+                return False
+                
+        except Exception as e:
+            print("Error grouping objects: {}".format(str(e)))
+            return False
+    
     def _process_block_instances(self, block_name):
         """
         Process all instances of a specific block and get their locations.
@@ -196,11 +260,13 @@ class SAIFPanelMapper:
     def map_panels(self):
         """
         Main method to map all panels in the current Rhino document.
+        Creates points for each panel location and groups them together.
         
         Returns:
-            dict: Complete mapping data with locations
+            dict: Complete mapping data with locations and created points
         """
         OUT = {}
+        all_created_points = []
         
         # Get all available block definitions in the document
         doc = Rhino.RhinoDoc.ActiveDoc
@@ -211,15 +277,44 @@ class SAIFPanelMapper:
         # Debug: Show what we're working with
         self._debug_info()
         
+        # Load existing recorded data to decide which blocks should create points
+        recorded_data = DATA_FILE.get_data("SAIF_panel_mapping") or {}
+        print("Recorded blocks available: {}".format(list(recorded_data.keys())))
+
         # Process all blocks in the refined panel mapping
         for key in self.PANEL_MAPPING.keys():
             locations = self._process_block_instances(key)
             
+            # Only create points if this block was previously recorded
+            should_create_points = key in recorded_data
+            if not should_create_points:
+                print("Skipping point creation for unrecorded block '{}'".format(key))
+
+            # Create points for each location
+            created_points = []
+            if should_create_points:
+                for location in locations:
+                    point_guid = self._create_point_from_location(location)
+                    if point_guid:
+                        # Store GUIDs as strings to ensure JSON serializability
+                        created_points.append(str(point_guid))
+                        all_created_points.append(str(point_guid))
+            
             OUT[key] = {
                 "mapping_data": self.PANEL_MAPPING[key],
                 "locations": locations,
-                "unit": "m"
+                "created_points": created_points
             }
+        
+        # Group all created points together
+        if all_created_points:
+            group_success = self._group_objects(all_created_points, "SAIF_Panel_Locations")
+            if group_success:
+                print("Successfully created and grouped {} points for SAIF panel locations".format(len(all_created_points)))
+            else:
+                print("Warning: Failed to group created points")
+        else:
+            print("No points were created - no panel locations found")
         
         print("Final output contains {} mapped blocks".format(len(OUT)))
         print(OUT)
@@ -233,7 +328,43 @@ class SAIFPanelMapper:
         Args:
             mapping_data (dict): The mapping data to save
         """
-        DATA_FILE.set_data(mapping_data, "SAIF_panel_mapping")
+        def _json_safe(value):
+            # Convert values to JSON-serializable equivalents
+            try:
+                import System
+            except:
+                System = None
+            # Py2/Py3 compatibility for basestring
+            # basestring is guaranteed to exist from module-level shim
+            
+            # Handle .NET Guid or Rhino GUIDs by converting to string
+            try:
+                if System is not None and isinstance(value, System.Guid):
+                    return str(value)
+            except:
+                pass
+            
+            # Basic primitives pass through
+            if isinstance(value, (int, float, bool)) or value is None:
+                return value
+            if isinstance(value, basestring):
+                return value
+            
+            # Lists/Tuples
+            if isinstance(value, (list, tuple)):
+                return [_json_safe(v) for v in value]
+            
+            # Dicts
+            if isinstance(value, dict):
+                iter_method = getattr(value, 'iteritems', None)
+                iterator = iter_method() if iter_method is not None else value.items()
+                return dict([(str(k), _json_safe(v)) for k, v in iterator])
+            
+            # Fallback to string representation
+            return str(value)
+        
+        safe_data = _json_safe(mapping_data)
+        DATA_FILE.set_data(safe_data, "SAIF_panel_mapping")
 
 
 # Global instance for easy access

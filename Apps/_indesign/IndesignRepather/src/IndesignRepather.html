@@ -7,12 +7,17 @@
                 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Connection Warning -->
+    <div id="connectionWarning" class="connection-warning hidden">
+        ⚠️ Connection is lost - Please check your connection and refresh the page
+    </div>
+
     <!-- Floating Logo -->
     <div id="floatingLogo" class="floating-logo">
         <img src="logo_vertical_light.png" alt="EnneadTab Logo" />
     </div>
 
-    <div class="container">
+    <div id="mainContainer" class="container">
         <div class="header">
             <h1>EnneadTab InDesign Repather</h1>
             <p>Repath all links in your InDesign document when folders are renamed</p>
@@ -321,6 +326,14 @@
                                                    constructor() {
                 // Use current origin to avoid CORS mismatches between 127.0.0.1 and localhost
                 this.baseUrl = window.location.origin;
+                
+                // Connection monitoring
+                this.connectionLost = false;
+                this.connectionCheckInterval = null;
+                this.lastSuccessfulRequest = Date.now();
+                this.connectionCheckIntervalMs = 5000; // Check every 5 seconds
+                this.connectionTimeoutMs = 10000; // Consider lost if no response for 10 seconds
+                
                 this.init();
             }
 
@@ -328,6 +341,7 @@
                  this.bindEvents();
                  this.checkConnection();
                  this.startAutoDetection();
+                 this.startConnectionMonitoring();
              }
 
                          bindEvents() {
@@ -365,11 +379,76 @@
                     const response = await fetch(`${this.baseUrl}/api/status`);
                     if (response.ok) {
                         this.showStatus('Server is running', 'success');
+                        this.setConnectionStatus(true);
                     } else {
                         this.showStatus('Server not responding', 'error');
+                        this.setConnectionStatus(false);
                     }
                 } catch (error) {
                     this.showStatus('Cannot connect to server. Make sure the Python script is running.', 'error');
+                    this.setConnectionStatus(false);
+                }
+            }
+
+            // Connection monitoring methods
+            startConnectionMonitoring() {
+                // Check connection status every few seconds
+                this.connectionCheckInterval = setInterval(() => {
+                    this.checkConnectionStatus();
+                }, this.connectionCheckIntervalMs);
+                
+                console.log('Connection monitoring started');
+            }
+            
+            stopConnectionMonitoring() {
+                if (this.connectionCheckInterval) {
+                    clearInterval(this.connectionCheckInterval);
+                    this.connectionCheckInterval = null;
+                }
+                console.log('Connection monitoring stopped');
+            }
+            
+            async checkConnectionStatus() {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+                    
+                    const response = await fetch(`${this.baseUrl}/api/status`, {
+                        method: 'GET',
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        this.lastSuccessfulRequest = Date.now();
+                        this.setConnectionStatus(true);
+                    } else {
+                        this.setConnectionStatus(false);
+                    }
+                } catch (error) {
+                    console.log('Connection check failed:', error.message);
+                    this.setConnectionStatus(false);
+                }
+            }
+            
+            setConnectionStatus(connected) {
+                const wasConnected = !this.connectionLost;
+                this.connectionLost = !connected;
+                
+                const container = document.getElementById('mainContainer');
+                const warning = document.getElementById('connectionWarning');
+                
+                if (this.connectionLost && wasConnected) {
+                    // Connection just lost
+                    container.classList.add('connection-lost');
+                    warning.classList.remove('hidden');
+                    console.warn('Connection lost - showing warning');
+                } else if (!this.connectionLost && !wasConnected) {
+                    // Connection restored
+                    container.classList.remove('connection-lost');
+                    warning.classList.add('hidden');
+                    console.log('Connection restored - hiding warning');
                 }
             }
 
@@ -2277,8 +2356,13 @@
 
                            // Initialize the application when the page loads
           document.addEventListener('DOMContentLoaded', () => {
-              new InDesignLinkRepather();
+              const repather = new InDesignLinkRepather();
               new FloatingLogo();
+              
+              // Cleanup connection monitoring when page is unloaded
+              window.addEventListener('beforeunload', () => {
+                  repather.stopConnectionMonitoring();
+              });
           });
 
                    // Global function for copying path to repather
