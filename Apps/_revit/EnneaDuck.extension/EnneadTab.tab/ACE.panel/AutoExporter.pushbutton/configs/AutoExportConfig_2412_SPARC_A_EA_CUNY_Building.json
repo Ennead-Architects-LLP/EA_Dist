@@ -1,0 +1,66 @@
+{
+  "project": {
+    "project_name": "2412_SPARC",
+    "pim_parameter_name": null
+  },
+  "models": {
+    "SPARC_A_EA_CUNY_Building": {
+      "model_guid": "0be7efb0-d2a0-43bd-8fa0-67be15d54f94",
+      "project_guid": "d92aaa44-5ca0-46fb-9426-ce3d64ebece9",
+      "region": "US",
+      "revit_version": "2024"
+    }
+  },
+  "export": {
+    "output_base_path": "C:\\Users\\{username}\\DC\\ACCDocs\\Ennead Architects LLP\\2412_SPARC\\Project Files\\2_RECORD\\AutoPublish",
+    "sheet_filter_parameter": "Sheet_$Issue_SD",
+    "dwg_setting_name": "EA - Sheets",
+    "pdf_color_parameter": "Print_In_Color",
+    "subfolders": ["PDF", "DWG", "JPG"],
+    "date_format": "%Y-%m-%d",
+    "pdf_options": {
+      "hide_crop_boundaries": true,
+      "hide_scope_boxes": true,
+      "hide_reference_plane": true,
+      "combine": false,
+      "stop_on_error": false
+    },
+    "jpg_options": {
+      "resolution_dpi": 150,
+      "pixel_size": 1920
+    }
+  },
+  "email": {
+    "recipients": [
+      "szhang@ennead.com",
+      "Sha.Li@ennead.com"
+    ],
+    "subject_template": "[EnneadTab Bot] AutoExporter {model_name} completed at {date}",
+    "body_template": "\n{model_name} Auto Export Report\n========================\n\nExport Date: {date}\nProject: {project_name}\n{pim_line}\nExport Summary:\n- PDF Files: {pdf_count} files\n- DWG Files: {dwg_count} files  \n- JPG Files: {jpg_count} files\n\nExport Location:\n{export_path}\n\nClick the folder link below to open the export location.\n\nFiles Exported:\n{pdf_files}\n{dwg_files}\n{jpg_files}\n\nThis is an automated export from the {model_name} Revit model.{pim_suffix}\n\nBest regards,\nEnneadTab Auto Export System\n",
+    "enable_notifications": true
+  },
+  "paths": {
+    "dev_root": "C:\\Users\\{username}\\github\\EnneadTab-OS",
+    "dist_root": "C:\\Users\\{username}\\Documents\\EnneadTab Ecosystem\\EA_Dist",
+    "lib_paths": [
+      "C:\\Users\\{username}\\github\\EnneadTab-OS\\Apps\\lib",
+      "C:\\Users\\{username}\\Documents\\EnneadTab Ecosystem\\EA_Dist\\Apps\\lib"
+    ]
+  },
+  "heartbeat": {
+    "enabled": true,
+    "folder_name": "heartbeat",
+    "date_format": "%Y%m%d"
+  },
+  "schedule": {
+    "monday": true,
+    "tuesday": true,
+    "wednesday": true,
+    "thursday": true,
+    "friday": true,
+    "saturday": false,
+    "sunday": false
+  }
+}
+
+
