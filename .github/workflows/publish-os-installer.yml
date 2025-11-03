@@ -1,0 +1,112 @@
+name: Publish OS Installer asset if changed
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Installation/EnneadTab_OS_Installer.exe
+      - .github/workflows/publish-os-installer.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  publish-os-installer:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG_NAME: os-installer
+      RELEASE_TITLE: OS Installer
+      INSTALLER_PATH: Installation/EnneadTab_OS_Installer.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify installer exists
+        run: |
+          if [ ! -f "$INSTALLER_PATH" ]; then
+            echo "${INSTALLER_PATH} not found" >&2
+            exit 1
+          fi
+
+      - name: Ensure release exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME exists"
+          else
+            echo "Creating release $TAG_NAME"
+            gh release create "$TAG_NAME" --title "$RELEASE_TITLE" --notes "Automated release for OS installer asset"
+          fi
+
+      - name: Decide whether to upload asset
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+          installer_name=$(basename "$INSTALLER_PATH")
+          echo "installer_name=$installer_name" >> "$GITHUB_OUTPUT"
+
+          # Compute local hash
+          local_sha=$(sha256sum "$INSTALLER_PATH" | awk '{print $1}')
+          echo "local_sha=$local_sha" >> "$GITHUB_OUTPUT"
+
+          # Check if asset exists on release
+          asset_exists=$(gh release view "$TAG_NAME" --json assets -q \
+            ".assets[].name" | grep -Fx "$installer_name" || true)
+
+          if [ -z "$asset_exists" ]; then
+            echo "Asset missing; will upload"
+            echo "upload_needed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Download existing asset to compare hash
+          tmpdir=$(mktemp -d)
+          gh release download "$TAG_NAME" -p "$installer_name" -D "$tmpdir" >/dev/null
+          remote_path="$tmpdir/$installer_name"
+          if [ ! -f "$remote_path" ]; then
+            echo "Download failed; will upload"
+            echo "upload_needed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          remote_sha=$(sha256sum "$remote_path" | awk '{print $1}')
+          echo "remote_sha=$remote_sha" >> "$GITHUB_OUTPUT"
+
+          if [ "$local_sha" != "$remote_sha" ]; then
+            echo "Hashes differ; will upload"
+            echo "upload_needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Hashes match; skip upload"
+            echo "upload_needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload asset if needed
+        if: steps.decide.outputs.upload_needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          installer_name=$(basename "$INSTALLER_PATH")
+
+          # Remove existing asset if present (ignore failure if not present)
+          asset_id=$(gh release view "$TAG_NAME" --json assets -q \
+             ".assets[] | select(.name == \"$installer_name\").id" || true)
+          if [ -n "$asset_id" ]; then
+            echo "Deleting existing asset $installer_name ($asset_id)"
+            gh release delete-asset "$TAG_NAME" "$asset_id" -y || gh release delete-asset "$TAG_NAME" "$installer_name" -y || true
+          fi
+
+          echo "Uploading $INSTALLER_PATH to release $TAG_NAME"
+          gh release upload "$TAG_NAME" "$INSTALLER_PATH" --clobber
+
+      - name: Summary
+        shell: bash
+        run: |
+          if [ "${{ steps.decide.outputs.upload_needed }}" = "true" ]; then
+            echo "Uploaded updated OS installer asset." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No changes detected; asset upload skipped." >> $GITHUB_STEP_SUMMARY
+          fi
