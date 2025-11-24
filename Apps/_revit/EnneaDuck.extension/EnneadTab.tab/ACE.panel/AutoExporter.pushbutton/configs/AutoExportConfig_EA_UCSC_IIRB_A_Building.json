@@ -27,7 +27,7 @@
     },
     "jpg_options": {
       "resolution_dpi": 150,
-      "pixel_size": 1920
+      "pixel_size": 4000
     }
   },
   "email": {
@@ -51,6 +51,15 @@
     "enabled": true,
     "folder_name": "heartbeat",
     "date_format": "%Y%m%d"
+  },
+  "schedule": {
+    "monday": false,
+    "tuesday": true,
+    "wednesday": false,
+    "thursday": false,
+    "friday": true,
+    "saturday": false,
+    "sunday": false
   }
 }
 

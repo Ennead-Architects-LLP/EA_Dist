@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-BaseProcessor module for shared functionality between Rhino and Revit processing.
-This module provides common color scheme extraction and curve processor discovery.
+Shared functionality between Rhino and Revit processing. Provides color scheme extraction and curve processor discovery.
 """
 
 # ============================================================================
@@ -1132,3 +1131,8 @@ class BaseProcessor:
                 return False
             except:
                 return False
+
+
+if __name__ == "__main__":
+    pass
+

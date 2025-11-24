@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__doc__ = """Automates the tedious task of joining vertical and horizontal elements throughout your model.\n\nThis utility now allows you to select which categories to join:\n- Horizontal elements: multi-pick from Floor, Ceiling\n- Vertical elements: multi-pick from Column, Structural Column\n\nThe tool will join all selected vertical elements to all selected horizontal elements, and provide a detailed completion report of successful and failed joins."""
+__doc__ = "Join vertical and horizontal elements. Select categories to join (Floors/Ceilings to Columns/Structural Columns)."
 __title__ = "Join Selected\nElements"
 
 import proDUCKtion # pyright: ignore 
@@ -20,16 +20,21 @@ DOC = REVIT_APPLICATION.get_doc()
 @ERROR_HANDLE.try_catch_error()
 def join_all_coln_floor(doc):
     # Define join pairs (better ordering and naming)
-    join_pairs = [
+    join_pairs = sorted([
         ("Architectural Column + Architectural Floor", DB.BuiltInCategory.OST_Columns, DB.BuiltInCategory.OST_Floors),
         ("Architectural Wall + Architectural Floor", DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors),
         ("Architectural Column + Ceiling", DB.BuiltInCategory.OST_Columns, DB.BuiltInCategory.OST_Ceilings),
         ("Architectural Wall + Ceiling", DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Ceilings),
         ("Structural Column + Architectural Floor", DB.BuiltInCategory.OST_StructuralColumns, DB.BuiltInCategory.OST_Floors),
+        ("Structural Beam + Architectural Floor", DB.BuiltInCategory.OST_StructuralFraming, DB.BuiltInCategory.OST_Floors),
         ("Structural Column + Ceiling", DB.BuiltInCategory.OST_StructuralColumns, DB.BuiltInCategory.OST_Ceilings),
+        ("Structural Beam + Ceiling", DB.BuiltInCategory.OST_StructuralFraming, DB.BuiltInCategory.OST_Ceilings),
+        ("Structural Beam + Architectural Wall", DB.BuiltInCategory.OST_StructuralFraming, DB.BuiltInCategory.OST_Walls),
+        ("Structural Beam + Structural Column", DB.BuiltInCategory.OST_StructuralFraming, DB.BuiltInCategory.OST_StructuralColumns),
+        ("Structural Beam + Structural Beam", DB.BuiltInCategory.OST_StructuralFraming, DB.BuiltInCategory.OST_StructuralFraming),
         ("Architectural Wall + Architectural Wall", DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Walls),
         ("Architectural Floor + Architectural Floor", DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Floors),
-    ]
+    ], key=lambda x: x[0])
     pair_names = [x[0] for x in join_pairs]
 
     selected_pairs = forms.SelectFromList.show(pair_names, multiselect=True, title="Pick element pairs to join")

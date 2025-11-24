@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-__doc__ = "Advanced element matching wizard that finds truly identical elements throughout your model. Unlike Revit's built-in selection tools, this utility performs deep parameter comparison to identify elements that are genuinely identical in all important aspects. Perfect for finding all instances that share specific parameter values when you need precise selection control."
+__doc__ = "Find elements with matching parameters by comparing parameter values across elements."
 __title__ = "Pick\nAbsolute Similar"
 
 import proDUCKtion # pyright: ignore 
@@ -47,7 +47,7 @@ def is_instance_absolute_similar_with_sample(instance, sample, picked_parameter_
         except:
             print (traceback.format_exc())
             return False
-        return True
+    return True
 
 
 @LOG.log(__file__, __title__)

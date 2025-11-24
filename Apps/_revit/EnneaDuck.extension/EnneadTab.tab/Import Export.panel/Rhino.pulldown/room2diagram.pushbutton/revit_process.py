@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-RevitProcess module for handling Revit-specific processing in room2diagram export.
+Revit-specific processing for room2diagram export.
 """
 
 # ============================================================================
@@ -795,4 +795,7 @@ class RevitProcess(BaseProcessor):
             print("Error verifying filled region: {}".format(str(e)))
             return False
 
+
+if __name__ == "__main__":
+    pass
 
