@@ -4,32 +4,11 @@
 """
 AutoExporter Revit Script
 
-Runs INSIDE Revit (IronPython 2.7) to perform automated model exports.
-Opens cloud models, exports files (PDF/DWG/JPG), sends notifications, and closes Revit.
-
-This script is launched by the orchestrator (runs outside Revit) via pyRevit CLI.
-Configuration is loaded from current_job_payload.json which specifies the active config file.
-
-Process:
-1. Read job payload to get active config
-2. Open cloud model specified in config (detached, audit, all worksets)
-3. Filter sheets based on export parameter
-4. Export to dated folders (PDF/DWG/JPG)
-5. Send email notification with export summary
-6. Write job status to current_job_status.json
-7. Close Revit cleanly
-
-Status Stages:
-- running: Script started
-- exporting: Performing file exports
-- post_export: Sending notifications
-- completed: Job finished successfully
-- failed: Error occurred (with error message)
-
-
+Runs inside Revit (IronPython 2.7). Opens cloud models, exports PDF/DWG/JPG, sends notifications, closes Revit.
+Launched by orchestrator via pyRevit CLI. Config loaded from current_job_payload.json.
 """
 
-__doc__ = "AutoExporter - Opens cloud model, exports files, sends notifications, closes Revit"
+__doc__ = "Open cloud model, export PDF/DWG/JPG, send notifications, close Revit"
 __title__ = "Amazing Auto Export"
 __context__ = "zero-doc"
 
@@ -204,37 +183,384 @@ def tuple_to_model_path(data_dict):
     return None
 
 
-def open_and_activate_doc(doc_name, model_data):
-    """Open and activate a document by name"""
+def open_and_activate_doc(doc_name, model_data, heartbeat_callback=None):
+    """Open and activate a document by name with detailed progress tracking"""
     if doc_name not in model_data:
-        print("[{}] not found in model data".format(doc_name))
+        error_msg = "[{}] not found in model data".format(doc_name)
+        print(error_msg)
+        if heartbeat_callback:
+            heartbeat_callback("2.1", error_msg, is_error=True)
         return None
+    
+    # Build cloud path with detailed logging
+    if heartbeat_callback:
+        heartbeat_callback("2.1", "Building cloud path for model [{}]".format(doc_name))
+    
+    print("Building cloud path for model: {}".format(doc_name))
+    model_info = model_data[doc_name]
+    print("  Project GUID: {}".format(model_info.get('project_guid', 'N/A')))
+    print("  Model GUID: {}".format(model_info.get('model_guid', 'N/A')))
+    print("  Region: {}".format(model_info.get('region', 'N/A')))
     
     cloud_path = tuple_to_model_path(model_data[doc_name])
     if not cloud_path:
+        error_msg = "Failed to build cloud path"
+        if heartbeat_callback:
+            heartbeat_callback("2.2", error_msg, is_error=True)
         return None
     
-    # Setup open options - detach and preserve worksets
-    open_options = DB.OpenOptions()
-    open_options.DetachFromCentralOption = DB.DetachFromCentralOption.DetachAndPreserveWorksets
-    open_options.SetOpenWorksetsConfiguration(
-        DB.WorksetConfiguration(DB.WorksetConfigurationOption.OpenAllWorksets)
-    )
-    open_options.Audit = True
+    if heartbeat_callback:
+        heartbeat_callback("2.2", "Cloud path created successfully")
     
-    print("Opening document (detached, audit, all worksets)...")
+    # Setup open options - match standard "open doc silently" behavior (no detach, default worksets)
+    if heartbeat_callback:
+        heartbeat_callback("2.3", "Configuring open options (standard open behavior)")
+    
+    open_options = DB.OpenOptions()
+    
+    print("Opening document using standard options (no detach)...")
+    print("  This may take several minutes for large cloud models...")
+    
+    if heartbeat_callback:
+        heartbeat_callback("2.4", "Initiating document download and open from ACC (this may take 3-10 min for large models)")
+    
+    # Try primary method
+    try:
+        if heartbeat_callback:
+            heartbeat_callback("2.5", "Attempting OpenAndActivateDocument...")
+        print("  Attempting OpenAndActivateDocument...")
+        
+        doc = REVIT_APPLICATION.get_uiapp().OpenAndActivateDocument(cloud_path, open_options, False)
+        
+        if heartbeat_callback:
+            heartbeat_callback("2.6", "Document opened successfully via OpenAndActivateDocument")
+        print("  Document opened successfully!")
+        return doc
+    except Exception as e:
+        error_msg = "OpenAndActivateDocument failed: {}".format(str(e))
+        print("  {}".format(error_msg))
+        if heartbeat_callback:
+            heartbeat_callback("2.5", "{}, trying alternative method...".format(error_msg))
+        
+        # Try fallback method
+        try:
+            if heartbeat_callback:
+                heartbeat_callback("2.6", "Attempting OpenDocumentFile...")
+            print("  Attempting OpenDocumentFile (fallback)...")
+            
+            doc = REVIT_APPLICATION.get_app().OpenDocumentFile(cloud_path, open_options)
+            
+            if doc:
+                if heartbeat_callback:
+                    heartbeat_callback("2.7", "Document opened via OpenDocumentFile, activating...")
+                print("  Document opened via fallback, activating...")
+                REVIT_APPLICATION.open_and_active_project(cloud_path)
+                
+                if heartbeat_callback:
+                    heartbeat_callback("2.8", "Document opened and activated successfully via fallback method")
+                print("  Document activated successfully!")
+                return doc
+            else:
+                error_msg = "OpenDocumentFile returned None"
+                print("  {}".format(error_msg))
+                if heartbeat_callback:
+                    heartbeat_callback("2.7", error_msg, is_error=True)
+                return None
+        except Exception as e2:
+            error_msg = "All open methods failed. Final error: {}".format(str(e2))
+            print("  {}".format(error_msg))
+            if heartbeat_callback:
+                heartbeat_callback("2.7", error_msg, is_error=True)
+            return None
+
+
+def _log_link_guard(message, exc=None):
+    """Standardized logging for link guard diagnostics."""
+    if exc:
+        print("[LinkGuard] {} | {}".format(message, exc))
+    else:
+        print("[LinkGuard] {}".format(message))
+
+
+def _get_link_type_name(link_type):
+    """Return a readable Revit link type name."""
+    try:
+        param = link_type.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM)
+        if param:
+            value = param.AsString()
+            if value:
+                return value
+    except Exception as param_error:
+        _log_link_guard("Failed reading link type parameter for name fallback", param_error)
     
     try:
-        return REVIT_APPLICATION.get_uiapp().OpenAndActivateDocument(cloud_path, open_options, False)
-    except:
+        return link_type.Name
+    except Exception as name_error:
+        _log_link_guard("Failed reading link type Name property", name_error)
+    
+    try:
+        element_id = getattr(link_type, "Id", None)
+        if element_id:
+            id_value = None
+            
+            if hasattr(element_id, "Value"):
+                try:
+                    id_value = element_id.Value
+                except Exception as value_error:
+                    _log_link_guard("Failed reading ElementId.Value for link type name", value_error)
+                    id_value = None
+            
+            if id_value is None and hasattr(element_id, "IntegerValue"):
+                try:
+                    id_value = element_id.IntegerValue
+                except Exception as int_error:
+                    _log_link_guard("Failed reading ElementId.IntegerValue for link type name", int_error)
+                    id_value = None
+            
+            if id_value is not None:
+                return "RevitLinkType-{}".format(id_value)
+    except Exception as id_error:
+        _log_link_guard("Failed building link type fallback name from ElementId", id_error)
+    
+    return "RevitLinkType"
+
+
+def _attempt_reload_link_type(doc, link_type, link_name, heartbeat_callback=None, stage=None):
+    """Reload a single Revit link type.
+    
+    For Revit 2024, tries local reload first (faster, more reliable for ACC links).
+    Falls back to global reload if local reload is not applicable.
+    
+    Note:
+        Some Revit environments do not allow link reload to be wrapped in an
+        explicit Transaction because Reload() manages its own internal
+        transaction. Attempting to wrap it can trigger errors like:
+        'Operation is not permitted when there is any open sub-transaction,
+        transaction, or transaction group.'
+        
+        To avoid nested transaction conflicts, call Reload() directly and let
+        Revit handle the transaction boundaries internally.
+    """
+    revit_version = REVIT_APPLICATION.get_revit_version()
+    
+    _ensure_document_ready_for_link_reload(
+        doc,
+        heartbeat_callback=heartbeat_callback,
+        stage=stage
+    )
+    
+    # For Revit 2024, try local reload first (often faster and more reliable)
+    # This approach is based on the pattern in doc-synced.py reload_sparc_exterior()
+    if revit_version == "2024":
+        if heartbeat_callback and stage:
+            heartbeat_callback(stage, "Trying local reload first (Revit 2024) for [{}]".format(link_name))
+        
         try:
-            doc = REVIT_APPLICATION.get_app().OpenDocumentFile(cloud_path, open_options)
-            if doc:
-                REVIT_APPLICATION.open_and_active_project(cloud_path)
-            return doc
-        except Exception as e:
-            print("Failed to open: {}".format(e))
-            return None
+            # Try local reload first for Revit 2024
+            # If link is locally unloaded, revert the local unload status
+            if hasattr(link_type, "LocallyUnloaded") and link_type.LocallyUnloaded:
+                if hasattr(link_type, "RevertLocalUnloadStatus"):
+                    link_type.RevertLocalUnloadStatus()
+                    if heartbeat_callback and stage:
+                        heartbeat_callback(stage, "Local reload succeeded for [{}] (reverted local unload)".format(link_name))
+                    return
+            # If link is not locally unloaded but needs reloading, try unload locally then revert
+            # This forces a fresh reload via local mechanism
+            elif hasattr(link_type, "UnloadLocally") and hasattr(link_type, "RevertLocalUnloadStatus"):
+                link_type.UnloadLocally(None)
+                link_type.RevertLocalUnloadStatus()
+                if heartbeat_callback and stage:
+                    heartbeat_callback(stage, "Local reload succeeded for [{}] (unload+revert)".format(link_name))
+                return
+        except Exception as local_error:
+            # Local reload failed, fall through to global reload
+            if heartbeat_callback and stage:
+                heartbeat_callback(stage, "Local reload failed for [{}], trying global reload: {}".format(link_name, local_error))
+            _log_link_guard(
+                "Local reload failed for [{}], will try global reload".format(link_name),
+                local_error
+            )
+    
+    # Fallback: Try global reload (works for all versions)
+    if heartbeat_callback and stage and revit_version != "2024":
+        heartbeat_callback(stage, "Using global reload for [{}] (Revit {})".format(link_name, revit_version))
+    
+    try:
+        link_type.Reload()
+    except Exception as reload_error:
+        # Surface the original error to the caller and log for diagnostics
+        _log_link_guard(
+            "Link reload failed for [{}]".format(link_name),
+            reload_error
+        )
+        raise
+
+
+def _ensure_document_ready_for_link_reload(doc, heartbeat_callback=None, stage=None, max_wait_seconds=60):
+    """Ensure document is not inside any open transaction before reloading links.
+    
+    Revit link reload operations start their own internal transactions. If the
+    document is still marked as modifiable (meaning some transaction is active),
+    Reload() can throw "Operation is not permitted when there is any open
+    sub-transaction, transaction, or transaction group." This helper tries to
+    close dangling transactions (typical when pyRevit left an EnsureInTransaction
+    session open) and, if needed, waits briefly for Revit to finish its work.
+    """
+    if doc is None:
+        return
+    
+    try:
+        transaction_manager = getattr(DB, "TransactionManager", None)
+        if transaction_manager is not None:
+            manager_instance = getattr(transaction_manager, "Instance", None)
+            if manager_instance is not None:
+                try:
+                    has_has_started = hasattr(manager_instance, "HasStarted")
+                    has_force_close = hasattr(manager_instance, "ForceCloseTransaction")
+                    
+                    if has_has_started and manager_instance.HasStarted() and has_force_close:
+                        manager_instance.ForceCloseTransaction()
+                        _log_link_guard("Force-closed dangling transaction before link reload")
+                    elif has_force_close:
+                        # Some hosts only expose ForceCloseTransaction without HasStarted
+                        manager_instance.ForceCloseTransaction()
+                        _log_link_guard("Force-closed transaction manager before link reload (no HasStarted)")
+                except Exception as tm_error:
+                    _log_link_guard("Failed to force-close transaction manager before link reload", tm_error)
+    except Exception as manager_error:
+        _log_link_guard("Transaction manager access failed before link reload", manager_error)
+    
+    if not hasattr(doc, "IsModifiable"):
+        return
+    
+    if not doc.IsModifiable:
+        return
+    
+    if heartbeat_callback and stage:
+        heartbeat_callback(stage, "Waiting for Revit to finish previous transaction before reloading links")
+    
+    wait_start = time.time()
+    while doc.IsModifiable and (time.time() - wait_start) < max_wait_seconds:
+        time.sleep(1)
+    
+    if doc.IsModifiable:
+        raise Exception(
+            "Document is still inside an active transaction after waiting {}s".format(max_wait_seconds)
+        )
+
+
+def _wait_for_link_to_load(doc, link_type, deadline, poll_interval=5,
+                           heartbeat_callback=None, stage=None, link_name=None):
+    """Wait until a link reports as loaded or deadline reached.
+    
+    Adds periodic heartbeat messages so long waits are visible in logs and
+    so the orchestrator's activity-based timeout sees ongoing progress.
+    """
+    last_report_time = 0
+    
+    while time.time() < deadline:
+        if DB.RevitLinkType.IsLoaded(doc, link_type.Id):
+            return True
+        
+        # Emit a heartbeat every ~30 seconds while waiting
+        if heartbeat_callback is not None and stage is not None and link_name is not None:
+            now = time.time()
+            if now - last_report_time >= 30:
+                elapsed_seconds = int(deadline - now)
+                msg = "Still waiting for [{}] to finish loading ({}s remaining)".format(link_name, elapsed_seconds)
+                heartbeat_callback(stage, msg)
+                last_report_time = now
+        
+        time.sleep(poll_interval)
+    
+    return DB.RevitLinkType.IsLoaded(doc, link_type.Id)
+
+
+def ensure_all_links_loaded(doc, timeout_minutes=10, heartbeat_callback=None):
+    """Ensure every Revit link type in the document is loaded before export."""
+    timeout_minutes = timeout_minutes or 0
+    if timeout_minutes <= 0:
+        timeout_minutes = 10
+    
+    _ensure_document_ready_for_link_reload(
+        doc,
+        heartbeat_callback=heartbeat_callback,
+        stage="3.0"
+    )
+    
+    link_types = list(DB.FilteredElementCollector(doc).OfClass(DB.RevitLinkType))
+    total_links = len(link_types)
+    
+    if total_links == 0:
+        if heartbeat_callback:
+            heartbeat_callback("3.1", "No Revit links found in document (nothing to reload)")
+        return {"total": 0, "already_loaded": 0, "reloaded": 0}
+    
+    already_loaded = []
+    reloaded = []
+    deadline = time.time() + (timeout_minutes * 60)
+    
+    if heartbeat_callback:
+        heartbeat_callback("3.1", "Checking {} Revit link(s) before export".format(total_links))
+    
+    for idx, link_type in enumerate(link_types):
+        link_name = _get_link_type_name(link_type)
+        stage = "3.{}".format(idx + 2)
+        
+        try:
+            is_loaded = DB.RevitLinkType.IsLoaded(doc, link_type.Id)
+        except Exception as state_error:
+            if heartbeat_callback:
+                heartbeat_callback(stage, "Unable to determine state for [{}]: {}".format(link_name, state_error), is_error=True)
+            raise
+        
+        if is_loaded:
+            already_loaded.append(link_name)
+            continue
+        
+        if heartbeat_callback:
+            heartbeat_callback(stage, "Reloading Revit link [{}] ({} of {})".format(link_name, idx + 1, total_links))
+        
+        try:
+            _attempt_reload_link_type(doc, link_type, link_name, heartbeat_callback=heartbeat_callback, stage=stage)
+        except Exception as reload_error:
+            error_msg = "Reload failed for [{}]: {}".format(link_name, reload_error)
+            if heartbeat_callback:
+                heartbeat_callback(stage, error_msg, is_error=True)
+            raise Exception(error_msg)
+        
+        if heartbeat_callback:
+            heartbeat_callback(stage, "Waiting for [{}] to finish loading".format(link_name))
+        
+        if not _wait_for_link_to_load(
+            doc,
+            link_type,
+            deadline,
+            heartbeat_callback=heartbeat_callback,
+            stage=stage,
+            link_name=link_name
+        ):
+            error_msg = "Link [{}] did not finish loading before timeout ({} min)".format(link_name, timeout_minutes)
+            if heartbeat_callback:
+                heartbeat_callback(stage, error_msg, is_error=True)
+            raise Exception(error_msg)
+        
+        reloaded.append(link_name)
+    
+    summary_msg = "Revit link check complete: {} total / {} already loaded / {} reloaded".format(
+        total_links,
+        len(already_loaded),
+        len(reloaded)
+    )
+    if heartbeat_callback:
+        heartbeat_callback("3.{}".format(total_links + 2), summary_msg)
+    print(summary_msg)
+    
+    return {
+        "total": total_links,
+        "already_loaded": len(already_loaded),
+        "reloaded": len(reloaded)
+    }
 
 
 @LOG.log(__file__, __title__)
@@ -282,16 +608,16 @@ def auto_export():
             print("ERROR: {}".format(error_msg))
             return
     
-        # Open document
+        # Open document with detailed progress tracking
         write_heartbeat("2", "Opening document [{}]".format(doc_name))
         print("Opening [{}]...".format(doc_name))
         
         with ErrorSwallower():
-            target_doc = open_and_activate_doc(doc_name, model_data)
+            target_doc = open_and_activate_doc(doc_name, model_data, heartbeat_callback=write_heartbeat)
         
         if not target_doc:
-            error_msg = "Failed to open document [{}]".format(doc_name)
-            write_heartbeat("2", error_msg, is_error=True)
+            error_msg = "Failed to open document [{}] - Check orchestrator heartbeat log for detailed progress".format(doc_name)
+            write_heartbeat("2.9", error_msg, is_error=True)
             write_job_status("failed", error=error_msg, traceback_info="Document open failed (no exception)")
             return
     
@@ -305,20 +631,26 @@ def auto_export():
         else:
             actual_doc = target_doc
         
+        try:
+            ensure_all_links_loaded(
+                actual_doc,
+                timeout_minutes=10,
+                heartbeat_callback=write_heartbeat
+            )
+        except Exception as link_error:
+            error_msg = "Failed to load Revit links before export: {}".format(link_error)
+            write_heartbeat("3.9", error_msg, is_error=True)
+            write_job_status("failed", error=error_msg, traceback_info=traceback.format_exc())
+            print("ERROR: {}".format(error_msg))
+            return
+        
         # Run exports
         write_heartbeat("4", "Starting exports")
         write_job_status("exporting")
         
-        # Get job_id for staging (if available)
-        job_id = None
-        try:
-            job_id = config_loader.get_current_job_id()
-        except:
-            pass
-        
         export_results = revit_export_logic.run_all_exports(
             actual_doc,
-            job_id=job_id,
+            job_id=JOB_ID,
             use_staging=True,
             heartbeat_callback=write_heartbeat
         )

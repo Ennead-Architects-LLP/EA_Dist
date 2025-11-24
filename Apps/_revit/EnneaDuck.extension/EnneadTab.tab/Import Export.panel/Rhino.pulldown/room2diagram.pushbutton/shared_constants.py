@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Shared constants for room2diagram export functionality.
+Shared constants for room2diagram export.
 """
 
 from Autodesk.Revit import DB # pyright: ignore
@@ -28,4 +28,9 @@ class ExportMethod:
     """Enum-like class for export methods."""
     RHINO = "Rhino"
     REVIT = "Revit"
+
+
+if __name__ == "__main__":
+    pass
+
     

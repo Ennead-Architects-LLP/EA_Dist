@@ -19,7 +19,7 @@ AutoExporter.pushbutton/
 │   └── AutoExportConfig_*.json          # Export config files (auto-discovered)
 ├── orchestrator.py                       # Main orchestrator (runs outside Revit - CPython)
 ├── run_orchestrator.bat                  # Batch launcher for task scheduler (ONLY bat file)
-├── revit_server_entry_script.py          # Revit entry point (runs inside Revit - IronPython)
+├── revit_auto_export_script.py           # Revit entry point (runs inside Revit - IronPython)
 ├── revit_export_logic.py                 # Export operations (runs inside Revit - IronPython)
 ├── revit_post_export_logic.py            # Post-export tasks (runs inside Revit - IronPython)
 ├── config_loader.py                      # Configuration loader (Python 2/3 compatible)
@@ -93,6 +93,12 @@ Example: `"C:\\Users\\{username}\\Documents\\Export"`
 ### Manual Run
 
 Double-click `run_orchestrator.bat` to start processing all configs.
+
+Optional flags (pass after the batch file name):
+
+- `--sparc` – only process configs that target SPARC (filters by filename/project metadata)
+
+Example: `run_orchestrator.bat --sparc`
 
 ### Task Scheduler
 

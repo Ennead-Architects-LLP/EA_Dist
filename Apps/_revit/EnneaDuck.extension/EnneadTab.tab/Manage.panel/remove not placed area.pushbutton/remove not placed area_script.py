@@ -1,4 +1,4 @@
-__doc__ = "This tool allows you to manage room and area accuracy by identifying and removing elements that are not properly placed in the project.\n\nFeatures:\n- Remove unplaced rooms and areas\n- Identify unbounded/redundant elements for review\n- Phase-specific room inspection\n- Find elements with negative areas or missing department assignments"
+__doc__ = "Remove unplaced rooms and areas. Identify unbounded or redundant elements for review."
 __title__ = "Remove Not Placed\nArea and Rooms"
 __tip__ = True
 __is_popular__ = True
@@ -105,8 +105,6 @@ def get_element_phase(element):
     return "Phase Created = {}, Phase Demolished = {}".format(phase_creation, phase_demolision)
 
 
-################## main code below #####################
-
 @LOG.log(__file__, __title__)
 @ERROR_HANDLE.try_catch_error()
 def main():
@@ -154,8 +152,11 @@ def delete_not_placed_areas():
             count += 1
 
         if area.Area < 0:
-            print("this area has negative area. Area Scheme = {}, Level = {}, area name = {}----{}".format(area.AreaScheme.Name,  
-                                                                                                           doc.GetElement(area.LevelId).Name,
+            area_scheme_name = area.AreaScheme.Name if area.AreaScheme else "N/A"
+            level_element = doc.GetElement(area.LevelId) if area.LevelId else None
+            level_name = level_element.Name if level_element else "N/A"
+            print("this area has negative area. Area Scheme = {}, Level = {}, area name = {}----{}".format(area_scheme_name,  
+                                                                                                           level_name,
                                                                                                            area.LookupParameter("Name").AsString(), 
                                                                                                            output.linkify(area.Id, title = "Select Area")))
             nega_count += 1
@@ -220,11 +221,10 @@ def find_non_close_or_redundent_room(phase):
 
         NOTIFICATION.messenger(main_text = "{} not enclosed room or redundent room still in the project.".format(count))
         for room in open_rooms:
-            #print area.LookupParameter("Area").AsValueString() ### is this equal to redundent or not enclosed?
-            #print area.Perimeter
-            #print area.Geometry[DB.Options()]
+            level_element = doc.GetElement(room.LevelId) if room.LevelId else None
+            level_name = level_element.Name if level_element else "N/A"
             print("not enclosed room or redundent room. Phase = {}\nLevel = {}, room department = {}, room name = {}----{}".format( phase.Name,
-                                                                                                                            doc.GetElement(room.LevelId).Name,
+                                                                                                                            level_name,
                                                                                                                             room.LookupParameter("Department").AsString(),
                                                                                                                             room.LookupParameter("Name").AsString(),
                                                                                                                             output.linkify(room.Id, title = "Select Room")))
@@ -254,13 +254,13 @@ def find_non_close_or_redundent_area():
 
         NOTIFICATION.messenger(main_text = "{} not enclosed areas or redundent area still in the project.".format(count))
         for area in open_areas:
-            #print area.LookupParameter("Area").AsValueString() ### is this equal to redundent or not enclosed?
-            #print area.Perimeter
-            #print area.Geometry[DB.Options()]
             area_department = area.LookupParameter("Area Department").AsString() if area.LookupParameter("Area Department") else "N/A"
+            area_scheme_name = area.AreaScheme.Name if area.AreaScheme else "N/A"
+            level_element = doc.GetElement(area.LevelId) if area.LevelId else None
+            level_name = level_element.Name if level_element else "N/A"
             print("not enclosed area or redundent area. {}\nArea Scheme = {}, Level = {}, area department = {}, area name = {}----{}".format(get_element_phase(area),
-                                                                                                                                            area.AreaScheme.Name,
-                                                                                                                                            doc.GetElement(area.LevelId).Name,
+                                                                                                                                            area_scheme_name,
+                                                                                                                                            level_name,
                                                                                                                                             area_department,area.LookupParameter("Name").AsString(),
                                                                                                                                             output.linkify(area.Id, title = "Select Area")))
     else:
@@ -281,11 +281,13 @@ def find_empty_area_department():
 
     count = 0
     for area in all_areas:
-        if area.AreaScheme.Name != "Gross Building":
+        area_scheme_name = area.AreaScheme.Name if area.AreaScheme else "N/A"
+        if area_scheme_name != "Gross Building":
             continue
         if area.LookupParameter("Area Department").AsString() == None:
-
-            print("this area has no area department assignemted to it. Area Scheme = {}, Level = {}, area name = {}----{}".format(area.AreaScheme.Name,  doc.GetElement(area.LevelId).Name,area.LookupParameter("Name").AsString(), output.linkify(area.Id, title = "Select Area")))
+            level_element = doc.GetElement(area.LevelId) if area.LevelId else None
+            level_name = level_element.Name if level_element else "N/A"
+            print("this area has no area department assignemted to it. Area Scheme = {}, Level = {}, area name = {}----{}".format(area_scheme_name,  level_name,area.LookupParameter("Name").AsString(), output.linkify(area.Id, title = "Select Area")))
             count += 1
     if count > 0:
         NOTIFICATION.messenger(main_text = "{} area has empty area department value in gross buiilding area scheme. See output window for detail".format(count), icon = "warning")
@@ -298,6 +300,5 @@ if __name__ == "__main__":
     output.close_others()
     main()
 
-    # output.center()
     output.set_width(1100)
     output.set_height(800)

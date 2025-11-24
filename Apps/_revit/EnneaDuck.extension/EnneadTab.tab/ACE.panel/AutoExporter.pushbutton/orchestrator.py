@@ -4,34 +4,8 @@
 """
 AutoExporter Orchestrator
 
-A flexible orchestration system for automated Revit model exports.
-Discovers and processes multiple export configuration files sequentially,
-launching Revit for each config to perform exports and notifications.
-
-Features:
-- Auto-discovers all AutoExportConfig_*.json files in configs/ folder
-- Sequential job processing with comprehensive logging
-- Timeout protection (default 30 min per job, configurable)
-- Process cleanup between jobs (kills lingering Revit processes)
-- Pre-flight checks (disk space, pyRevit availability, config validation)
-- Continues processing on failure (logs errors, proceeds to next config)
-- Status tracking via JSON files for monitoring
-- Lock file prevents multiple concurrent instances
-- Exit codes for task scheduler integration
-
-Architecture:
-- Runs OUTSIDE Revit using CPython 3.9 (.venv environment)
-- Launches pyRevit to run scripts INSIDE Revit (IronPython 2.7)
-- Uses JSON files for inter-process communication (payload, status)
-
-Usage:
-1. Add config files to configs/ folder (AutoExportConfig_*.json)
-2. Run this script directly or via run_orchestrator.bat
-3. Monitor orchestrator_logs/ for execution details
-4. Check heartbeat/ logs for Revit script execution details
-
-Author: EnneadTab Development Team
-Version: 1.0
+Runs outside Revit (CPython 3.9). Discovers AutoExportConfig_*.json files and processes them sequentially.
+Launches pyRevit to run scripts inside Revit (IronPython 2.7). Uses JSON files for inter-process communication.
 """
 
 import os
@@ -40,6 +14,7 @@ import json
 import time
 import subprocess
 import glob
+import argparse
 from datetime import datetime
 
 
@@ -398,6 +373,55 @@ def validate_all_configs(config_paths, logger):
     return (all_valid, validation_results)
 
 
+def parse_cli_args(argv=None):
+    """Parse command-line arguments for orchestrator control."""
+    parser = argparse.ArgumentParser(
+        description="AutoExporter Orchestrator",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--sparc",
+        action="store_true",
+        help="Only run configs for SPARC (filters by filename/project metadata)"
+    )
+    return parser.parse_args(argv)
+
+
+def filter_configs_by_flags(config_paths, cli_args, logger):
+    """Filter discovered configs based on CLI flags."""
+    filtered_paths = list(config_paths)
+    
+    if getattr(cli_args, "sparc", False):
+        logger.info("SPARC flag detected - filtering configs to SPARC-only jobs")
+        sparc_paths = []
+        for path in filtered_paths:
+            name = os.path.basename(path).lower()
+            if "sparc" in name or "2412" in name:
+                sparc_paths.append(path)
+                continue
+            
+            # Inspect project metadata as fallback
+            try:
+                with open(path, 'r') as cfg_file:
+                    cfg_data = json.load(cfg_file)
+                project_name = cfg_data.get('project', {}).get('project_name', '')
+                if project_name is None:
+                    project_name = ''
+                project_name_string = project_name if isinstance(project_name, str) else str(project_name)
+                if "sparc" in project_name_string.lower():
+                    sparc_paths.append(path)
+            except Exception as cfg_error:
+                logger.warning("  Could not inspect {} for SPARC metadata: {}".format(
+                    os.path.basename(path),
+                    cfg_error
+                ))
+        
+        filtered_paths = sparc_paths
+        logger.info("SPARC filter retained {} config(s)".format(len(filtered_paths)))
+    
+    return filtered_paths
+
+
 # =============================================================================
 # JOB EXECUTION
 # =============================================================================
@@ -491,7 +515,7 @@ def launch_revit_job(config_path, job_id, logger):
     logger.info("Empty doc: {}".format(empty_doc))
     
     # Build pyrevit command
-    script_path = os.path.join(SCRIPT_DIR, "revit_server_entry_script.py")
+    script_path = os.path.join(SCRIPT_DIR, "revit_auto_export_script.py")
     
     cmd = [
         'pyrevit', 'run',
@@ -845,9 +869,11 @@ def process_job(config_path, logger):
 # MAIN ORCHESTRATOR
 # =============================================================================
 
-def run_orchestrator():
+def run_orchestrator(cli_args=None):
     """Main orchestrator function"""
     logger = OrchestratorLogger()
+    if cli_args is None:
+        cli_args = parse_cli_args()
     
     logger.info("AutoExporter Orchestrator Starting...")
     logger.info("Script directory: {}".format(SCRIPT_DIR))
@@ -893,6 +919,16 @@ def run_orchestrator():
         logger.info("Found {} config file(s)".format(len(config_paths)))
         for config_path in config_paths:
             logger.info("  - {}".format(os.path.basename(config_path)))
+        
+        config_paths = filter_configs_by_flags(config_paths, cli_args, logger)
+        if not config_paths:
+            logger.error("No config files matched the requested filters/flags")
+            return 1
+        
+        if getattr(cli_args, "sparc", False):
+            logger.info("SPARC filter active - configs to process:")
+            for config_path in config_paths:
+                logger.info("  * {}".format(os.path.basename(config_path)))
         
         # Validate all configs
         all_valid, _ = validate_all_configs(config_paths, logger)

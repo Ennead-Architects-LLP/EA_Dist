@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-RhinoProcess module for handling Rhino-specific processing in room2diagram export.
+Rhino-specific processing for room2diagram export.
 """
 
 import clr  # pyright: ignore
@@ -229,3 +229,8 @@ class RhinoProcess(BaseProcessor):
         except Exception as e:
             print("Error in Rhino processing: {}".format(str(e)))
             return False
+
+
+if __name__ == "__main__":
+    pass
+
