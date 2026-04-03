@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnneadTab AI Assistant</title>
+<style>
+  :root {
+    --bg-sidebar: #1a1a2e;
+    --bg-chat: #f8f9fa;
+    --bg-input: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-light: #e0e0e0;
+    --accent: #4a6cf7;
+    --accent-hover: #3b5de7;
+    --user-bubble: #4a6cf7;
+    --ai-bubble: #ffffff;
+    --border: #dee2e6;
+    --status-green: #28a745;
+    --status-red: #dc3545;
+    --status-yellow: #ffc107;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Consolas, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    color: var(--text-primary);
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bg-sidebar);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+  }
+  .sidebar h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .sidebar .subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+  }
+
+  .status-section {
+    margin-bottom: 24px;
+  }
+  .status-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 6px 0;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: var(--status-green); }
+  .status-dot.red { background: var(--status-red); }
+  .status-dot.yellow { background: var(--status-yellow); }
+
+  .sidebar-footer {
+    margin-top: auto;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* ---- Main area ---- */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-chat);
+  }
+
+  /* ---- Messages ---- */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .message {
+    max-width: 72%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+  }
+  .message.user {
+    align-self: flex-end;
+    background: var(--user-bubble);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .message.assistant {
+    align-self: flex-start;
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .message.assistant code {
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .message.assistant pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 8px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .message.assistant pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* Tool call indicator */
+  .tool-indicator {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #6d4c00;
+  }
+  .tool-indicator .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ffe082;
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .tool-indicator.done {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #1b5e20;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Welcome screen */
+  .welcome {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 32px;
+  }
+  .welcome h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .welcome p {
+    font-size: 14px;
+    max-width: 400px;
+  }
+
+  /* ---- Input ---- */
+  .input-area {
+    padding: 16px 32px 24px;
+    background: var(--bg-chat);
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    align-items: flex-end;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .input-row textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 120px;
+    padding: 4px 0;
+    background: transparent;
+  }
+  .input-row button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .input-row button:hover { background: var(--accent-hover); }
+  .input-row button:disabled { background: #ccc; cursor: not-allowed; }
+  .input-row button svg { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <h1>EnneadTab AI</h1>
+  <div class="subtitle">Revit Assistant</div>
+
+  <div class="status-section">
+    <h3>Connections</h3>
+    <div class="status-item">
+      <span class="status-dot" id="revitDot"></span>
+      <span id="revitStatus">Checking Revit...</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot green"></span>
+      <span>AI Proxy (enneadtab.com)</span>
+    </div>
+  </div>
+
+  <div class="status-section" id="toolLog" style="display:none">
+    <h3>Recent Tool Calls</h3>
+    <div id="toolLogItems"></div>
+  </div>
+
+  <div class="sidebar-footer">
+    EnneadTab &mdash; Ennead Architects
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <h2>EnneadTab AI Assistant</h2>
+      <p>Ask me anything about your Revit project. I can read model data, modify parameters, run analyses, and more.</p>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="input" rows="1" placeholder="Ask about your Revit project..." autofocus></textarea>
+      <button id="sendBtn" title="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- State ----
+  const messages = [];  // {role, content}
+  let busy = false;
+
+  // ---- DOM refs ----
+  const $messages  = document.getElementById("messages");
+  const $welcome   = document.getElementById("welcome");
+  const $input     = document.getElementById("input");
+  const $sendBtn   = document.getElementById("sendBtn");
+  const $revitDot  = document.getElementById("revitDot");
+  const $revitStat = document.getElementById("revitStatus");
+  const $toolLog   = document.getElementById("toolLog");
+  const $toolItems = document.getElementById("toolLogItems");
+
+  // ---- Auto-resize textarea ----
+  $input.addEventListener("input", () => {
+    $input.style.height = "auto";
+    $input.style.height = Math.min($input.scrollHeight, 120) + "px";
+  });
+
+  // ---- Send on Enter (Shift+Enter for newline) ----
+  $input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  $sendBtn.addEventListener("click", sendMessage);
+
+  // ---- Check Revit status ----
+  async function checkRevit() {
+    try {
+      const res = await fetch("/api/revit/status", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        $revitDot.className = "status-dot green";
+        $revitStat.textContent = "Revit connected" +
+          (data.version ? " (v" + data.version + ")" : "");
+      } else {
+        throw new Error("HTTP " + res.status);
+      }
+    } catch {
+      $revitDot.className = "status-dot red";
+      $revitStat.textContent = "Revit not connected";
+    }
+  }
+  checkRevit();
+  setInterval(checkRevit, 15000);
+
+  // ---- Render helpers ----
+  function scrollToBottom() {
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+
+  function addMessageBubble(role, html) {
+    const div = document.createElement("div");
+    div.className = "message " + role;
+    div.innerHTML = html;
+    $messages.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function addToolIndicator(name, loading) {
+    const div = document.createElement("div");
+    div.className = "tool-indicator" + (loading ? "" : " done");
+    div.innerHTML = (loading
+      ? '<div class="spinner"></div>'
+      : '<span style="font-weight:600">&#10003;</span>') +
+      "<span>Calling <strong>" + escapeHtml(name) + "</strong>" +
+      (loading ? "..." : " done") + "</span>";
+    $messages.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function logTool(name) {
+    $toolLog.style.display = "";
+    const item = document.createElement("div");
+    item.className = "status-item";
+    item.style.fontSize = "12px";
+    item.innerHTML = '<span class="status-dot yellow"></span><span>' +
+      escapeHtml(name) + "</span>";
+    $toolItems.prepend(item);
+    // Keep only last 8
+    while ($toolItems.children.length > 8) {
+      $toolItems.removeChild($toolItems.lastChild);
+    }
+  }
+
+  // ---- Markdown-lite renderer ----
+  function renderMarkdown(text) {
+    // Escape HTML first
+    let html = escapeHtml(text);
+
+    // Code blocks: ```lang\n...\n```
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (_, lang, code) {
+      return "<pre><code>" + code.trim() + "</code></pre>";
+    });
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+    // Line breaks
+    html = html.replace(/\n/g, "<br>");
+
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ---- SSE parser ----
+  function parseSSEEvents(text) {
+    const events = [];
+    const blocks = text.split("\n\n");
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      let type = "message";
+      const dataLines = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event:")) {
+          type = line.slice(6).trim();
+        } else if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trim());
+        }
+      }
+      if (dataLines.length) {
+        let data;
+        const raw = dataLines.join("\n");
+        try { data = JSON.parse(raw); } catch { data = { text: raw }; }
+        events.push({ type, data });
+      }
+    }
+    return events;
+  }
+
+  // ---- Send message ----
+  async function sendMessage() {
+    const text = $input.value.trim();
+    if (!text || busy) return;
+
+    busy = true;
+    $sendBtn.disabled = true;
+    $welcome.style.display = "none";
+
+    // Add user bubble
+    messages.push({ role: "user", content: text });
+    addMessageBubble("user", escapeHtml(text));
+    $input.value = "";
+    $input.style.height = "auto";
+
+    // Prepare streaming AI bubble
+    const aiBubble = addMessageBubble("assistant", "");
+    let aiText = "";
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += decoder.decode(value, { stream: true });
+
+        // Process complete SSE events
+        while (sseBuffer.indexOf("\n\n") !== -1) {
+          const idx = sseBuffer.indexOf("\n\n");
+          const eventBlock = sseBuffer.slice(0, idx);
+          sseBuffer = sseBuffer.slice(idx + 2);
+
+          const events = parseSSEEvents(eventBlock + "\n\n");
+          for (const evt of events) {
+            if (evt.type === "text") {
+              const chunk = evt.data.text || "";
+              aiText += chunk;
+              aiBubble.innerHTML = renderMarkdown(aiText);
+              scrollToBottom();
+            } else if (evt.type === "tool_start") {
+              const name = evt.data.name || "tool";
+              addToolIndicator(name, true);
+              logTool(name);
+            } else if (evt.type === "tool_result") {
+              const name = evt.data.name || "tool";
+              // Replace last tool indicator with done state
+              const indicators = $messages.querySelectorAll(".tool-indicator:not(.done)");
+              if (indicators.length) {
+                const last = indicators[indicators.length - 1];
+                last.className = "tool-indicator done";
+                last.innerHTML = '<span style="font-weight:600">&#10003;</span>' +
+                  "<span><strong>" + escapeHtml(name) + "</strong> completed</span>";
+              }
+            } else if (evt.type === "error") {
+              const msg = evt.data.message || "Unknown error";
+              aiText += "\n\n[Error: " + msg + "]";
+              aiBubble.innerHTML = renderMarkdown(aiText);
+            }
+          }
+        }
+      }
+
+      // Save final AI message
+      if (aiText) {
+        messages.push({ role: "assistant", content: aiText });
+      }
+
+    } catch (err) {
+      aiBubble.innerHTML = renderMarkdown(
+        aiText + "\n\n[Connection error: " + err.message + "]"
+      );
+    }
+
+    busy = false;
+    $sendBtn.disabled = false;
+    $input.focus();
+  }
+})();
+</script>
+</body>
+</html>
