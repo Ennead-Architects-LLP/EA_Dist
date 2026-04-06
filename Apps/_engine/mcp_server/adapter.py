@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Dict, List, Optional
 
 
 class AppAdapter(ABC):
@@ -30,7 +31,7 @@ class AppAdapter(ABC):
     # ------------------------------------------------------------------
 
     @abstractmethod
-    def list_elements(self, category: str, filters: dict | None = None) -> list[dict]:
+    def list_elements(self, category: str, filters: Optional[Dict] = None) -> List[dict]:
         """List elements of *category*, optionally filtered."""
 
     @abstractmethod
@@ -54,7 +55,7 @@ class AppAdapter(ABC):
     # ------------------------------------------------------------------
 
     @abstractmethod
-    def get_view_image(self, view_name: str | None = None) -> bytes:
+    def get_view_image(self, view_name: Optional[str] = None) -> bytes:
         """Capture and return a PNG screenshot of *view_name* (or the active view)."""
 
     # ------------------------------------------------------------------
@@ -62,11 +63,11 @@ class AppAdapter(ABC):
     # ------------------------------------------------------------------
 
     @abstractmethod
-    def list_enneadtab_tools(self) -> list[dict]:
+    def list_enneadtab_tools(self) -> List[dict]:
         """List available EnneadTab tool modules and their descriptions."""
 
     @abstractmethod
     def run_enneadtab_tool(
-        self, module: str, function: str, args: dict | None = None
+        self, module: str, function: str, args: Optional[Dict] = None
     ) -> dict:
         """Invoke an EnneadTab tool function and return its result."""
