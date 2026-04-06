@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
+import json
 import traceback
-from typing import Any
-
-import httpx
+import urllib.request
+from typing import Any, Dict, Optional
 
 _INGEST_URL = "https://error-dump-ennead-projects.vercel.app/error-dump/api/ingest"
 _TIMEOUT = 5.0  # seconds
 
 
 def report_error(
-    error: BaseException | str,
+    error: Any,
     *,
-    extra: dict[str, Any] | None = None,
+    extra: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Send an error report to ErrorHub.
 
@@ -35,10 +35,10 @@ def report_error(
             tb = traceback.format_exception(type(error), error, error.__traceback__)
             stack = "".join(tb)
         else:
-            message = error
+            message = str(error)
             stack = ""
 
-        payload: dict[str, Any] = {
+        payload: Dict[str, Any] = {
             "source_app": "EnneadTab-MCP",
             "environment": "mcp-server",
             "error_message": message,
@@ -47,6 +47,13 @@ def report_error(
         if extra:
             payload.update(extra)
 
-        httpx.post(_INGEST_URL, json=payload, timeout=_TIMEOUT)
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            _INGEST_URL,
+            data=data,
+            method="POST",
+        )
+        req.add_header("Content-Type", "application/json")
+        urllib.request.urlopen(req, timeout=_TIMEOUT)
     except Exception:  # noqa: BLE001 — intentionally broad
         pass
