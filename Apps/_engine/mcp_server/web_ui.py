@@ -666,6 +666,80 @@ body {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
+/* ── Splash screen ── */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-bottom: 10vh;
+  transition: opacity 0.8s ease;
+}
+.splash.fade-out { opacity: 0; pointer-events: none; }
+.splash-icon {
+  width: 72px;
+  height: 72px;
+  background: var(--accent-dim);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: splashPulse 2s ease-in-out infinite;
+}
+.splash-icon img {
+  filter: invert(0.7) sepia(0.3) saturate(3) hue-rotate(190deg);
+}
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { transform: scale(1.05); box-shadow: 0 0 24px 8px var(--accent-glow); }
+}
+.splash-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.splash-status {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  min-height: 20px;
+}
+.splash-progress {
+  width: 240px;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.splash-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.splash-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  min-width: 180px;
+}
+.splash-step { display: flex; align-items: center; gap: 8px; }
+.splash-step .check { opacity: 0.3; }
+.splash-step.done { color: var(--text-secondary); }
+.splash-step.done .check { opacity: 1; color: var(--success); }
+.splash-step.active { color: var(--text-primary); }
+.splash-step.active .check { opacity: 0.6; animation: bounce 1s infinite; }
+
 /* ── Sidebar tools scrollable ── */
 .sidebar-tools {
   flex: 1;
@@ -703,6 +777,20 @@ body {
 </style>
 </head>
 <body>
+
+<!-- Splash screen -->
+<div class="splash" id="splash">
+  <div class="splash-icon" id="splash-icon"></div>
+  <div class="splash-title">EnneaDuck</div>
+  <div class="splash-status" id="splash-status">Starting up...</div>
+  <div class="splash-progress"><div class="splash-bar" id="splash-bar"></div></div>
+  <div class="splash-steps">
+    <div class="splash-step active" id="step-server"><span class="check">--</span> Server connection</div>
+    <div class="splash-step" id="step-keys"><span class="check">--</span> API keys</div>
+    <div class="splash-step" id="step-tools"><span class="check">--</span> Loading tools</div>
+    <div class="splash-step" id="step-ready"><span class="check">--</span> Ready</div>
+  </div>
+</div>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
@@ -812,10 +900,40 @@ let sending = false;
 let toolList = [];
 let msgCount = 0;
 
+/* ── Splash helpers ── */
+function splashStep(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+  const check = el.querySelector('.check');
+  if (check) check.textContent = state === 'done' ? '>' : '--';
+}
+function splashProgress(pct) {
+  const bar = document.getElementById('splash-bar');
+  if (bar) bar.style.width = pct + '%';
+}
+function splashStatus(msg) {
+  const el = document.getElementById('splash-status');
+  if (el) el.textContent = msg;
+}
+function dismissSplash() {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  splash.classList.add('fade-out');
+  setTimeout(function() { splash.remove(); }, 1000);
+}
+
 /* ── Init ── */
 async function init() {
   const dot = document.getElementById('status-dot');
   const connLabel = document.getElementById('conn-label');
+
+  // Step 1: Server connection
+  splashStep('step-server', 'active');
+  splashStatus('Connecting to server...');
+  splashProgress(10);
+
   try {
     const r = await fetch('/api/health');
     const d = await r.json();
@@ -823,13 +941,51 @@ async function init() {
     connLabel.textContent = 'Connected';
     providers = d.providers || {};
     authUrl = d.auth_url || '';
+    splashStep('step-server', 'done');
+    splashProgress(30);
+
+    // Step 2: API keys
+    splashStep('step-keys', 'active');
+    const keyCount = Object.keys(providers).length;
+    if (keyCount > 0) {
+      splashStatus(keyCount + ' AI provider' + (keyCount > 1 ? 's' : '') + ' connected');
+      splashStep('step-keys', 'done');
+    } else {
+      splashStatus('No API keys found -- sign in after loading');
+      splashStep('step-keys', 'done');
+    }
+    splashProgress(55);
   } catch (e) {
     dot.classList.add('err');
     connLabel.textContent = 'Connection failed';
     providers = {};
+    splashStep('step-server', 'done');
+    splashStep('step-keys', 'done');
+    splashStatus('Connection failed -- retrying won\'t help, check server');
+    splashProgress(55);
   }
+
   populateProviders();
-  fetchTools();
+
+  // Step 3: Load tools
+  splashStep('step-tools', 'active');
+  splashStatus('Loading tools...');
+  splashProgress(65);
+  await fetchTools();
+  splashStep('step-tools', 'done');
+  splashProgress(90);
+
+  // Step 4: Ready
+  splashStep('step-ready', 'active');
+  splashStatus('Ready!');
+  splashProgress(100);
+
+  // Let user see 100% before dismissing
+  await new Promise(function(r) { setTimeout(r, 800); });
+  splashStep('step-ready', 'done');
+  splashStatus('');
+  await new Promise(function(r) { setTimeout(r, 400); });
+  dismissSplash();
 }
 
 function populateProviders() {
@@ -1427,6 +1583,7 @@ function makeDuckImg(size) {
 }
 
 /* ── Boot ── */
+document.getElementById('splash-icon').appendChild(makeDuckImg(40));
 document.getElementById('sidebar-logo').appendChild(makeDuckImg(24));
 document.getElementById('welcome-icon').appendChild(makeDuckImg(36));
 init();

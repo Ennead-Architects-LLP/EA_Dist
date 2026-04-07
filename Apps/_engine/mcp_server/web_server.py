@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import threading
 import urllib.request
@@ -21,6 +22,80 @@ from .web_ui import get_index_html
 
 # EnneadTabHome endpoint for centralized API keys
 _KEYS_URL = "https://enneadtab.com/api/keys/llm"
+
+
+def _kill_pid(pid: int) -> bool:
+    """Terminate a process by PID. Returns True if killed successfully."""
+    try:
+        subprocess.call(
+            ["taskkill", "/F", "/PID", str(pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def _kill_zombies(port: int) -> None:
+    """Kill any existing processes listening on *port*.
+
+    Uses a PID file as the primary mechanism. Falls back to netstat
+    scanning if the PID file is stale or missing. Fully automatic —
+    end users never need to intervene.
+    """
+    my_pid = os.getpid()
+    pid_file = os.path.join(
+        os.environ.get("TEMP", os.environ.get("USERPROFILE", "")),
+        "mcp_web_{}.pid".format(port),
+    )
+    killed = []
+
+    # 1) PID file — fast path
+    if os.path.exists(pid_file):
+        try:
+            with open(pid_file, "r") as f:
+                old_pid = int(f.read().strip())
+            if old_pid != my_pid and _kill_pid(old_pid):
+                killed.append(old_pid)
+        except (ValueError, OSError):
+            pass  # stale file or process already gone
+
+    # 2) Fallback — scan netstat for anything else on this port
+    try:
+        out = subprocess.check_output(
+            ["netstat", "-ano"], stderr=subprocess.DEVNULL, text=True,
+        )
+        for line in out.splitlines():
+            if "LISTENING" not in line:
+                continue
+            # Match exact port (e.g., ":5000 " not ":50001")
+            if ":{} ".format(port) not in line and ":{}".format(port) not in line.split()[1]:
+                continue
+            parts = line.split()
+            try:
+                pid = int(parts[-1])
+            except (ValueError, IndexError):
+                continue
+            if pid == my_pid or pid in killed or pid == 0:
+                continue
+            if _kill_pid(pid):
+                killed.append(pid)
+    except Exception:
+        pass
+
+    if killed:
+        print("[web] Cleaned up {} old server(s): PID {}".format(
+            len(killed), ", ".join(str(p) for p in killed)), file=sys.stderr)
+        import time
+        time.sleep(0.5)
+
+    # Write our PID for next startup to find
+    try:
+        with open(pid_file, "w") as f:
+            f.write(str(my_pid))
+    except OSError:
+        pass
 
 
 def _fetch_central_keys() -> Dict[str, Dict[str, str]]:
@@ -94,6 +169,9 @@ def make_handler(tools: Dict[str, Any], providers: Dict[str, Dict[str, str]], po
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(html)))
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
                 self.end_headers()
                 self.wfile.write(html)
 
@@ -264,6 +342,9 @@ def start_web_server(
         port: Port number
         open_browser: Auto-open browser on start
     """
+    # Kill any zombie servers on the target port before binding
+    _kill_zombies(port)
+
     print("Fetching API keys...", file=sys.stderr)
     providers = _fetch_central_keys()
     if providers:
@@ -273,26 +354,31 @@ def start_web_server(
 
     handler_class = make_handler(mcp_tools, providers, port)
 
-    # Try the requested port, fall back to next available
-    for attempt_port in range(port, port + 10):
-        try:
-            httpd = HTTPServer((host, attempt_port), handler_class)
-            break
-        except OSError:
-            continue
-    else:
-        print("ERROR: Could not bind to any port in range {}-{}".format(port, port + 9), file=sys.stderr)
+    try:
+        httpd = HTTPServer((host, port), handler_class)
+    except OSError as e:
+        print("ERROR: Could not bind to port {}: {}".format(port, e), file=sys.stderr)
         sys.exit(1)
 
-    actual_port = attempt_port
+    actual_port = port
     url = "http://{}:{}".format(host, actual_port)
     print("Web UI: {}".format(url), file=sys.stderr)
 
     if open_browser:
         threading.Timer(0.5, webbrowser.open, args=[url]).start()
 
+    pid_file = os.path.join(
+        os.environ.get("TEMP", os.environ.get("USERPROFILE", "")),
+        "mcp_web_{}.pid".format(port),
+    )
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down web server.", file=sys.stderr)
         httpd.shutdown()
+    finally:
+        # Clean up PID file so next startup doesn't chase a dead PID
+        try:
+            os.remove(pid_file)
+        except OSError:
+            pass
