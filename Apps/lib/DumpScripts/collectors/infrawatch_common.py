@@ -7,13 +7,17 @@ Runs on any machine with Python 3.x.
 import json
 import os
 import socket
+import sys
 import urllib.request
 
 INFRAWATCH_BASE = "https://infrawatch-one.vercel.app/infra/api/ingest"
-ERRORDUMP_URL = "https://error-dump-ennead-projects.vercel.app/error-dump/api/ingest"
-# Write-only key for InfraWatch metrics — no sensitive data access.
-# Hardcoded because EA_Dist machines can't read env vars from network.
-API_KEY = "03f95bfdca109614860d330bbf67394af808381e81efb1da"
+# 2026-04-08: skipTrailingSlashRedirect fixed on ErrorDump, but keep
+# trailing slash for backwards compat with older deployments
+ERRORDUMP_URL = "https://error-dump-ennead-projects.vercel.app/error-dump/api/ingest/"
+
+# Local failure counter — survives within a single collect_all run.
+# If ErrorDump itself is down, at least stderr shows something.
+_error_dump_failures = 0
 
 
 def post_to_infrawatch(endpoint, payload):
@@ -25,7 +29,6 @@ def post_to_infrawatch(endpoint, payload):
         data=data,
         headers={
             "Content-Type": "application/json",
-            "x-api-key": API_KEY,
         },
         method="POST",
     )
@@ -37,7 +40,8 @@ def post_to_infrawatch(endpoint, payload):
 
 
 def report_error(func_name, error_msg):
-    """Silently report failure to ErrorDump. Never raises."""
+    """Report failure to ErrorDump. Never raises, but logs to stderr on failure."""
+    global _error_dump_failures
     try:
         data = json.dumps({
             "source_app": "EnneadTab-OS",
@@ -54,8 +58,13 @@ def report_error(func_name, error_msg):
             headers={"Content-Type": "application/json"},
         )
         urllib.request.urlopen(req, timeout=5)
-    except Exception:
-        pass  # Truly silent — if ErrorDump fails, nothing happens
+        _error_dump_failures = 0  # reset on success
+    except Exception as e:
+        _error_dump_failures += 1
+        # 2026-04-08: bare except:pass hid months of ErrorDump failures.
+        # Log to stderr so at least scheduled-task logs capture it.
+        print("[infrawatch] ErrorDump report failed ({}x): {}".format(
+            _error_dump_failures, e), file=sys.stderr)
 
 
 def get_machine_name():
