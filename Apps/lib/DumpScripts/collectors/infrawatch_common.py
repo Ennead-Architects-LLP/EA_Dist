@@ -9,8 +9,9 @@ import os
 import socket
 import sys
 import urllib.request
+import urllib.error
 
-INFRAWATCH_BASE = "https://infrawatch-one.vercel.app/infra/api/ingest"
+INFRAWATCH_BASE = "https://infrawatch-ennead-projects.vercel.app/infra/api/ingest"
 # 2026-04-08: skipTrailingSlashRedirect fixed on ErrorDump, but keep
 # trailing slash for backwards compat with older deployments
 ERRORDUMP_URL = "https://error-dump-ennead-projects.vercel.app/error-dump/api/ingest/"
@@ -29,13 +30,18 @@ def post_to_infrawatch(endpoint, payload):
         data=data,
         headers={
             "Content-Type": "application/json",
+            "X-Collector-Protocol": "2026-05-07",
         },
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             return resp.status == 200
-    except Exception:
+    except urllib.error.HTTPError as e:
+        print("[infrawatch] HTTP Error {}: {}".format(e.code, e.reason), file=sys.stderr)
+        return False
+    except Exception as e:
+        print("[infrawatch] Post failed: {}".format(e), file=sys.stderr)
         return False
 
 
