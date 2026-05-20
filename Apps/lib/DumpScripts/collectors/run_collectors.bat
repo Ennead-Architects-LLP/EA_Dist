@@ -33,6 +33,16 @@ if %ERRORLEVEL%==0 (
     exit /b %ERRORLEVEL%
 )
 
-REM 4. No Python found. Exit 0 so Task Scheduler does not alarm on every cycle for
+REM 4. Fallback to legacy InfraWatch_Collect.exe if Python is not on PATH.
+REM    The exe bundles its own CPython interpreter (PyInstaller) so it works
+REM    even on machines with no system Python. This path only activates on
+REM    machines outside the standard office image.
+set LEGACY_EXE=%SCRIPT_DIR%..\..\ExeProducts\InfraWatch_Collect.exe
+if exist "%LEGACY_EXE%" (
+    "%LEGACY_EXE%" %* >nul 2>&1
+    exit /b %ERRORLEVEL%
+)
+
+REM 5. No Python and no exe found. Exit 0 so Task Scheduler does not alarm on every cycle for
 REM what is really a one-time deployment-gap problem (would need ErrorDump to surface).
 exit /b 0
