@@ -4,7 +4,7 @@ import getpass
 import ctypes
 import sys
 
-script_path = "C:\\Users\\szhang\\duck-repo\\EnneadTab-OS\\DarkSide\\_schedule_publish.py"
+script_path = "C:\\Users\\szhang\\duck-repo\\EnneadTab-OS\\DarkSide\\publish\\_schedule_publish.py"
 venv_python = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', '..', '.venv', 'Scripts', 'python.exe')
 venv_python = os.path.abspath(venv_python)
 vscode_path = r"C:\\Users\\szhang\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
