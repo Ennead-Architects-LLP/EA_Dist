@@ -127,7 +127,7 @@ def _fetch_central_keys() -> Dict[str, Dict[str, str]]:
     if "gemini" not in providers:
         key = os.environ.get("GOOGLE_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
         if key:
-            providers["gemini"] = {"key": key, "model": "gemini-2.0-flash"}
+            providers["gemini"] = {"key": key, "model": "gemini-2.5-flash"}
 
     return providers
 
