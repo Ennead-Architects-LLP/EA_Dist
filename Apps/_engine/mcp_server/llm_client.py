@@ -81,7 +81,7 @@ def _to_gemini_contents(messages: List[Dict[str, str]]) -> List[Dict]:
 def _call_gemini(api_key: str, contents: List[Dict], tools: List[Dict],
                  system_text: str) -> Dict:
     url = ("https://generativelanguage.googleapis.com/v1beta/"
-           "models/gemini-2.0-flash:generateContent?key={}".format(api_key))
+           "models/gemini-2.5-flash:generateContent?key={}".format(api_key))
     body = {
         "contents": contents,
         "tools": tools,
