@@ -3,6 +3,10 @@
 Stdlib-only CPython 3. Discovers closed-session journals (mtime >= 7 days),
 dedupes via local sha256 table, uploads via presigned blob PUT.
 
+Corpus tiers (size-based, server-tagged):
+  0-25 MiB  -> healthy_training   (positive LLM / behavior-cloning corpus)
+  25 MiB+   -> negative_health    (negative prompts + model-health troubleshooting)
+
 Must NOT be called from run_all() / run_heavy() / run_events_only() during pilot.
 """
 
@@ -25,7 +29,8 @@ from infrawatch_common import (  # noqa: E402
 )
 
 STABILITY_DAYS = 7
-MAX_UPLOAD_BYTES = 26_214_400  # 25 MiB
+MAX_UPLOAD_BYTES = 26_214_400  # 25 MiB — matches server default
+DEFAULT_MAX_OVERSIZE_BYTES = 104_857_600  # 100 MiB — bad-session investigation path
 CONFIG_TTL_SEC = 86400
 CHUNK_BYTES = 1024 * 1024
 
@@ -100,8 +105,8 @@ def _http_json(method, url, payload=None, timeout=30):
         return 0, {"error": str(e)}
 
 
-def get_rollout_percent():
-    """Cached GET journal/config rollout_percent (24h TTL)."""
+def get_pilot_config():
+    """Cached GET journal/config (rollout, allowlist, size caps)."""
     path = _state_path("journal_pilot_config.json")
     now = time.time()
     if path and os.path.isfile(path):
@@ -109,31 +114,73 @@ def get_rollout_percent():
             with open(path, "r", encoding="utf-8") as f:
                 cached = json.load(f)
             if now - cached.get("fetched_at", 0) < CONFIG_TTL_SEC:
-                return int(cached.get("rollout_percent", 0))
+                return (
+                    int(cached.get("rollout_percent", 0)),
+                    cached.get("allowlist") or [],
+                    int(cached.get("max_journal_bytes", MAX_UPLOAD_BYTES)),
+                    int(
+                        cached.get(
+                            "max_oversize_journal_bytes",
+                            DEFAULT_MAX_OVERSIZE_BYTES,
+                        )
+                    ),
+                )
         except Exception as e:
-            report_error("collect_revit_journal.get_rollout_percent.cache", str(e))
+            report_error("collect_revit_journal.get_pilot_config.cache", str(e))
 
     status, body = _http_json("GET", _JOURNAL_API + "/config", timeout=15)
     if status != 200:
         report_error(
-            "collect_revit_journal.get_rollout_percent",
+            "collect_revit_journal.get_pilot_config",
             "config HTTP {}: {}".format(status, body),
         )
-        return 0
+        return 0, [], MAX_UPLOAD_BYTES, DEFAULT_MAX_OVERSIZE_BYTES
 
     percent = int(body.get("rollout_percent", 0))
+    allowlist = body.get("allowlist") or []
+    if not isinstance(allowlist, list):
+        allowlist = []
+    max_journal = int(body.get("max_journal_bytes", MAX_UPLOAD_BYTES))
+    max_oversize = int(
+        body.get("max_oversize_journal_bytes", DEFAULT_MAX_OVERSIZE_BYTES)
+    )
     if path:
         try:
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
-                json.dump({"rollout_percent": percent, "fetched_at": now}, f)
+                json.dump(
+                    {
+                        "rollout_percent": percent,
+                        "allowlist": allowlist,
+                        "max_journal_bytes": max_journal,
+                        "max_oversize_journal_bytes": max_oversize,
+                        "fetched_at": now,
+                    },
+                    f,
+                )
             os.replace(tmp, path)
         except Exception as e:
-            report_error("collect_revit_journal.get_rollout_percent.save", str(e))
+            report_error("collect_revit_journal.get_pilot_config.save", str(e))
+    return percent, allowlist, max_journal, max_oversize
+
+
+def get_rollout_percent():
+    """Backward-compatible wrapper."""
+    percent, _allowlist, _mj, _mo = get_pilot_config()
     return percent
 
 
-def is_pilot_enrolled(machine_name, rollout_percent):
+def _is_allowlisted(machine_name, allowlist):
+    upper = machine_name.upper()
+    for host in allowlist or []:
+        if str(host).upper() == upper:
+            return True
+    return False
+
+
+def is_pilot_enrolled(machine_name, rollout_percent, allowlist=None):
+    if _is_allowlisted(machine_name, allowlist):
+        return True
     if rollout_percent <= 0:
         return False
     if rollout_percent >= 100:
@@ -198,28 +245,148 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def post_oversize(machine_name, username, file_size_bytes, revit_version):
+def post_oversize_metadata(machine_name, username, file_size_bytes, revit_version,
+                           journal_path_basename, content_sha256):
+    """Enqueue metadata-only when journal exceeds the oversize blob cap."""
     payload = {
         "machine_name": machine_name,
         "username": username,
         "file_size_bytes": file_size_bytes,
         "revit_version": revit_version,
+        "journal_path_basename": journal_path_basename,
+        "content_sha256": content_sha256,
     }
     status, body = _http_json("POST", _JOURNAL_API + "/oversize", payload)
     if status != 200:
         report_error(
-            "collect_revit_journal.post_oversize",
+            "collect_revit_journal.post_oversize_metadata",
             "oversize HTTP {}: {}".format(status, body),
         )
 
 
-def upload_journal_file(path, machine_name, username, state):
+def _blob_put(upload_url, path, timeout_sec=120):
+    with open(path, "rb") as f:
+        blob_data = f.read()
+    put_req = urllib.request.Request(
+        upload_url,
+        data=blob_data,
+        headers={"Content-Type": "text/plain"},
+        method="PUT",
+    )
+    with urllib.request.urlopen(put_req, timeout=timeout_sec) as resp:
+        return resp.status == 200
+
+
+def upload_oversize_journal_file(path, machine_name, username, state):
+    """25 MiB < size <= oversize cap — full blob upload on oversize queue."""
     file_size = os.path.getsize(path)
     revit_version = revit_version_from_path(path)
     basename = os.path.basename(path)
 
-    if file_size > MAX_UPLOAD_BYTES:
-        post_oversize(machine_name, username, file_size, revit_version)
+    try:
+        content_sha256 = sha256_file(path)
+    except Exception as e:
+        report_error("collect_revit_journal.oversize.sha256", "{}: {}".format(path, e))
+        return
+
+    if content_sha256 in state.get("uploaded_hashes", {}):
+        return
+
+    mtime = os.path.getmtime(path)
+    init_payload = {
+        "machine_name": machine_name,
+        "username": username,
+        "journal_path_basename": basename,
+        "file_size_bytes": file_size,
+        "file_mtime": datetime.utcfromtimestamp(mtime).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "revit_version": revit_version,
+        "content_sha256": content_sha256,
+    }
+
+    status, body = _http_json("POST", _JOURNAL_API + "/oversize/init", init_payload)
+    if status == 403 and body.get("pilot_rejected"):
+        return
+    if status == 200 and body.get("deduplicated"):
+        state.setdefault("uploaded_hashes", {})[content_sha256] = {
+            "uploaded_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "journal_basename": basename,
+            "file_size_bytes": file_size,
+            "oversize": True,
+        }
+        save_hash_state(state)
+        return
+    if status != 200 or not body.get("upload_url"):
+        report_error(
+            "collect_revit_journal.oversize.init",
+            "init HTTP {}: {}".format(status, body),
+        )
+        return
+
+    queue_id = body["queue_id"]
+    try:
+        if not _blob_put(body["upload_url"], path, timeout_sec=300):
+            report_error(
+                "collect_revit_journal.oversize.blob_put",
+                "PUT failed for {}".format(queue_id),
+            )
+            return
+    except Exception as e:
+        report_error("collect_revit_journal.oversize.blob_put", str(e))
+        return
+
+    complete_payload = {"queue_id": queue_id, "machine_name": machine_name}
+    status, body = _http_json(
+        "POST", _JOURNAL_API + "/oversize/complete", complete_payload
+    )
+    if status != 200:
+        report_error(
+            "collect_revit_journal.oversize.complete",
+            "complete HTTP {}: {}".format(status, body),
+        )
+        return
+
+    state.setdefault("uploaded_hashes", {})[content_sha256] = {
+        "uploaded_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "journal_basename": basename,
+        "file_size_bytes": file_size,
+        "oversize": True,
+    }
+    save_hash_state(state)
+
+
+def upload_journal_file(path, machine_name, username, state, size_caps=None):
+    file_size = os.path.getsize(path)
+    revit_version = revit_version_from_path(path)
+    basename = os.path.basename(path)
+
+    if size_caps is None:
+        _r, _a, max_journal, max_oversize = get_pilot_config()
+    else:
+        max_journal, max_oversize = size_caps
+
+    if file_size > max_journal:
+        if file_size > max_oversize:
+            try:
+                content_sha256 = sha256_file(path)
+            except Exception as e:
+                report_error("collect_revit_journal.oversize.sha256", "{}: {}".format(path, e))
+                return
+            if content_sha256 in state.get("uploaded_hashes", {}):
+                return
+            post_oversize_metadata(
+                machine_name, username, file_size, revit_version,
+                basename, content_sha256,
+            )
+            state.setdefault("uploaded_hashes", {})[content_sha256] = {
+                "uploaded_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "journal_basename": basename,
+                "file_size_bytes": file_size,
+                "oversize": True,
+                "metadata_only": True,
+            }
+            save_hash_state(state)
+            return
+        upload_oversize_journal_file(path, machine_name, username, state)
         return
 
     try:
@@ -264,21 +431,12 @@ def upload_journal_file(path, machine_name, username, state):
     upload_url = body["upload_url"]
 
     try:
-        with open(path, "rb") as f:
-            blob_data = f.read()
-        put_req = urllib.request.Request(
-            upload_url,
-            data=blob_data,
-            headers={"Content-Type": "text/plain"},
-            method="PUT",
-        )
-        with urllib.request.urlopen(put_req, timeout=120) as resp:
-            if resp.status != 200:
-                report_error(
-                    "collect_revit_journal.blob_put",
-                    "PUT status {} for {}".format(resp.status, ingest_id),
-                )
-                return
+        if not _blob_put(upload_url, path):
+            report_error(
+                "collect_revit_journal.blob_put",
+                "PUT failed for {}".format(ingest_id),
+            )
+            return
     except Exception as e:
         report_error("collect_revit_journal.blob_put", str(e))
         return
@@ -308,12 +466,13 @@ def main():
 
         machine_name = get_machine_name()
         username = get_username()
-        rollout = get_rollout_percent()
-        if not is_pilot_enrolled(machine_name, rollout):
+        rollout, allowlist, max_journal, max_oversize = get_pilot_config()
+        if not is_pilot_enrolled(machine_name, rollout, allowlist):
             return 0
 
         cutoff = time.time() - STABILITY_DAYS * 86400
         state = load_hash_state()
+        size_caps = (max_journal, max_oversize)
 
         for path in discover_journal_paths():
             try:
@@ -321,7 +480,9 @@ def main():
                     continue
                 if os.path.getmtime(path) > cutoff:
                     continue
-                upload_journal_file(path, machine_name, username, state)
+                upload_journal_file(
+                    path, machine_name, username, state, size_caps=size_caps
+                )
             except Exception as e:
                 report_error("collect_revit_journal.per_file", "{}: {}".format(path, e))
     except Exception as e:
