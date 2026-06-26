@@ -2,6 +2,8 @@
 
 Stdlib-only — no pip dependencies. Uses PowerShell to query Windows Event Log.
 Designed to run silently on every EA_Dist machine (hourly or on schedule).
+
+Hourly run also posts lightweight drive connectivity probes before BSOD scan.
 """
 
 import json
@@ -11,14 +13,29 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from drive_connectivity import probe_expected_drives
 from infrawatch_common import post_to_infrawatch, report_error, get_machine_name
+
+
+def post_drive_connectivity():
+    """Lightweight hourly connectivity probe for expected office drives."""
+    drives = probe_expected_drives()
+    if not drives:
+        return
+    payload = {
+        "machine_name": get_machine_name(),
+        "timestamp": datetime.now().isoformat(),
+        "drives": drives,
+    }
+    ok = post_to_infrawatch("drive-health", payload)
+    if not ok:
+        report_error("collect_events.post_drive_connectivity", "POST to drive-health failed")
 
 
 def get_recent_bsod_events(hours=24):
     """Query Windows Event Log for BSOD events in the last N hours."""
     events = []
     try:
-        # PowerShell query for WER SystemErrorReporting with minidump
         ps_cmd = (
             "$cutoff = (Get-Date).AddHours(-{hours});"
             "Get-WinEvent -FilterHashtable @{{"
@@ -67,9 +84,11 @@ def get_recent_bsod_events(hours=24):
 
 def main():
     try:
+        post_drive_connectivity()
+
         events = get_recent_bsod_events(hours=24)
         if not events:
-            return  # Nothing to report — normal
+            return
 
         payload = {
             "machine_name": get_machine_name(),

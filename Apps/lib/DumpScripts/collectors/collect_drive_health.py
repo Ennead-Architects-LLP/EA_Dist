@@ -3,6 +3,9 @@
 Stdlib-only — no pip dependencies. Uses PowerShell for drive discovery.
 Designed to run silently via Task Scheduler on every EA_Dist machine.
 
+Probes every expected drive from office_drives.json (even when Win32 omits
+disconnected letters). Heavy tier adds capacity/latency for connected drives.
+
 Usage:
     python collect_drive_health.py           # One-shot
     python collect_drive_health.py --loop 5  # Every 5 minutes
@@ -15,14 +18,14 @@ import sys
 import time
 from datetime import datetime
 
-# Allow import from same directory
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from drive_connectivity import load_office_drives_config, probe_expected_drives
 from infrawatch_common import post_to_infrawatch, report_error, get_machine_name
 
 
-def get_drives():
-    """Discover drives and measure metrics via PowerShell. Stdlib only."""
-    drives = []
+def _wmi_drives_by_letter():
+    """Win32_LogicalDisk metrics keyed by drive letter (connected only)."""
+    by_letter = {}
     try:
         result = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
@@ -41,7 +44,6 @@ def get_drives():
                 continue
             letter = device_id[0].upper()
             drive_type = disk.get("DriveType", 0)
-            # 3=Local, 4=Network
             if drive_type not in (3, 4):
                 continue
 
@@ -56,24 +58,20 @@ def get_drives():
             usage_pct = round((used_gb / total_gb) * 100, 1) if total_gb > 0 else 0
             unc_path = disk.get("ProviderName") or None
             protocol = "SMB" if drive_type == 4 else "Local"
-
-            # Measure latency (directory listing time)
             latency_ms = _measure_latency("{}\\".format(letter))
 
-            drives.append({
-                "letter": letter,
+            by_letter[letter] = {
                 "unc_path": unc_path,
-                "connected": True,
                 "latency_ms": latency_ms,
                 "total_gb": total_gb,
                 "used_gb": used_gb,
                 "free_gb": free_gb,
                 "usage_pct": usage_pct,
                 "protocol": protocol,
-            })
+            }
     except Exception as e:
-        report_error("collect_drive_health.get_drives", str(e))
-    return drives
+        report_error("collect_drive_health._wmi_drives_by_letter", str(e))
+    return by_letter
 
 
 def _measure_latency(path):
@@ -84,6 +82,33 @@ def _measure_latency(path):
         return round((time.perf_counter() - start) * 1000, 1)
     except Exception:
         return None
+
+
+def get_drives():
+    """Expected drives with connectivity probe; heavy metrics when connected."""
+    config = load_office_drives_config()
+    probed = probe_expected_drives(config)
+    if not probed:
+        return []
+
+    wmi = _wmi_drives_by_letter()
+    drives = []
+    for row in probed:
+        letter = row["letter"]
+        entry = {
+            "letter": letter,
+            "unc_path": row.get("unc_path"),
+            "connected": row["connected"],
+            "probe_ms": row["probe_ms"],
+            "error_class": row["error_class"],
+            "protocol": row.get("protocol"),
+        }
+        if row["connected"] and letter in wmi:
+            entry.update(wmi[letter])
+            if entry.get("unc_path") is None and wmi[letter].get("unc_path"):
+                entry["unc_path"] = wmi[letter]["unc_path"]
+        drives.append(entry)
+    return drives
 
 
 def collect_once():
