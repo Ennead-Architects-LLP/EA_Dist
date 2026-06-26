@@ -7,6 +7,7 @@ Modes:
     python collect_all.py               # All collectors (default)
     python collect_all.py --heavy       # Drive health + machine spec (slow-changing data, run every 6h)
     python collect_all.py --events-only # Just events (run hourly for fast detection)
+    python collect_all.py --journals-only # Revit journals only (weekly; independent kill switch)
     python collect_all.py --spec-only   # Just machine spec (good for login trigger)
     python collect_all.py --loop 60     # Every 60 minutes (in-process; prefer Task Scheduler)
 """
@@ -60,7 +61,23 @@ def run_spec_only():
     collect_machine_spec.main()
 
 
+def run_journals_only():
+    """Weekly Revit journal upload. Not coupled to infra kill switch."""
+    import collect_revit_journal
+    collect_revit_journal.main()
+
+
+def _journal_kill_switch_active():
+    import collect_revit_journal
+    return collect_revit_journal.journal_kill_switch_active()
+
+
 def main():
+    if "--journals-only" in sys.argv:
+        if _journal_kill_switch_active():
+            return
+        run_journals_only()
+        return
     if _kill_switch_active():
         return
     if "--heavy" in sys.argv:
