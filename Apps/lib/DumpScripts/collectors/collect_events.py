@@ -14,7 +14,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from drive_connectivity import probe_expected_drives
-from infrawatch_common import post_to_infrawatch, report_error, get_machine_name
+from infrawatch_common import post_to_infrawatch_detailed, report_error, get_machine_name
 
 
 def post_drive_connectivity():
@@ -27,9 +27,10 @@ def post_drive_connectivity():
         "timestamp": datetime.now().isoformat(),
         "drives": drives,
     }
-    ok = post_to_infrawatch("drive-health", payload)
+    ok, detail = post_to_infrawatch_detailed("drive-health", payload)
     if not ok:
-        report_error("collect_events.post_drive_connectivity", "POST to drive-health failed")
+        report_error("collect_events.post_drive_connectivity",
+                     "POST to drive-health failed [{} drives]: {}".format(len(drives), detail))
 
 
 def get_recent_bsod_events(hours=24):
@@ -94,9 +95,9 @@ def main():
             "machine_name": get_machine_name(),
             "events": events,
         }
-        ok = post_to_infrawatch("events", payload)
+        ok, detail = post_to_infrawatch_detailed("events", payload)
         if not ok:
-            report_error("collect_events.main", "POST to events failed")
+            report_error("collect_events.main", "POST to events failed: {}".format(detail))
     except Exception as e:
         report_error("collect_events.main", str(e))
 
