@@ -137,7 +137,7 @@ def _execute_tool(tools: Dict[str, Any], name: str, arguments: Dict) -> Any:
     entry = tools.get(name)
     if not entry:
         raise ValueError("Unknown tool: {}".format(name))
-    return entry["handler"](**arguments)
+    return entry.handler(**arguments)
 
 
 def _get_tool_list(tools: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -146,8 +146,8 @@ def _get_tool_list(tools: Dict[str, Any]) -> List[Dict[str, Any]]:
     for name, entry in tools.items():
         result.append({
             "name": name,
-            "description": entry.get("description", ""),
-            "inputSchema": entry.get("parameters", {"type": "object", "properties": {}}),
+            "description": entry.description,
+            "inputSchema": entry.parameters,
         })
     return result
 
@@ -158,6 +158,42 @@ def make_handler(tools: Dict[str, Any], providers: Dict[str, Dict[str, str]], po
     class ChatHandler(BaseHTTPRequestHandler):
 
         def do_GET(self):
+            self._safe_dispatch(self._do_GET)
+
+        def do_POST(self):
+            self._safe_dispatch(self._do_POST)
+
+        def _safe_dispatch(self, route_fn):
+            """Run a route handler, converting any unhandled exception into a
+            JSON 500 (plus a full stderr traceback) instead of a silently
+            dropped socket.
+
+            Without this, an exception raised before a response is written
+            propagates out of the handler, the single-threaded HTTPServer
+            closes the connection with zero bytes, and the browser reports
+            only ``net::ERR_EMPTY_RESPONSE`` with no clue as to the cause.
+            """
+            try:
+                route_fn()
+            except Exception:
+                import traceback
+                tb = traceback.format_exc()
+                print("[web] Unhandled handler error on {}:\n{}".format(
+                    self.path, tb), file=sys.stderr)
+                try:
+                    detail = tb.strip().splitlines()[-1][:500] if tb.strip() else ""
+                    body = json.dumps({
+                        "error": "Internal server error",
+                        "detail": detail,
+                    }).encode()
+                    self._json_response(500, body)
+                except Exception:
+                    # A response was already partially sent, so we can't emit
+                    # clean 500 headers. The stderr traceback above is the
+                    # durable record either way.
+                    pass
+
+        def _do_GET(self):
             # Parse path and query string
             from urllib.parse import urlparse, parse_qs
             parsed = urlparse(self.path)
@@ -190,7 +226,7 @@ def make_handler(tools: Dict[str, Any], providers: Dict[str, Dict[str, str]], po
                 self._json_response(200, body)
 
             elif path == "/api/tools":
-                tool_list = [{"name": n, "description": e.get("description", "")}
+                tool_list = [{"name": n, "description": e.description}
                              for n, e in tools.items()]
                 body = json.dumps({"tools": tool_list}).encode()
                 self._json_response(200, body)
@@ -220,7 +256,7 @@ def make_handler(tools: Dict[str, Any], providers: Dict[str, Dict[str, str]], po
             else:
                 self.send_error(404)
 
-        def do_POST(self):
+        def _do_POST(self):
             if self.path == "/api/chat":
                 self._handle_chat()
             else:
