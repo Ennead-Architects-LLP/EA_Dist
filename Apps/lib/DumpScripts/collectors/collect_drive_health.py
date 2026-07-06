@@ -20,7 +20,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from drive_connectivity import load_office_drives_config, probe_expected_drives
-from infrawatch_common import post_to_infrawatch, report_error, get_machine_name
+from infrawatch_common import post_to_infrawatch_detailed, report_error, get_machine_name
 
 
 def _wmi_drives_by_letter():
@@ -122,9 +122,10 @@ def collect_once():
         "timestamp": datetime.now().isoformat(),
         "drives": drives,
     }
-    ok = post_to_infrawatch("drive-health", payload)
+    ok, detail = post_to_infrawatch_detailed("drive-health", payload)
     if not ok:
-        report_error("collect_drive_health.collect_once", "POST to drive-health failed")
+        report_error("collect_drive_health.collect_once",
+                     "POST to drive-health failed [{} drives]: {}".format(len(drives), detail))
 
 
 def main():
