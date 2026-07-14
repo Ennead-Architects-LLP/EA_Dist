@@ -34,6 +34,24 @@ _shell_lock = threading.Lock()
 CROSS_LINK_FILENAME = "shortcut_cross_link.txt"
 SELF_LINK_FILENAME = "shortcut_self_link.txt"
 
+
+def get_report_folder() -> str:
+    """Resolve the shared reports folder at runtime (#2360).
+
+    The L: drive is being retired, so the destination is no longer hardcoded.
+    Prefers the EnneadTab library resolver; falls back to the EA_SHARED_ROOT
+    environment variable, then to the legacy L: path.
+    """
+    try:
+        from EnneadTab import ENVIRONMENT
+        db_folder = ENVIRONMENT.DB_FOLDER
+    except Exception:
+        shared_root = (os.environ.get("EA_SHARED_ROOT") or "").strip()
+        if not shared_root or shared_root.upper() == "OFFLINE":
+            shared_root = "L:\\4b_Design Technology"
+        db_folder = os.path.join(shared_root, "05_EnneadTab-DB")
+    return os.path.join(db_folder, "Shared Data Dump", "_internal reports")
+
 def get_shell():
     """Get or create a cached shell object."""
     global _shell_cache
@@ -289,7 +307,7 @@ def find_project_shortcut_links(drive_path: str = "J:\\") -> None:
     Add 1-based index to each entry. Ignore 'J:\\_0000 - Project Directory'.
     """
     # Output directory
-    output_dir = r"L:\\4b_Design Technology\\05_EnneadTab-DB\\Shared Data Dump\\_internal reports"
+    output_dir = get_report_folder()
     results_path = os.path.join(output_dir, CROSS_LINK_FILENAME)
     selflinks_path = os.path.join(output_dir, SELF_LINK_FILENAME)
 
@@ -354,8 +372,9 @@ def main():
         find_project_shortcut_links()
         logger.info("Scan complete. See {} and {} for details in the output directory.".format(CROSS_LINK_FILENAME, SELF_LINK_FILENAME))
         try:
-            subprocess.run(['start', os.path.join(r'L:\\4b_Design Technology\\05_EnneadTab-DB\\Shared Data Dump\\_internal reports', CROSS_LINK_FILENAME)], shell=True)
-            subprocess.run(['start', os.path.join(r'L:\\4b_Design Technology\\05_EnneadTab-DB\\Shared Data Dump\\_internal reports', SELF_LINK_FILENAME)], shell=True)
+            report_folder = get_report_folder()
+            subprocess.run(['start', os.path.join(report_folder, CROSS_LINK_FILENAME)], shell=True)
+            subprocess.run(['start', os.path.join(report_folder, SELF_LINK_FILENAME)], shell=True)
         except Exception as e:
             logger.error("Error opening results file: {}".format(str(e)))
             logger.info("Please open the output files manually.")
