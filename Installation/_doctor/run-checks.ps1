@@ -357,8 +357,7 @@ if ($SelfTest) {
 # have them yet (the auto-updater check will already flag that).
 $expectedTasksCore = @(
     'EnneadTab_OS_Installer_Task',
-    'EnneadTab_Rhino8RuiUpdater_Task',
-    'WhatTheLunch_Daily'
+    'EnneadTab_Rhino8RuiUpdater_Task'
 )
 $expectedTasksRecent = @(
     'EnneadTab_InfraWatch_Events_Task',
@@ -592,7 +591,6 @@ if ($SelfTest) {
         'EnneadTab_OS_Installer.exe',
         'Rhino8RuiUpdater.exe',
         'ClearRevitRhinoCache.exe',
-        'WhatTheLunch.exe',
         'Messenger.exe'
     )
     # Recently-added EXEs (post-2026-04-15). Missing -> WARN, because users
