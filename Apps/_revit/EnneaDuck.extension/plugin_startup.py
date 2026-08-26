@@ -354,6 +354,34 @@ def register_selection_owner_checker():
     __revit__.SelectionChanged += EventHandler[SelectionChangedEventArgs](selection_owner_checker)
 
 
+def register_session_view_counter():
+    """Count the distinct views the user touches this session.
+
+    The sync card wants "you worked across N views", and there is no way to ask
+    Revit that after the fact -- it has to be observed as it happens. This is the
+    same `+=` EventHandler pattern toggle_warning_mode and what_happened already
+    use, and the handler is deliberately trivial: one string append into a
+    process-scoped store, no API calls, because it fires on every view switch.
+
+    The counter lives in a pyRevit env var rather than module state: pyRevit runs
+    each hook in its own engine, so a set populated here would simply not exist
+    when doc-syncing reads it.
+    """
+    from System import EventHandler
+    from Autodesk.Revit.UI.Events import ViewActivatedEventArgs # pyright: ignore
+    __revit__.ViewActivated += EventHandler[ViewActivatedEventArgs](session_view_counter) # pyright: ignore
+
+
+@ERROR_HANDLE.try_catch_error(is_pass=True)
+def session_view_counter(sender, args):
+    from EnneadTab import SESSION_STATS
+    view = args.CurrentActiveView
+    if view is None:
+        return
+    from EnneadTab.REVIT import REVIT_APPLICATION
+    SESSION_STATS.note_view(REVIT_APPLICATION.get_element_id_value(view.Id))
+
+
 def selection_owner_checker(sender, args):
     selection_ids = list(args.GetSelectedElements ())
     
@@ -636,19 +664,24 @@ def _enable_routes_server():
     pyRevit ships Routes OFF by default; the desktop app then probes
     localhost:48884.. for /enneadtab/status/, finds nothing, and reports
     "cannot detect Revit". We flip the user_config flag ourselves (idempotent:
-    only writes + saves the first time it is found off) so pyRevit starts the
-    server on every session load via its own proven init path
-    (loader/sessionmgr.py: `if user_config.routes_server: routes.activate_server()`).
+    only writes + saves the first time it is found off).
 
-    We deliberately do NOT call routes.activate_server() by hand here: at this
-    point in extension startup pyRevit has already run its own routes block for
-    this session, so a manual activate would race that ordering. Setting the
-    config + letting the NEXT load start it is the verified-safe path; the
-    one-time notice below tells the user to reload once. The /enneadtab/* routes
-    themselves are registered by _register_mcp_routes()."""
+    This runs from execute_extension_startup_script(), which sessionmgr calls
+    from inside _new_session() -- BEFORE _perform_onsessionloadcomplete_ops()
+    reads user_config.routes_server and calls routes.activate_server() for this
+    same session (see loader/sessionmgr.py). So flipping the flag here already
+    covers the normal case with no extra call needed. We ALSO call
+    routes.activate_server() directly as a safety net for hosts/orderings where
+    that later step does not run (e.g. a hot-reload that skips
+    onsessionloadcomplete): activate_server() is idempotent (it checks the
+    ROUTES_SERVER env var and no-ops if a server is already up), so calling it
+    twice in the same session is harmless. The /enneadtab/* routes themselves
+    are registered by _register_mcp_routes()."""
     try:
         from pyrevit.userconfig import user_config
-    except:
+    except Exception as e:
+        if USER.IS_DEVELOPER:
+            print("_enable_routes_server: cannot import user_config: {}".format(e))
         return
     changed = False
     try:
@@ -663,17 +696,24 @@ def _enable_routes_server():
             changed = True
         if changed:
             user_config.save_changes()
-    except:
+    except Exception as e:
+        if USER.IS_DEVELOPER:
+            print("_enable_routes_server: failed to set/save routes config: {}".format(e))
         return
 
     if changed:
-        # Config only takes effect on the next pyRevit load (that is when pyRevit
-        # starts the server). Say so once, rather than silently leaving the user
-        # wondering why the Assistant still cannot connect this session.
+        try:
+            from pyrevit import routes
+            routes.activate_server()
+        except Exception as e:
+            if USER.IS_DEVELOPER:
+                print("_enable_routes_server: activate_server() failed: {}".format(e))
+            # Non-fatal: _perform_onsessionloadcomplete_ops() still gets a
+            # chance to start the server later in this same session load.
+
         try:
             NOTIFICATION.messenger(
-                main_text="EnneadTab turned on the Revit Assistant connection.\n"
-                          "Reload pyRevit (or restart Revit) once to activate it."
+                main_text="EnneadTab turned on the Revit Assistant connection."
             )
         except:
             pass
@@ -742,6 +782,23 @@ def EnneadTab_startup():
     except:
         pass
 
+    # Sync-time session card. Everything expensive it needs is prepared HERE,
+    # where latency is free, so the sync path itself stays a pure local read:
+    #   - stamp the session clock
+    #   - arm the view counter
+    #   - drain the Bank outbox and warm the wallet/leaderboard caches
+    #   - pick the "not tried yet" tool (this one walks the knowledge database)
+    # Mirrored in Apps/_rhino/startup.py -- both hosts call the same functions,
+    # which is what keeps Revit and Rhino from drifting.
+    try:
+        from EnneadTab import SESSION_STATS, SYNC_SUMMARY, LEADER_BOARD
+        SESSION_STATS.mark_session_start()
+        register_session_view_counter()
+        LEADER_BOARD.refresh_async()
+        SYNC_SUMMARY.refresh_recommendation()
+    except:
+        pass
+
     # use this part to force clear a user from database, in case the file is corrupted
     # LEGACY_LOG.force_clear_user(target_user_names = ["fliu"])
     
@@ -757,6 +814,11 @@ def EnneadTab_startup():
     
     REVIT_EVENT.set_doc_change_hook_depressed(stage = False)
     REVIT_EVENT.set_sync_queue_enable_stage(stage = True)
+    try:
+        from EnneadTab import SYNC_TURN_WATCH
+        SYNC_TURN_WATCH.start_poller()
+    except Exception:
+        pass
     REVIT_EVENT.set_family_load_hook_stage(stage = True)
     REVIT_EVENT.set_L_drive_alert_hook_depressed(stage = False)
 

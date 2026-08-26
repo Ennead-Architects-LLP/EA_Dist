@@ -34,6 +34,7 @@ import FOLDER
 import DATA_FILE
 import ENVIRONMENT
 import ERROR_HANDLE
+import WEB_GUARD
 
 LOG_FILE_NAME = "log_{}".format(USER.USER_NAME)
 
@@ -125,6 +126,42 @@ def log_usage(func, *args):
 whereas revit need to look at local func run"""
 
 
+def _is_button_script(script_path):
+    """True only for a real, clickable tool bundle.
+
+    This decorator is NOT only applied to buttons: `hooks/doc-syncing.py`,
+    `hooks/doc-synced.py` and `plugin_startup.py` all carry it too. Reporting
+    those to the Bank as `tool_run` would be wrong twice over -- a sync is not a
+    tool use, and those firings would burn the daily earn cap that real tool use
+    is supposed to fill. It would also put a file write on the sync path, which
+    the whole session-card design exists to keep clear.
+
+    So the test is DEFAULT-DENY: a path only qualifies if one of its folders is a
+    button bundle, i.e. ends in "button" -- `.pushbutton`, `.smartbutton`,
+    `.splitbutton` (Revit) and `.button` (Rhino). `.pulldown`, `.stack`, `.panel`
+    and `.tab` are containers whose scripts already sit inside a button folder,
+    so they need no separate case. Anything decorated in future that is not a
+    button is silently excluded, which is the correct direction to fail: a missed
+    coin is better than a fabricated one.
+
+    Args:
+        script_path (str): the decorated script's full path.
+
+    Returns:
+        bool: True if this invocation represents a user clicking a tool.
+    """
+    if not script_path:
+        return False
+    try:
+        normalized = str(script_path).replace("\\", "/")
+    except Exception:
+        return False
+    for part in normalized.split("/"):
+        if part.lower().endswith("button"):
+            return True
+    return False
+
+
 @FOLDER.backup_data(LOG_FILE_NAME, "log")
 def log(script_path, func_name_as_record):
     """Decorator for persistent function usage logging.
@@ -192,6 +229,27 @@ def log(script_path, func_name_as_record):
                 except Exception:
                     pass
 
+                # Third sink: the EnneadTab economy. Unlike the two above this one
+                # does NOT touch the network -- it appends to a local outbox that
+                # LEADER_BOARD.refresh_async() drains at the next startup. The
+                # click path stays local, and the server's 48h occurred_at window
+                # is what makes deferring legal.
+                #
+                # Its own try/except, like its neighbours, and deliberately the
+                # LAST thing before `return out`: the bare `except:` below re-runs
+                # `func`, so anything that can raise up there executes the user's
+                # tool a second time. Nothing added here may reach it.
+                try:
+                    if _is_button_script(script_path):
+                        from EnneadTab import LEADER_BOARD
+                        LEADER_BOARD.report_tool_run(
+                            function_name,
+                            duration_seconds=t_end - t_start,
+                            script_path=script_path,
+                        )
+                except Exception:
+                    pass
+
                 return out
             except:
                 out = func(*args, **kwargs)
@@ -221,6 +279,15 @@ def read_log(user_name=USER.USER_NAME):
 
 
 INFRAWATCH_USAGE_URL = "https://enneadtab.com/infra/api/ingest/usage"
+INFRAWATCH_TIME_ESTIMATE_URL = "https://enneadtab.com/infra/api/ingest/time-estimate"
+
+# The recap "how long by hand?" picker offers six coarse buckets; the client
+# sends the bucket MIDPOINT in seconds. This is the client-side mirror of the
+# server-side whitelist in InfraWatch (ingest/time-estimate) -- keep them in
+# lockstep. Refusing an off-list value here too means a caller bug can never even
+# attempt to move the fleet median.
+#   < 2 min | 2-5 | 5-15 | 15-30 | 30-60 | 1 hr+
+TIME_ESTIMATE_BUCKET_SECONDS = (60, 210, 600, 1350, 2700, 5400)
 
 
 def _build_infrawatch_payload(environment, function_name, result):
@@ -280,6 +347,7 @@ def _try_infrawatch_urllib3(environment, function_name, result):
             body=body,
             headers={"Content-Type": "application/json"},
             timeout=10.0,
+            redirect=False,
         )
         if response.status == 200:
             return True
@@ -306,7 +374,7 @@ def _try_infrawatch_urllib2(environment, function_name, result):
             data=body,
             headers={"Content-Type": "application/json"},
         )
-        response = urllib2.urlopen(req, timeout=10)
+        response = WEB_GUARD.urlopen_no_redirect(req, 10)
         if response.getcode() == 200:
             return True
         ERROR_HANDLE.print_note(
@@ -331,7 +399,7 @@ def _try_infrawatch_urllib_request(environment, function_name, result):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        response = urllib.request.urlopen(req, timeout=10)
+        response = WEB_GUARD.urlopen_no_redirect(req, 10)
         if response.getcode() == 200:
             return True
         ERROR_HANDLE.print_note(
@@ -344,6 +412,130 @@ def _try_infrawatch_urllib_request(environment, function_name, result):
         ERROR_HANDLE.print_note(
             "InfraWatch usage POST error (urllib.request): {}".format(e)
         )
+        return False
+
+
+# --- user-reported "how long by hand?" time estimates -> InfraWatch -----------
+# The fallback ladder below is intentionally a parallel copy of the usage senders
+# above rather than a shared refactor: the usage path is live fleet telemetry
+# that cannot be exercised outside Revit/Rhino, so it is left byte-for-byte
+# untouched. Unify onto one (url, payload) dispatcher once a live test harness
+# exists -- tracked as a follow-up todo.
+
+def _build_time_estimate_payload(script_path, function_name, seconds):
+    """Body for /api/ingest/time-estimate, or None to refuse sending.
+
+    Carries NO username/machine_name: the only consumer is an aggregate median,
+    so identity would be collected for nothing. `seconds` must be one of the
+    known bucket midpoints (mirrors the server whitelist); anything else -> None
+    so a caller bug can never even attempt a poisoning value.
+    """
+    try:
+        seconds = int(seconds)
+    except (TypeError, ValueError):
+        return None
+    if seconds not in TIME_ESTIMATE_BUCKET_SECONDS:
+        return None
+    if not script_path:
+        return None
+    return {
+        "occurred_at": TIME.get_utc_timestamp_iso(),
+        "script_path": script_path,
+        "function_name": function_name or "",
+        "seconds": seconds,
+    }
+
+
+def send_manual_time_estimate(script_path, function_name, seconds):
+    """Send one user-reported by-hand time estimate to InfraWatch.
+
+    Feeds the recap fleet time-saved baseline (a per-tool median). Best-effort:
+    tries urllib3 -> urllib2 -> urllib.request, silent on success, print_note on
+    failure, and NEVER raises -- a telemetry send must not break the caller. A
+    non-whitelisted `seconds` is dropped silently client-side.
+    """
+    payload = _build_time_estimate_payload(script_path, function_name, seconds)
+    if payload is None:
+        return
+    try:
+        if _try_time_estimate_urllib3(payload):
+            return
+        elif _try_time_estimate_urllib2(payload):
+            return
+        elif _try_time_estimate_urllib_request(payload):
+            return
+        else:
+            ERROR_HANDLE.print_note(
+                "No HTTP library available for InfraWatch time-estimate POST")
+    except Exception as e:
+        ERROR_HANDLE.print_note(
+            "Failed to send time estimate to InfraWatch: {}".format(e))
+
+
+def _try_time_estimate_urllib3(payload):
+    try:
+        import urllib3
+        body = json.dumps(payload).encode("utf-8")
+        http = urllib3.PoolManager()
+        response = http.request(
+            "POST", INFRAWATCH_TIME_ESTIMATE_URL, body=body,
+            headers={"Content-Type": "application/json"},
+            timeout=10.0, redirect=False)
+        if response.status == 200:
+            return True
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST non-200: {} (urllib3)".format(
+                response.status))
+        return False
+    except ImportError:
+        return False
+    except Exception as e:
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST error (urllib3): {}".format(e))
+        return False
+
+
+def _try_time_estimate_urllib2(payload):
+    try:
+        import urllib2
+        body = json.dumps(payload).encode("utf-8")
+        req = urllib2.Request(
+            INFRAWATCH_TIME_ESTIMATE_URL, data=body,
+            headers={"Content-Type": "application/json"})
+        response = WEB_GUARD.urlopen_no_redirect(req, 10)
+        if response.getcode() == 200:
+            return True
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST non-200: {} (urllib2)".format(
+                response.getcode()))
+        return False
+    except ImportError:
+        return False
+    except Exception as e:
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST error (urllib2): {}".format(e))
+        return False
+
+
+def _try_time_estimate_urllib_request(payload):
+    try:
+        import urllib.request
+        body = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            INFRAWATCH_TIME_ESTIMATE_URL, data=body,
+            headers={"Content-Type": "application/json"}, method="POST")
+        response = WEB_GUARD.urlopen_no_redirect(req, 10)
+        if response.getcode() == 200:
+            return True
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST non-200: {} (urllib.request)".format(
+                response.getcode()))
+        return False
+    except ImportError:
+        return False
+    except Exception as e:
+        ERROR_HANDLE.print_note(
+            "InfraWatch time-estimate POST error (urllib.request): {}".format(e))
         return False
 
 
@@ -422,7 +614,7 @@ def _try_urllib3_usage_implementation(environment, function_name, result):
         encoded_data = urllib.parse.urlencode(form_data).encode('utf-8')
         
         # Send request
-        response = http.request('POST', g_form_url, body=encoded_data, headers=headers, timeout=30.0)
+        response = http.request('POST', g_form_url, body=encoded_data, headers=headers, timeout=30.0, redirect=False)
         
         if response.status == 200:
             response_content = response.data.decode('utf-8')
@@ -481,7 +673,7 @@ def _try_urllib2_usage_implementation(environment, function_name, result):
         req.add_header('Upgrade-Insecure-Requests', '1')
         
         # Send the request
-        response = urllib2.urlopen(req, timeout=30)
+        response = WEB_GUARD.urlopen_no_redirect(req, 30)
         # Google Forms returns a 200 status even on successful submission
         if response.getcode() == 200:
             # Read response to check for success indicators
@@ -546,7 +738,7 @@ def _try_urllib_request_usage_implementation(environment, function_name, result)
         req.add_header('Upgrade-Insecure-Requests', '1')
         
         # Send the request
-        response = urllib.request.urlopen(req, timeout=30)
+        response = WEB_GUARD.urlopen_no_redirect(req, 30)
         # Google Forms returns a 200 status even on successful submission
         if response.getcode() == 200:
             # Read response to check for success indicators
