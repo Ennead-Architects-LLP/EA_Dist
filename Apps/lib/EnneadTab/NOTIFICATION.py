@@ -22,6 +22,12 @@ Note:
     All notifications respect user preferences and can be disabled through
     configuration settings.
 """
+# 2026-08-21: signing-pipeline trigger touch (see senzhang-todo #4600) -- no behavior change.
+# 2026-08-21: publish trigger touch after the EA_Dist clone repair (senzhang-todo #4456, #4634)
+# -- no behavior change. Confirms production publish is green again end-to-end.
+# 2026-08-21: publish trigger touch to ship PR #192 (the fleet went stale when run
+# 32511676656 refused with no output) and to exercise the guard-output capture from
+# PR #195 -- no behavior change. See senzhang-todo #4661.
 
 import os
 import random
@@ -138,21 +144,8 @@ def _write_inbox_item(data):
         print("Failed to write notification inbox item: {}".format(e))
         return False
 
-
-def _legacy_messenger_fallback(data):
-    """One-shot Messenger.exe path when NotificationHost cannot be started."""
-    DATA_FILE.set_data(data, "messenger_data")
-    result = EXE.try_open_app("Messenger")
-    if not result:
-        if EXE._is_rate_limited("Messenger"):
-            print("Messenger is temporarily rate limited. Message: {}".format(
-                data.get("main_text")))
-        else:
-            print("Messenger failed to start. Message: {}".format(
-                data.get("main_text")))
-
-
 def messenger(main_text,
+             title=None,
              width=None,
              height=None,
              image=None,
@@ -167,21 +160,25 @@ def messenger(main_text,
              font_family=None,
              level=None,
              actions=None,
-             youtube=None):
+             youtube=None,
+             sticky=False):
     """Display a customizable popup notification via NotificationHost.
 
     Writes a unique inbox JSON then wakes the persistent host if needed.
-    Falls back to legacy one-shot Messenger.exe if the host cannot start.
 
     Args:
         main_text (str): Message to display (supports line breaks)
+        title (str, optional): Bold header line shown above main_text
         width (int, optional): Legacy size hint (ignored by host layout)
         height (int, optional): Legacy size hint (ignored by host layout)
-        image (str, optional): Path to png/jpg/jpeg/gif/bmp/webp shown above text.
-            A YouTube watch/share URL here is also accepted (thumbnail + Open).
+        image (str, optional): Path to png/jpg/jpeg/gif/bmp/webp shown
+            full-bleed at the top of the card (edge-to-edge, height follows
+            aspect ratio). A YouTube watch/share URL here is also accepted
+            (thumbnail + Open).
         audio (str, optional): Path or EnneadTab audio name (.wav) played as cue
         animation_in_duration: Legacy timing (optional)
-        animation_stay_duration: Stay duration - seconds if < 100, else ms
+        animation_stay_duration: Stay duration - seconds if < 100, else ms.
+            Ignored when sticky=True.
         animation_fade_duration: Legacy timing (optional)
         x_offset (int, optional): Legacy offset (optional)
         background_color (str, optional): Legacy color (optional)
@@ -193,6 +190,12 @@ def messenger(main_text,
             id, label, type (dismiss|open_path|open_url|copy), payload
         youtube (str, optional): YouTube URL or 11-char video id. Host fetches
             a thumbnail into the toast and adds an Open action (no iframe).
+        sticky (bool, optional): When True, the card never auto-dismisses on
+            a timer - it stays until the user closes it, clicks mute, or
+            clicks an action button. The action bar (if any) renders visible
+            immediately instead of hover-gated. Use for CTA notifications
+            that need an explicit response. Still non-blocking: this
+            function returns immediately either way.
 
     Note:
         If notifications are disabled via user preferences, this function
@@ -210,6 +213,10 @@ def messenger(main_text,
 
     data = {}
     data["main_text"] = main_text
+    if title:
+        data["title"] = title
+    if sticky:
+        data["sticky"] = True
     if animation_in_duration is not None:
         data["animation_in_duration"] = animation_in_duration
     if animation_stay_duration is not None:
@@ -247,14 +254,10 @@ def messenger(main_text,
 
     wrote = _write_inbox_item(data)
     if not wrote:
-        _legacy_messenger_fallback(data)
+        print("Failed to enqueue notification to NotificationHost inbox. Message: {}".format(main_text))
         return
 
-    woke = EXE.ensure_notification_host()
-    if not woke:
-        print("NotificationHost unavailable; falling back to Messenger. Message: {}".format(
-            main_text))
-        _legacy_messenger_fallback(data)
+    EXE.ensure_notification_host()
 
 
 def duck_pop(main_text=None):

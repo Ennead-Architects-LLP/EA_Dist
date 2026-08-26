@@ -24,10 +24,10 @@ except Exception as e:
     ENVIRONMENT = None
 
 try:
-    import EMAIL
+    import WEB_GUARD
 except Exception as e:
-    print("Error importing EMAIL in ERROR_HANDLE.py: {}".format(traceback.format_exc()))
-    EMAIL = None
+    print("Error importing WEB_GUARD in ERROR_HANDLE.py: {}".format(traceback.format_exc()))
+    WEB_GUARD = None
 
 try:
     import USER
@@ -370,14 +370,9 @@ def try_catch_error(is_silent=False, is_pass = False):
 
                 # Safely get plugin name with fallback
                 plugin_name = get_plugin_name()
-                
-                subject_line = plugin_name + " Auto Error Log"
-                if is_silent:
-                    subject_line += "(Silent)"
-                try:
-                    EMAIL.email_error(error_time + error, func.__name__, USER.USER_NAME, subject_line=subject_line)
-                except Exception as e:
-                    print_note("Cannot send email: {}".format(get_alternative_traceback()))
+                # Crash traces do not go to Resend. A storm on this wrapper
+                # would consume the shared team rate limit and take every
+                # identity dark. ErrorDump below is the remaining report.
 
                 try:
                     send_error_to_error_dump(
@@ -583,6 +578,10 @@ def send_error_to_error_dump(error_message, func_name, user_name, is_silent=Fals
         req.Method = "POST"
         req.ContentType = "application/json"
         req.Timeout = 5000  # milliseconds
+        # AllowAutoRedirect defaults to True; an SSO bounce would otherwise be
+        # read as a delivered error report. See WEB_GUARD.
+        if WEB_GUARD is not None:
+            WEB_GUARD.harden_dotnet_request(req)
 
         req.ContentLength = body_bytes.Length
         req_stream = req.GetRequestStream()
@@ -606,7 +605,7 @@ def send_error_to_error_dump(error_message, func_name, user_name, is_silent=Fals
         import urllib.request
         payload = _payload_str("urllib.request").encode("utf-8")
         req = urllib.request.Request(url, data=payload, headers=headers)
-        urllib.request.urlopen(req, timeout=5)
+        WEB_GUARD.urlopen_no_redirect(req, 5)
         return
     except ImportError:
         pass
@@ -618,7 +617,7 @@ def send_error_to_error_dump(error_message, func_name, user_name, is_silent=Fals
         import urllib2
         payload = _payload_str("urllib2").encode("utf-8")
         req = urllib2.Request(url, data=payload, headers=headers)
-        urllib2.urlopen(req, timeout=5)
+        WEB_GUARD.urlopen_no_redirect(req, 5)
         return
     except ImportError:
         pass
@@ -630,7 +629,7 @@ def send_error_to_error_dump(error_message, func_name, user_name, is_silent=Fals
         import urllib3
         http = urllib3.PoolManager()
         payload = _payload_str("urllib3").encode("utf-8")
-        http.request("POST", url, body=payload, headers=headers, timeout=5.0)
+        http.request("POST", url, body=payload, headers=headers, timeout=5.0, redirect=False)
         return
     except ImportError:
         pass
