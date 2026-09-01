@@ -80,7 +80,7 @@ def _out_path(args, file_name):
 
 # --------------------------------------------------------------------- recap
 
-def build_recap(raw_log, today, state, user_name):
+def build_recap(raw_log, today, state, user_name, fleet_path=None):
     """Everything the surfaces need, computed once. No I/O."""
     metrics = recap_stats.build(raw_log, today)
     catalog = recap_catalog.build_catalog()
@@ -96,8 +96,15 @@ def build_recap(raw_log, today, state, user_name):
     # empty baseline file yields zeros and simply no time_saved claim.
     # Baseline source precedence: fleet median with quorum (graded med) -> curated
     # seed -> contribute 0. With no fleet file yet this is identical to seed-only.
+    #
+    # fleet_path is explicit-arg-only (senzhang-todo #3939): the __file__-relative
+    # default in recap_savings.load_fleet_baselines lives inside the git-synced
+    # EA_Dist tree, which a fleet machine cannot durably write to (read-only, or
+    # reset on the next sync) -- main() resolves the real writable path via
+    # _out_path/recap_env.dump_file and passes it down. recap_savings itself stays
+    # pure/no-EnneadTab-import so it is still unit-testable off Windows.
     seed_baselines, baseline_rejects = recap_savings.load_baselines()
-    fleet_baselines, fleet_rejects = recap_savings.load_fleet_baselines()
+    fleet_baselines, fleet_rejects = recap_savings.load_fleet_baselines(path=fleet_path)
     baselines = recap_savings.merge_baselines(seed_baselines, fleet_baselines)
     month_cov_ok = month.get("duration_parse_coverage", 0.0) >= 0.8
     metrics["savings"] = recap_savings.estimate_saved(
@@ -453,6 +460,17 @@ def main(argv=None):
     else:
         state = recap_state.load(user_name)
 
+    # Where the fleet baselines file actually lives (senzhang-todo #3939): the
+    # module-level defaults in recap_fleet_fetch/recap_savings resolve next to
+    # __file__, which on an EA_Dist-shipped fleet machine sits inside the
+    # git-synced tree -- read-only or clobbered on the next sync, so a write there
+    # is not durable even when the OS permission bit allows it. _out_path already
+    # gives every other output file in this module the same real writable path
+    # (recap_env.dump_file, i.e. the user's own EnneadTab dump folder) with an
+    # --out-dir override for standalone/test runs; reuse it here rather than
+    # inventing a second path-resolution rule.
+    fleet_path = _out_path(args, recap_fleet_fetch.FLEET_FILE)
+
     # Refresh the fleet baselines BEFORE build_recap reads them off disk. Never
     # fatal: refresh_fleet_baselines fails soft, and build_recap falls back to the
     # curated seed when the file is stale or absent. Skipped in standalone/testing
@@ -467,7 +485,7 @@ def main(argv=None):
         want_fetch = False
     if want_fetch:
         try:
-            fleet_status = recap_fleet_fetch.refresh_fleet_baselines()
+            fleet_status = recap_fleet_fetch.refresh_fleet_baselines(dest=fleet_path)
         except Exception as error:       # contract says it won't, but never crash the recap
             fleet_status = {"ok": False, "written": False,
                             "reason": "{}: {}".format(type(error).__name__, error)}
@@ -475,7 +493,7 @@ def main(argv=None):
             print("fleet baseline refresh skipped: {} (using file on disk)".format(
                 fleet_status.get("reason")))
 
-    recap = build_recap(raw_log, today, state, user_name)
+    recap = build_recap(raw_log, today, state, user_name, fleet_path=fleet_path)
     if fleet_status is not None:
         recap["metrics"]["fleet_fetch"] = fleet_status
 
