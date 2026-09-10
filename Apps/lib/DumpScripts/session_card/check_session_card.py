@@ -24,6 +24,7 @@ weekly digest. The two that matter most:
 
 import os
 import sys
+import json
 import tempfile
 import time
 import unittest
@@ -356,6 +357,210 @@ class ArcadeActionTests(unittest.TestCase):
         self.assertIsNone(SESSION_STATS.store_get(
             SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN))
         self.assertTrue(SYNC_SUMMARY._arcade_install_cta_due())
+
+
+class ArcadeAfterWaitToastTests(unittest.TestCase):
+    """Post-wait Get Arcade toast: long wait + uninstalled only, shares the
+    7-day install-CTA cooldown with the session card so card+toast never
+    double-nag the same wait or spam twice a week.
+    """
+
+    def setUp(self):
+        from EnneadTab import ARCADE
+        self._ARCADE = ARCADE
+        self._orig_hate = ARCADE.is_hate_arcade
+        self._orig_exe = ARCADE.get_installed_arcade_exe
+        SESSION_STATS.store_set(SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+        SESSION_STATS._MEMORY_STORE.pop(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+        self._shown = []
+        self._orig_messenger = SYNC_SUMMARY.NOTIFICATION.messenger
+        SYNC_SUMMARY.NOTIFICATION.messenger = self._capture_messenger
+
+    def tearDown(self):
+        self._ARCADE.is_hate_arcade = self._orig_hate
+        self._ARCADE.get_installed_arcade_exe = self._orig_exe
+        SYNC_SUMMARY.NOTIFICATION.messenger = self._orig_messenger
+        SESSION_STATS.store_set(SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+        SESSION_STATS._MEMORY_STORE.pop(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+
+    def _capture_messenger(self, **kwargs):
+        self._shown.append(kwargs)
+
+    def _set_arcade(self, installed=False, hate=False):
+        self._ARCADE.is_hate_arcade = lambda: hate
+        self._ARCADE.get_installed_arcade_exe = (
+            lambda: r"C:\Users\test\AppData\Local\Programs\EnneadTab-Arcade\EnneadTab-Arcade.exe"
+            if installed else None)
+
+    def test_uninstalled_long_wait_offers_toast(self):
+        self._set_arcade(installed=False, hate=False)
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS + 5)
+        self.assertTrue(ok)
+        self.assertEqual(len(self._shown), 1)
+        payload = self._shown[0]
+        self.assertEqual(payload["main_text"], SYNC_SUMMARY.ARCADE_TOAST_MAIN_TEXT)
+        self.assertEqual(payload["level"], "info")
+        action = payload["actions"][0]
+        self.assertEqual(action["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_TOAST_GET)
+        self.assertEqual(action["label"], "Get Arcade")
+        self.assertEqual(action["type"], "open_url")
+        self.assertEqual(action["payload"], self._ARCADE.ARCADE_LANDING_URL)
+        stamped = SESSION_STATS.store_get(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN)
+        self.assertIsNotNone(stamped)
+        self.assertFalse(SYNC_SUMMARY._arcade_install_cta_due())
+
+    def test_installed_skips_toast(self):
+        self._set_arcade(installed=True, hate=False)
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS + 5)
+        self.assertFalse(ok)
+        self.assertEqual(self._shown, [])
+
+    def test_opt_out_skips_toast(self):
+        self._set_arcade(installed=False, hate=True)
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS + 5)
+        self.assertFalse(ok)
+        self.assertEqual(self._shown, [])
+
+    def test_short_wait_skips_toast(self):
+        self._set_arcade(installed=False, hate=False)
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS - 1)
+        self.assertFalse(ok)
+        self.assertEqual(self._shown, [])
+
+    def test_none_or_missing_wait_skips_toast(self):
+        self._set_arcade(installed=False, hate=False)
+        self.assertFalse(SYNC_SUMMARY.offer_arcade_after_wait(None))
+        self.assertFalse(SYNC_SUMMARY.offer_arcade_after_wait("nope"))
+        self.assertEqual(self._shown, [])
+
+    def test_cooldown_skips_toast(self):
+        self._set_arcade(installed=False, hate=False)
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, time.time())
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS + 5)
+        self.assertFalse(ok)
+        self.assertEqual(self._shown, [])
+
+    def test_card_offer_this_wait_blocks_toast(self):
+        """Shared cooldown: Get Arcade on the session card stamps the key, so
+        the post-wait toast does not double-nag the same wait."""
+        self._set_arcade(installed=False, hate=False)
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, time.time())
+        self.assertFalse(SYNC_SUMMARY._arcade_install_cta_due())
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS + 30)
+        self.assertFalse(ok)
+        self.assertEqual(self._shown, [])
+
+    def test_toast_returns_after_cooldown(self):
+        self._set_arcade(installed=False, hate=False)
+        aged = time.time() - SYNC_SUMMARY.ARCADE_INSTALL_CTA_COOLDOWN_SECONDS - 1
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, aged)
+        ok = SYNC_SUMMARY.offer_arcade_after_wait(
+            self._ARCADE.WAIT_THRESHOLD_SECONDS)
+        self.assertTrue(ok)
+        self.assertEqual(len(self._shown), 1)
+
+
+class ArcadeWaitFlagTests(unittest.TestCase):
+    """Flag lifecycle: written even when uninstalled; end returns age before delete."""
+
+    def setUp(self):
+        from EnneadTab import ARCADE
+        self._ARCADE = ARCADE
+        self._tmpdir = tempfile.mkdtemp(prefix="ea_arcade_flag_")
+        self._flag_path = os.path.join(self._tmpdir, ARCADE.FLAG_FILE_NAME)
+        self._orig_flag_path = ARCADE.get_flag_path
+        self._orig_hate = ARCADE.is_hate_arcade
+        self._orig_exe = ARCADE.get_installed_arcade_exe
+        self._orig_popen = ARCADE.subprocess.Popen
+        ARCADE.get_flag_path = lambda: self._flag_path
+
+        def _no_watcher(*a, **k):
+            raise AssertionError("watcher must not spawn when uninstalled")
+
+        ARCADE.subprocess.Popen = _no_watcher
+
+    def tearDown(self):
+        self._ARCADE.get_flag_path = self._orig_flag_path
+        self._ARCADE.is_hate_arcade = self._orig_hate
+        self._ARCADE.get_installed_arcade_exe = self._orig_exe
+        self._ARCADE.subprocess.Popen = self._orig_popen
+        try:
+            if os.path.exists(self._flag_path):
+                os.remove(self._flag_path)
+            os.rmdir(self._tmpdir)
+        except Exception:
+            pass
+
+    def test_start_writes_flag_when_uninstalled_without_watcher(self):
+        self._ARCADE.is_hate_arcade = lambda: False
+        self._ARCADE.get_installed_arcade_exe = lambda: None
+        self._ARCADE.start_wait_watch("sync", "Tower A")
+        self.assertTrue(os.path.exists(self._flag_path))
+        with open(self._flag_path, "r") as f:
+            flag = json.load(f)
+        self.assertEqual(flag["kind"], "sync")
+        self.assertEqual(flag["doc"], "Tower A")
+
+    def test_end_returns_age_and_deletes_flag(self):
+        self._ARCADE.is_hate_arcade = lambda: False
+        self._ARCADE.get_installed_arcade_exe = lambda: None
+        self._ARCADE.start_wait_watch("open", "Tower B")
+        # Age the flag so end_wait_watch reports a measurable duration.
+        past = time.time() - 75
+        os.utime(self._flag_path, (past, past))
+        age = self._ARCADE.end_wait_watch()
+        self.assertIsNotNone(age)
+        self.assertGreaterEqual(age, 70)
+        self.assertFalse(os.path.exists(self._flag_path))
+
+    def test_end_with_no_flag_returns_none(self):
+        self.assertFalse(os.path.exists(self._flag_path))
+        self.assertIsNone(self._ARCADE.end_wait_watch())
+
+    def test_hate_skips_flag_entirely(self):
+        self._ARCADE.is_hate_arcade = lambda: True
+        self._ARCADE.get_installed_arcade_exe = lambda: None
+        self._ARCADE.start_wait_watch("sync", "Tower C")
+        self.assertFalse(os.path.exists(self._flag_path))
+
+    def test_installed_watcher_passes_revit_wait_arg(self):
+        """OS half of #6050: Arcade offer mode needs --revit-wait (Arcade PR #25)."""
+        captured = []
+        fake_exe = (
+            r"C:\Users\test\AppData\Local\Programs\EnneadTab-Arcade\EnneadTab-Arcade.exe")
+
+        def _capture_popen(args, **kwargs):
+            captured.append(args)
+            return None
+
+        # start_wait_watch calls the private helper; mock that (public alone is not enough).
+        orig_private = self._ARCADE._get_installed_arcade_exe
+        self._ARCADE.is_hate_arcade = lambda: False
+        self._ARCADE._get_installed_arcade_exe = lambda: fake_exe
+        self._ARCADE.subprocess.Popen = _capture_popen
+        try:
+            self._ARCADE.start_wait_watch("sync", "Tower D")
+        finally:
+            self._ARCADE._get_installed_arcade_exe = orig_private
+
+        self.assertEqual(len(captured), 1)
+        ps_cmd = captured[0][-1]
+        self.assertIn("Start-Process", ps_cmd)
+        self.assertIn("-ArgumentList '--revit-wait'", ps_cmd)
+        self.assertIn("EnneadTab-Arcade.exe", ps_cmd)
+        self.assertNotIn("http", ps_cmd.lower())
 
 
 class ToolRunGateTests(unittest.TestCase):
