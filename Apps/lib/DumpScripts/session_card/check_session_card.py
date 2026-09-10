@@ -214,6 +214,150 @@ class CardLifetimeTests(unittest.TestCase):
             SYNC_SUMMARY.CARD_STAY_SECONDS, ARCADE.WAIT_THRESHOLD_SECONDS)
 
 
+class ArcadeActionTests(unittest.TestCase):
+    """Session-card Arcade CTA: Play when installed, soft Get when not,
+    never when opted out, and Get is independently 7-day throttled."""
+
+    def setUp(self):
+        from EnneadTab import ARCADE
+        self._ARCADE = ARCADE
+        self._orig_hate = ARCADE.is_hate_arcade
+        self._orig_exe = ARCADE.get_installed_arcade_exe
+        SESSION_STATS.store_set(SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+        SESSION_STATS._MEMORY_STORE.pop(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+
+    def tearDown(self):
+        self._ARCADE.is_hate_arcade = self._orig_hate
+        self._ARCADE.get_installed_arcade_exe = self._orig_exe
+        SESSION_STATS.store_set(SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+        SESSION_STATS._MEMORY_STORE.pop(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, None)
+
+    def _set_arcade(self, installed=False, hate=False):
+        self._ARCADE.is_hate_arcade = lambda: hate
+        self._ARCADE.get_installed_arcade_exe = (
+            lambda: r"C:\Users\test\AppData\Local\Programs\EnneadTab-Arcade\EnneadTab-Arcade.exe"
+            if installed else None)
+
+    def _arcade_action(self, actions):
+        for action in actions:
+            if action.get("id") in (
+                    SYNC_SUMMARY.ACTION_ID_ARCADE_PLAY,
+                    SYNC_SUMMARY.ACTION_ID_ARCADE_GET):
+                return action
+        return None
+
+    def test_not_installed_offers_get_arcade_open_url(self):
+        self._set_arcade(installed=False, hate=False)
+        actions = SYNC_SUMMARY._actions(balance=100)
+        arcade = self._arcade_action(actions)
+        self.assertIsNotNone(arcade)
+        self.assertEqual(arcade["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_GET)
+        self.assertEqual(arcade["label"], "Get Arcade")
+        self.assertEqual(arcade["type"], "open_url")
+        self.assertEqual(arcade["payload"], self._ARCADE.ARCADE_LANDING_URL)
+        self.assertTrue(arcade["payload"].startswith("https://enneadtab.com/arcade"))
+        self.assertEqual(actions[0]["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_GET)
+        self.assertEqual(actions[1]["id"], "sync_card_bank")
+
+    def test_hate_opt_out_omits_arcade_action(self):
+        self._set_arcade(installed=False, hate=True)
+        actions = SYNC_SUMMARY._actions(balance=100)
+        self.assertIsNone(self._arcade_action(actions))
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0]["id"], "sync_card_bank")
+
+        self._set_arcade(installed=True, hate=True)
+        actions = SYNC_SUMMARY._actions(balance=100)
+        self.assertIsNone(self._arcade_action(actions))
+
+    def test_installed_offers_play_arcade_open_path(self):
+        self._set_arcade(installed=True, hate=False)
+        actions = SYNC_SUMMARY._actions(balance=100)
+        arcade = self._arcade_action(actions)
+        self.assertIsNotNone(arcade)
+        self.assertEqual(arcade["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_PLAY)
+        self.assertEqual(arcade["label"], "Play arcade")
+        self.assertEqual(arcade["type"], "open_path")
+        self.assertTrue(arcade["payload"].endswith("EnneadTab-Arcade.exe"))
+        self.assertEqual(actions[0]["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_PLAY)
+
+    def test_install_cta_suppressed_within_seven_day_cooldown(self):
+        self._set_arcade(installed=False, hate=False)
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, time.time())
+        actions = SYNC_SUMMARY._actions(balance=100)
+        self.assertIsNone(self._arcade_action(actions))
+        self.assertEqual(actions[0]["id"], "sync_card_bank")
+
+    def test_install_cta_returns_after_cooldown(self):
+        self._set_arcade(installed=False, hate=False)
+        aged = time.time() - SYNC_SUMMARY.ARCADE_INSTALL_CTA_COOLDOWN_SECONDS - 1
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, aged)
+        actions = SYNC_SUMMARY._actions(balance=None)
+        arcade = self._arcade_action(actions)
+        self.assertIsNotNone(arcade)
+        self.assertEqual(arcade["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_GET)
+
+    def test_play_arcade_ignores_install_cta_cooldown(self):
+        """Cooldown gates Get only; installed Play must still appear."""
+        self._set_arcade(installed=True, hate=False)
+        SESSION_STATS.store_set(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN, time.time())
+        actions = SYNC_SUMMARY._actions(balance=100)
+        arcade = self._arcade_action(actions)
+        self.assertEqual(arcade["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_PLAY)
+
+    def test_show_session_card_stamps_install_cta_cooldown(self):
+        """Timestamp is recorded when the card is shown with Get Arcade, not
+        merely when _actions is computed (same pattern as KEY_LAST_SHOWN)."""
+        self._set_arcade(installed=False, hate=False)
+        self.assertTrue(SYNC_SUMMARY._arcade_install_cta_due())
+
+        shown = []
+
+        def _fake_messenger(**kwargs):
+            shown.append(kwargs)
+
+        original_messenger = SYNC_SUMMARY.NOTIFICATION.messenger
+        original_enabled = SYNC_SUMMARY.is_enabled
+        original_should = SYNC_SUMMARY._should_show_now
+        original_build = SYNC_SUMMARY.build_card
+        try:
+            SYNC_SUMMARY.NOTIFICATION.messenger = _fake_messenger
+            SYNC_SUMMARY.is_enabled = lambda: True
+            SYNC_SUMMARY._should_show_now = lambda: True
+            SYNC_SUMMARY.build_card = lambda doc=None: {
+                "lines": ["You have been in this session for 10 min."],
+                "coin_line": None,
+                "recommendation": None,
+                "actions": SYNC_SUMMARY._actions(balance=None),
+            }
+            self.assertTrue(SYNC_SUMMARY.show_session_card())
+        finally:
+            SYNC_SUMMARY.NOTIFICATION.messenger = original_messenger
+            SYNC_SUMMARY.is_enabled = original_enabled
+            SYNC_SUMMARY._should_show_now = original_should
+            SYNC_SUMMARY.build_card = original_build
+
+        self.assertEqual(len(shown), 1)
+        self.assertEqual(
+            shown[0]["actions"][0]["id"], SYNC_SUMMARY.ACTION_ID_ARCADE_GET)
+        stamped = SESSION_STATS.store_get(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN)
+        self.assertIsNotNone(stamped)
+        self.assertFalse(SYNC_SUMMARY._arcade_install_cta_due())
+
+    def test_computing_actions_alone_does_not_stamp_cooldown(self):
+        self._set_arcade(installed=False, hate=False)
+        SYNC_SUMMARY._actions(balance=None)
+        self.assertIsNone(SESSION_STATS.store_get(
+            SYNC_SUMMARY.KEY_ARCADE_INSTALL_CTA_LAST_SHOWN))
+        self.assertTrue(SYNC_SUMMARY._arcade_install_cta_due())
+
+
 class ToolRunGateTests(unittest.TestCase):
     """LOG.log is applied to things that are not tools. Reporting those as
     `tool_run` would mis-state a firm-wide auditable ledger AND burn the daily
