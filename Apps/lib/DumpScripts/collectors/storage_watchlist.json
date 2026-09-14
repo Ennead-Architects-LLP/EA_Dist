@@ -1,0 +1,30 @@
+{
+    "_comment": "InfraWatch storage folder snapshot watchlist (EnneadTab-OS #1824/#1825).",
+    "reporters": [
+        "EANY-PW-0HJ97N",
+        "MININT-5V26DTJ",
+        "MININT-H00D42F"
+    ],
+    "folders": [
+        {
+            "canonical_key": "ea_dist",
+            "folder_path": "\\\\ennead.com\\resources\\EA_Dist",
+            "description": "EnneadTab software distribution root"
+        },
+        {
+            "canonical_key": "project_archive",
+            "folder_path": "\\\\ennead.com\\projects\\Archive",
+            "description": "Project archive share"
+        },
+        {
+            "canonical_key": "enneadtab_settings",
+            "folder_path": "L:\\EnneadTab_Settings",
+            "description": "EnneadTab central settings"
+        },
+        {
+            "canonical_key": "shared_library",
+            "folder_path": "J:\\Shared",
+            "description": "Office shared resources"
+        }
+    ]
+}
