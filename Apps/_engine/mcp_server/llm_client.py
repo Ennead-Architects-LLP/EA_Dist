@@ -163,7 +163,11 @@ def _call_anthropic(api_key: str, messages: List[Dict], tools: List[Dict],
                     system_text: str) -> Dict:
     url = "https://api.anthropic.com/v1/messages"
     body = {
-        "model": "claude-sonnet-4-20250514",
+        "model": "claude-sonnet-5",
+        # Keep the pre-migration behavior: claude-sonnet-4 did no thinking by
+        # default, but on claude-sonnet-5 an omitted `thinking` runs adaptive
+        # thinking, which would consume part of the 4096 max_tokens budget.
+        "thinking": {"type": "disabled"},
         "max_tokens": 4096,
         "system": system_text,
         "messages": messages,
