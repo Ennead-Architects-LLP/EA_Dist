@@ -283,32 +283,55 @@ def download_qr_code(data_url, size=220):
     if not data_url:
         return None
 
-    qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}".format(
-        size, _url_quote(data_url))
-    out_path = os.path.join(get_staging_directory(), "arvr_qr_{}.png".format(size))
-
     try:
-        from System.Net import WebRequest, ServicePointManager, SecurityProtocolType # pyright: ignore
-        from System.IO import FileStream, FileMode # pyright: ignore
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
-        request = WebRequest.Create(qr_api_url)
-        request.Method = "GET"
-        request.Timeout = 15000
-        response = request.GetResponse()
-        response_stream = response.GetResponseStream()
-        file_stream = FileStream(out_path, FileMode.Create)
-        response_stream.CopyTo(file_stream)
-        file_stream.Close()
-        response_stream.Close()
-        response.Close()
-    except ImportError:
-        import urllib.request
-        urllib.request.urlretrieve(qr_api_url, out_path)
-    except Exception:
+        import uuid
+        qr_api_url = "https://api.qrserver.com/v1/create-qr-code/?size={0}x{0}&data={1}".format(
+            size, _url_quote(data_url))
+        staging_dir = get_staging_directory()
+        out_path = os.path.join(staging_dir, "arvr_qr_{}_{}.png".format(size, uuid.uuid4().hex[:8]))
+
+        # Clean up any stale QR files in staging dir
+        try:
+            for fname in os.listdir(staging_dir):
+                if fname.startswith("arvr_qr_") and fname.endswith(".png"):
+                    try:
+                        os.remove(os.path.join(staging_dir, fname))
+                    except:
+                        pass
+        except:
+            pass
+
+        downloaded = False
+        # Try .NET WebClient first if in IronPython
+        try:
+            from System.Net import WebClient, ServicePointManager, SecurityProtocolType # pyright: ignore
+            try:
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
+            except:
+                pass
+            client = WebClient()
+            client.DownloadFile(qr_api_url, out_path)
+            downloaded = os.path.exists(out_path) and os.path.getsize(out_path) > 0
+        except:
+            pass
+
+        if not downloaded:
+            try:
+                try:
+                    import urllib.request as urllib_req
+                    urllib_req.urlretrieve(qr_api_url, out_path)
+                except ImportError:
+                    import urllib
+                    urllib.urlretrieve(qr_api_url, out_path)
+                downloaded = os.path.exists(out_path) and os.path.getsize(out_path) > 0
+            except:
+                pass
+
+        if downloaded:
+            return out_path
+    except:
         return None
 
-    if os.path.exists(out_path) and os.path.getsize(out_path) > 0:
-        return out_path
     return None
 
 def open_web_hub(room_id=None):

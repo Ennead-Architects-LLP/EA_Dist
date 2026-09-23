@@ -222,69 +222,94 @@ class ARVRExportDialog(object):
         self.status_lbl.TextColor = self.col_green
         self.link_tb.Text = url
 
-        qr_path = ARVR.download_qr_code(url)
-        if qr_path:
-            try:
-                self.qr_view.Image = Eto.Drawing.Bitmap(qr_path)
-            except Exception:
-                pass
+        try:
+            self.btn_web.Text = "OPEN ROOM {} IN BROWSER".format(room_id)
+        except:
+            pass
+
+        try:
+            qr_path = ARVR.download_qr_code(url)
+            if qr_path and os.path.exists(qr_path):
+                try:
+                    # In .NET/WPF, load bytes into MemoryStream to prevent holding an open file handle
+                    from System.IO import File, MemoryStream # pyright: ignore
+                    data_bytes = File.ReadAllBytes(qr_path)
+                    ms = MemoryStream(data_bytes)
+                    self.qr_view.Image = Eto.Drawing.Bitmap(ms)
+                except:
+                    try:
+                        self.qr_view.Image = Eto.Drawing.Bitmap(qr_path)
+                    except:
+                        pass
+        except:
+            pass
 
     def on_export_click(self, sender, e):
-        objs = rs.SelectedObjects()
-        if not objs:
-            rs.Command("-_SelAll ")
+        try:
             objs = rs.SelectedObjects()
             if not objs:
-                NOTIFICATION.messenger("No objects found to export. Please select objects in Rhino first, or use Pick Objects above.")
+                rs.Command("-_SelAll ")
+                objs = rs.SelectedObjects()
+                if not objs:
+                    NOTIFICATION.messenger("No objects found to export. Please select objects in Rhino first, or use Pick Objects above.")
+                    return
+
+            # Prepare export target path in staging folder
+            doc_name = rs.DocumentName()
+            if doc_name:
+                clean_name = os.path.splitext(doc_name)[0]
+            else:
+                clean_name = "Rhino_Model"
+
+            staging_dir = ARVR.get_staging_directory()
+            out_path = os.path.join(staging_dir, clean_name + ".glb")
+
+            # Delete any leftover file from a previous run first. Without this, a
+            # failed export here would silently re-upload a stale .glb from an
+            # earlier successful export instead of reporting failure.
+            if os.path.exists(out_path):
+                try:
+                    os.remove(out_path)
+                except Exception:
+                    pass
+
+            # Use RhinoDoc.ExportSelected directly (same proven pattern as
+            # File.tab/external_trimmer.button) instead of scripting -_Export
+            # with blind _Enter presses -- that macro approach has no way to
+            # know how many dialogs a given selection will trigger.
+            rs.SelectObjects(objs)
+            try:
+                exported = sc.doc.ExportSelected(out_path)
+            except Exception as export_err:
+                exported = False
+                NOTIFICATION.messenger("Export raised an error: {}".format(export_err))
+
+            if not exported or not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
+                NOTIFICATION.messenger("Could not export geometry to .GLB. Please check Rhino export formats or use Browse.")
                 return
 
-        # Prepare export target path in staging folder
-        doc_name = rs.DocumentName()
-        if doc_name:
-            clean_name = os.path.splitext(doc_name)[0]
-        else:
-            clean_name = "Rhino_Model"
-
-        staging_dir = ARVR.get_staging_directory()
-        out_path = os.path.join(staging_dir, clean_name + ".glb")
-
-        # Delete any leftover file from a previous run first. Without this, a
-        # failed export here would silently re-upload a stale .glb from an
-        # earlier successful export instead of reporting failure.
-        if os.path.exists(out_path):
-            try:
-                os.remove(out_path)
-            except Exception:
-                pass
-
-        # Use RhinoDoc.ExportSelected directly (same proven pattern as
-        # File.tab/external_trimmer.button) instead of scripting -_Export
-        # with blind _Enter presses -- that macro approach has no way to
-        # know how many dialogs a given selection will trigger.
-        rs.SelectObjects(objs)
-        try:
-            exported = sc.doc.ExportSelected(out_path)
-        except Exception as export_err:
-            exported = False
-            NOTIFICATION.messenger("Export raised an error: {}".format(export_err))
-
-        if not exported or not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
-            NOTIFICATION.messenger("Could not export geometry to .GLB. Please check Rhino export formats or use Browse.")
-            return
-
-        room_input = self.room_tb.Text.strip() if self.room_tb.Text else None
-        ok, room_id, url, err = ARVR.stage_and_upload(out_path, room_id=room_input, auto_open_browser=False)
-        self._handle_upload_result(ok, room_id, url, err)
+            room_input = self.room_tb.Text.strip() if self.room_tb.Text else None
+            ok, room_id, url, err = ARVR.stage_and_upload(out_path, room_id=room_input, auto_open_browser=False)
+            self._handle_upload_result(ok, room_id, url, err)
+        except Exception as ex:
+            NOTIFICATION.messenger("Export error: {}".format(ex))
+        except:
+            NOTIFICATION.messenger("Unexpected error during export.")
 
     def on_browse_click(self, sender, e):
-        filter_str = "3D Models (*.glb;*.gltf;*.usdz)|*.glb;*.gltf;*.usdz|All Files (*.*)|*.*"
-        filepath = rs.OpenFileName("Select 3D Model to Beam to AR/VR", filter_str)
-        if not filepath or not os.path.exists(filepath):
-            return
+        try:
+            filter_str = "3D Models (*.glb;*.gltf;*.usdz)|*.glb;*.gltf;*.usdz|All Files (*.*)|*.*"
+            filepath = rs.OpenFileName("Select 3D Model to Beam to AR/VR", filter_str)
+            if not filepath or not os.path.exists(filepath):
+                return
 
-        room_input = self.room_tb.Text.strip() if self.room_tb.Text else None
-        ok, room_id, url, err = ARVR.stage_and_upload(filepath, room_id=room_input, auto_open_browser=False)
-        self._handle_upload_result(ok, room_id, url, err)
+            room_input = self.room_tb.Text.strip() if self.room_tb.Text else None
+            ok, room_id, url, err = ARVR.stage_and_upload(filepath, room_id=room_input, auto_open_browser=False)
+            self._handle_upload_result(ok, room_id, url, err)
+        except Exception as ex:
+            NOTIFICATION.messenger("Browse error: {}".format(ex))
+        except:
+            NOTIFICATION.messenger("Unexpected error during browse.")
 
     def on_web_click(self, sender, e):
         room_input = self.room_tb.Text.strip() if self.room_tb.Text else None
