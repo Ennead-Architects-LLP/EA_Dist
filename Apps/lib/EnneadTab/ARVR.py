@@ -290,12 +290,15 @@ def download_qr_code(data_url, size=220):
         staging_dir = get_staging_directory()
         out_path = os.path.join(staging_dir, "arvr_qr_{}_{}.png".format(size, uuid.uuid4().hex[:8]))
 
-        # Clean up any stale QR files in staging dir
+        # Clean up stale QR files older than 5 minutes in staging dir
         try:
+            now_t = time.time()
             for fname in os.listdir(staging_dir):
                 if fname.startswith("arvr_qr_") and fname.endswith(".png"):
+                    fpath = os.path.join(staging_dir, fname)
                     try:
-                        os.remove(os.path.join(staging_dir, fname))
+                        if now_t - os.path.getmtime(fpath) > 300:
+                            os.remove(fpath)
                     except:
                         pass
         except:
@@ -333,6 +336,27 @@ def download_qr_code(data_url, size=220):
         return None
 
     return None
+
+def get_mobile_viewer_url(room_id):
+    """Return the direct mobile AR viewer URL for a room (the big QR target)."""
+    return "{}/view/{}".format(ARVR_URL_BASE, room_id.upper().strip())
+
+def download_qr_code_pair(room_id, hub_url):
+    """Download both QR codes needed for the share dialog:
+      - Large QR  (240px) → mobile AR viewer URL  (https://enneadtab.com/arvr/view/<room>)
+      - Small QR  (80px)  → desktop hub room URL   (https://enneadtab.com/arvr?room=<room>)
+
+    Args:
+        room_id (str): The room code.
+        hub_url (str): The desktop hub URL (already computed by stage_and_upload).
+
+    Returns:
+        tuple: (large_qr_path, small_qr_path) — either may be None if fetch failed.
+    """
+    mobile_url = get_mobile_viewer_url(room_id)
+    large_path = download_qr_code(mobile_url, size=240)
+    small_path = download_qr_code(hub_url, size=80)
+    return large_path, small_path
 
 def open_web_hub(room_id=None):
     """Open the ARVR web app in default browser."""
