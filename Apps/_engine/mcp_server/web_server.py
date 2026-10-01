@@ -379,6 +379,9 @@ def make_handler(
 
             # Resolve API key: central > manual > none
             prov_info = providers.get(provider, {})
+            # Resolve model: central /api/keys/llm payload > GEMINI_MODEL env
+            # (todo #1452). None = llm_client built-in default.
+            model = prov_info.get("model", "") or os.environ.get("GEMINI_MODEL", "") or None
             api_key = prov_info.get("key", "")
             if not api_key and manual_key:
                 api_key = manual_key
@@ -398,6 +401,8 @@ def make_handler(
             # Try primary provider, auto-fallback to the other on failure
             fallback_provider = "gemini" if provider == "anthropic" else "anthropic"
             fallback_info = providers.get(fallback_provider, {})
+            fallback_model = (fallback_info.get("model", "")
+                              or os.environ.get("GEMINI_MODEL", "") or None)
             fallback_key = fallback_info.get("key", "")
 
             try:
@@ -407,6 +412,7 @@ def make_handler(
                     messages=messages,
                     mcp_tools=mcp_tools,
                     execute_fn=execute,
+                    model=model,
                 )
                 result["provider_used"] = provider
                 body = json.dumps(result).encode()
@@ -421,6 +427,7 @@ def make_handler(
                             messages=messages,
                             mcp_tools=mcp_tools,
                             execute_fn=execute,
+                            model=fallback_model,
                         )
                         result["provider_used"] = fallback_provider
                         result["fallback_reason"] = str(primary_err)[:200]
