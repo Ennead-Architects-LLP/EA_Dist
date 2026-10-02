@@ -138,18 +138,6 @@ def build_recap(raw_log, today, state, user_name, fleet_path=None):
     metrics["baseline_unresolved"] = recap_savings.unresolved_baseline_keys(
         baselines, catalog)
 
-    # Display names for the chart, resolved through the join so a reworded
-    # title still renders as the tool's real name.
-    display_names = {}
-    for key in month.get("runs_by_tool", {}):
-        script_path = catalog["by_alias"].get(key)
-        if script_path is None:
-            basename = (month.get("basenames_by_tool") or {}).get(key)
-            script_path = catalog["by_basename"].get(basename) if basename else None
-        if script_path and script_path in catalog["tools"]:
-            display_names[key] = catalog["tools"][script_path]["alias"]
-    metrics["display_names"] = display_names
-
     # Apps the user actually touches -- never recommend into an unused one.
     active_apps = set()
     for app, count in (month.get("runs_by_application") or {}).items():
@@ -221,7 +209,11 @@ def write_pending_digest(args, recap, today):
         "body_text": claim.render_body(),
         "claim_type": claim.type,
         "html_path": html_path,
-        "chart": _toast_chart(recap),
+        # NOTE: a "chart" key used to be built here via _toast_chart(), but no
+        # NOTIFICATION.messenger() signature accepts it and no host renders it
+        # -- it raised TypeError on every toast call and was silently dropped.
+        # Removed with the builder in senzhang-todo #3897. Do not re-add
+        # without a real renderer on the NotificationHost side.
     }
 
     if args.dry_run:
@@ -236,29 +228,10 @@ def write_pending_digest(args, recap, today):
     return PENDING_FILE
 
 
-def _toast_chart(recap):
-    """Declarative chart payload -- NotificationHost renders it.
-
-    The producer never rasterizes anything: it ships raw data plus a type, so
-    the Revit/Rhino side only builds a dict and stays IronPython-2.7 safe.
-    `mask_labels` hides the winning bar's identity, which is the visual half of
-    the curiosity gap.
-    """
-    month = recap["metrics"]["month"]
-    top = month.get("top_tools") or []
-    if not top:
-        return None
-    names = recap["metrics"].get("display_names") or {}
-    series = []
-    for key, count in top[:5]:
-        series.append({"label": names.get(key, key), "value": count})
-    return {
-        "type": "bar",
-        "series": series,
-        "highlight": 0,
-        "mask_labels": True,
-        "caption": recap["metrics"]["month_label"],
-    }
+# _toast_chart() was deleted in senzhang-todo #3897: the declarative chart
+# payload it built was never accepted by NOTIFICATION.messenger() and never
+# rendered by any host -- it raised TypeError on every call and was silently
+# dropped. See the NOTE on the pending-digest payload above.
 
 
 # ------------------------------------------------------------------ reporting
